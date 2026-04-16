@@ -182,6 +182,7 @@
             btn.disabled = true;
 
             try {
+                // ... (mantenha o código de loop dos jogos igual)
                 for (let j of todosJogos) {
                     const ga = document.getElementById(`g-a-${j.id}`).value;
                     const gb = document.getElementById(`g-b-${j.id}`).value;
@@ -192,9 +193,18 @@
                         });
                     }
                 }
+
                 await _supabase.rpc('admin_recalcular_tudo');
+                
+                // --- ALTERAÇÃO AQUI ---
                 alert("✨ Tudo atualizado com sucesso!");
-                location.reload();
+                
+                // Em vez de location.reload(), apenas atualizamos os dados locais
+                await carregarDados(); // Isso busca os valores novos do banco
+                btn.disabled = false;
+                btn.innerText = "SALVAR E RECALCULAR TUDO";
+                // -----------------------
+
             } catch (e) {
                 alert("Erro: " + e.message);
                 btn.disabled = false;
