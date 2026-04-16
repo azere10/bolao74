@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolão Copa 2026 - Bolao74</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <header class="bg-blue-600 text-white p-4 shadow-lg mb-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold italic">BOLÃO74 ⚽</h1>
+            <div id="user-section" class="text-sm">
+                </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 max-w-2xl">
+        
+        <div class="flex mb-6 bg-white rounded-lg shadow p-1">
+            <button onclick="showTab('jogos')" class="flex-1 py-2 rounded-md font-semibold text-blue-600 bg-blue-50" id="tab-jogos">Jogos</button>
+            <button onclick="showTab('ranking')" class="flex-1 py-2 rounded-md font-semibold text-gray-500" id="tab-ranking">Ranking</button>
+        </div>
+
+        <div id="content-jogos" class="space-y-4">
+            <p class="text-center text-gray-500 italic">Carregando jogos...</p>
+        </div>
+
+        <div id="content-ranking" class="hidden">
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="p-4">Pos</th>
+                            <th class="p-4">Amigo</th>
+                            <th class="p-4 text-right">Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // CONFIGURAÇÕES DO SUPABASE (Substitua pelos seus dados)
+        const SUPABASE_URL = 'https://auwzjdjyaqvqvznpfvif.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Lógica de Troca de Abas
+        function showTab(tab) {
+            if(tab === 'jogos') {
+                document.getElementById('content-jogos').classList.remove('hidden');
+                document.getElementById('content-ranking').classList.add('hidden');
+                document.getElementById('tab-jogos').className = 'flex-1 py-2 rounded-md font-semibold text-blue-600 bg-blue-50';
+                document.getElementById('tab-ranking').className = 'flex-1 py-2 rounded-md font-semibold text-gray-500';
+            } else {
+                document.getElementById('content-jogos').classList.add('hidden');
+                document.getElementById('content-ranking').classList.remove('hidden');
+                document.getElementById('tab-ranking').className = 'flex-1 py-2 rounded-md font-semibold text-blue-600 bg-blue-50';
+                document.getElementById('tab-jogos').className = 'flex-1 py-2 rounded-md font-semibold text-gray-500';
+                carregarRanking();
+            }
+        }
+
+        // Função para carregar jogos e verificar bloqueio de 5 min
+        async function carregarJogos() {
+            const { data: jogos, error } = await supabase.from('jogos').select('*').order('data_hora', { ascending: true });
+            
+            const container = document.getElementById('content-jogos');
+            container.innerHTML = '';
+
+            const agora = new Date();
+
+            jogos.forEach(jogo => {
+                const dataJogo = new Date(jogo.data_hora);
+                const diffMinutos = (dataJogo - agora) / 1000 / 60;
+                const bloqueado = diffMinutos < 5; // BLOQUEIO DE 5 MINUTOS
+
+                const card = `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 ${bloqueado ? 'border-red-400' : 'border-green-400'}">
+                        <div class="text-xs text-gray-400 mb-2">${dataJogo.toLocaleString()} - ${jogo.fase}</div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold w-1/3 text-right">${jogo.time_a}</span>
+                            <div class="flex space-x-2 items-center">
+                                <input type="number" ${bloqueado ? 'disabled' : ''} class="w-12 h-10 border rounded text-center font-bold text-xl ${bloqueado ? 'bg-gray-100' : ''}" placeholder="0">
+                                <span class="text-gray-400">x</span>
+                                <input type="number" ${bloqueado ? 'disabled' : ''} class="w-12 h-10 border rounded text-center font-bold text-xl ${bloqueado ? 'bg-gray-100' : ''}" placeholder="0">
+                            </div>
+                            <span class="font-bold w-1/3 text-left">${jogo.time_b}</span>
+                        </div>
+                        ${bloqueado ? '<p class="text-[10px] text-red-500 mt-2 text-center">Palpites encerrados</p>' : ''}
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        // Função simples para carregar o ranking
+        async function carregarRanking() {
+            const { data: perfis } = await supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
+            const tbody = document.getElementById('ranking-body');
+            tbody.innerHTML = '';
+            
+            perfis.forEach((perfil, index) => {
+                tbody.innerHTML += `
+                    <tr class="border-b last:border-0">
+                        <td class="p-4 font-bold text-gray-400">#${index + 1}</td>
+                        <td class="p-4 font-medium">${perfil.nome_completo}</td>
+                        <td class="p-4 text-right font-bold text-blue-600">${perfil.pontos_total}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        carregarJogos();
+    </script>
+</body>
+</html>
