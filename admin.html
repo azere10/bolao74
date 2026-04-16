@@ -61,41 +61,40 @@
 
         async function processarAtualizacao() {
             const btn = document.getElementById('btn-main');
-            const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerText = "ATUALIZANDO BANCO...";
+            btn.innerText = "ATUALIZANDO...";
 
             const inputs = document.querySelectorAll('input[id^="oficial-a-"]');
             
             try {
+                // Criamos uma lista de promessas para enviar tudo de uma vez
                 for (let inputA of inputs) {
                     const id = inputA.id.replace('oficial-a-', '');
                     const gA = inputA.value;
                     const gB = document.getElementById(`oficial-b-${id}`).value;
 
                     if (gA !== "" && gB !== "") {
-                        // CHAMADA DA NOVA FUNÇÃO (Contorna o erro de WHERE clause)
-                        const { error: updateError } = await _supabase.rpc('admin_atualizar_placar', {
-                            jogo_id: id,
-                            gols_a: parseInt(gA),
-                            gols_b: parseInt(gB)
+                        // Usando RPC para chamar a função que criamos no SQL
+                        const { error: err } = await _supabase.rpc('admin_atualizar_placar', {
+                            id_jogo: id, // Nome deve ser igual ao do SQL
+                            g_a: parseInt(gA),
+                            g_b: parseInt(gB)
                         });
-
-                        if (updateError) throw updateError;
+                        if (err) throw err;
                     }
                 }
 
-                btn.innerText = "RECALCULANDO RANKING...";
-                const { error: rpcError } = await _supabase.rpc('admin_recalcular_tudo');
-                if (rpcError) throw rpcError;
+                btn.innerText = "RECALCULANDO...";
+                const { error: rpcErr } = await _supabase.rpc('admin_recalcular_tudo');
+                if (rpcErr) throw rpcErr;
 
-                alert("Sucesso! Ranking e resultados atualizados.");
+                alert("Sucesso! Ranking atualizado.");
             } catch (err) {
-                alert("Erro: " + err.message);
+                alert("Erro: " + (err.message || "Falha na comunicação com o banco"));
                 console.error(err);
             } finally {
                 btn.disabled = false;
-                btn.innerText = originalText;
+                btn.innerText = "ATUALIZAR RESULTADOS E RECALCULAR TUDO";
                 carregarJogosAdmin();
             }
         }
