@@ -2,41 +2,54 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel de Controle - Bolão74</title>
+    <title>Painel Admin - Bolão74</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-900 text-white p-6">
-    <div class="max-w-3xl mx-auto">
+    <div id="login-admin" class="max-w-sm mx-auto mt-20 bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700">
+        <h2 class="text-xl font-black mb-4 text-center">ACESSO RESTRITO</h2>
+        <input type="password" id="senha-admin" placeholder="Digite a senha mestra" class="w-full p-3 bg-slate-950 border border-slate-600 rounded mb-4 text-center">
+        <button onclick="verificarSenha()" class="w-full bg-blue-600 py-3 rounded-lg font-bold">ENTRAR</button>
+    </div>
+
+    <div id="painel-admin" class="hidden max-w-3xl mx-auto">
         <h1 class="text-3xl font-black mb-8 border-b border-slate-700 pb-4">ADMINISTRAÇÃO BOLÃO74</h1>
-        
-        <div class="bg-amber-100 text-amber-900 p-4 rounded-lg mb-8 text-sm font-bold">
-            ⚠️ O botão de atualizar zera o ranking e recalcula tudo do zero para evitar erros.
-        </div>
-
         <div id="lista-admin" class="space-y-4 mb-10"></div>
-
         <button onclick="processarAtualizacao()" id="btn-main" class="w-full bg-green-500 hover:bg-green-600 text-white font-black py-6 rounded-2xl shadow-2xl text-xl sticky bottom-4">
             ATUALIZAR RESULTADOS E RECALCULAR TUDO
         </button>
     </div>
 
     <script>
-        const SUPABASE_URL = 'SUA_URL';
-        const SUPABASE_KEY = 'SUA_KEY';
+        const SUPABASE_URL = 'https://auwzjdjyaqvqvznpfvif.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // DEFINA SUA SENHA AQUI
+        const SENHA_MESTRA = "1234"; 
+
+        function verificarSenha() {
+            const senha = document.getElementById('senha-admin').value;
+            if(senha === SENHA_MESTRA) {
+                document.getElementById('login-admin').classList.add('hidden');
+                document.getElementById('painel-admin').classList.remove('hidden');
+                carregarJogosAdmin();
+            } else {
+                alert("Senha incorreta!");
+            }
+        }
 
         async function carregarJogosAdmin() {
             const { data: jogos } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
             const container = document.getElementById('lista-admin');
             container.innerHTML = '';
-
             jogos.forEach(j => {
                 container.innerHTML += `
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
-                        <div class="w-1/3">
-                            <p class="text-[10px] text-slate-400">${j.fase}</p>
+                        <div class="w-1/3 text-sm">
                             <p class="font-bold">${j.time_a} x ${j.time_b}</p>
+                            <p class="text-[10px] text-slate-400">${j.fase}</p>
                         </div>
                         <div class="flex gap-2">
                             <input type="number" id="oficial-a-${j.id}" value="${j.gols_a_oficial ?? ''}" class="w-14 h-12 bg-slate-950 border border-slate-600 rounded text-center text-xl font-bold text-green-400">
@@ -48,17 +61,13 @@
 
         async function processarAtualizacao() {
             const btn = document.getElementById('btn-main');
-            btn.disabled = true;
-            btn.innerText = "PROCESSANDO... AGUARDE";
-
+            btn.innerText = "ATUALIZANDO BANCO...";
             const inputs = document.querySelectorAll('input[id^="oficial-a-"]');
             
-            // 1. Salva os gols na tabela jogos
             for (let inputA of inputs) {
                 const id = inputA.id.replace('oficial-a-', '');
                 const gA = inputA.value;
                 const gB = document.getElementById(`oficial-b-${id}`).value;
-
                 if (gA !== "" && gB !== "") {
                     await _supabase.from('jogos').update({ 
                         gols_a_oficial: parseInt(gA), 
@@ -67,17 +76,14 @@
                 }
             }
 
-            // 2. Chama a função mágica do banco que recalcula tudo
+            btn.innerText = "RECALCULANDO RANKING...";
             const { error } = await _supabase.rpc('admin_recalcular_tudo');
-
-            if (error) alert("Erro ao calcular: " + error.message);
-            else alert("Ranking atualizado com sucesso!");
             
-            btn.disabled = false;
+            if (error) alert("Erro: " + error.message);
+            else alert("Sucesso! Ranking e resultados atualizados.");
+            
             btn.innerText = "ATUALIZAR RESULTADOS E RECALCULAR TUDO";
         }
-
-        carregarJogosAdmin();
     </script>
 </body>
 </html>
