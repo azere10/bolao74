@@ -68,40 +68,35 @@
             const inputs = document.querySelectorAll('input[id^="oficial-a-"]');
             
             try {
-                // 1. Salva os gols na tabela jogos individualmente para evitar o erro de WHERE clause
                 for (let inputA of inputs) {
                     const id = inputA.id.replace('oficial-a-', '');
                     const gA = inputA.value;
                     const gB = document.getElementById(`oficial-b-${id}`).value;
 
-                    // Só envia se ambos os campos estiverem preenchidos
                     if (gA !== "" && gB !== "") {
-                        const { error: updateError } = await _supabase
-                            .from('jogos')
-                            .update({ 
-                                gols_a_oficial: parseInt(gA), 
-                                gols_b_oficial: parseInt(gB) 
-                            })
-                            .eq('id', id); // O "eq" é o WHERE que o erro estava pedindo!
+                        // CHAMADA DA NOVA FUNÇÃO (Contorna o erro de WHERE clause)
+                        const { error: updateError } = await _supabase.rpc('admin_atualizar_placar', {
+                            jogo_id: id,
+                            gols_a: parseInt(gA),
+                            gols_b: parseInt(gB)
+                        });
 
-                        if (updateError) console.error("Erro no jogo " + id, updateError);
+                        if (updateError) throw updateError;
                     }
                 }
 
                 btn.innerText = "RECALCULANDO RANKING...";
-                
-                // 2. Chama a função do banco que recalcula os pontos de todos
                 const { error: rpcError } = await _supabase.rpc('admin_recalcular_tudo');
-
                 if (rpcError) throw rpcError;
 
-                alert("Sucesso! Resultados salvos e ranking atualizado.");
+                alert("Sucesso! Ranking e resultados atualizados.");
             } catch (err) {
-                alert("Erro no processamento: " + err.message);
+                alert("Erro: " + err.message);
+                console.error(err);
             } finally {
                 btn.disabled = false;
                 btn.innerText = originalText;
-                carregarJogosAdmin(); // Recarrega a lista para mostrar os valores salvos
+                carregarJogosAdmin();
             }
         }
     </script>
