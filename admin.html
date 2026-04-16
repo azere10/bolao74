@@ -61,28 +61,48 @@
 
         async function processarAtualizacao() {
             const btn = document.getElementById('btn-main');
+            const originalText = btn.innerText;
+            btn.disabled = true;
             btn.innerText = "ATUALIZANDO BANCO...";
+
             const inputs = document.querySelectorAll('input[id^="oficial-a-"]');
             
-            for (let inputA of inputs) {
-                const id = inputA.id.replace('oficial-a-', '');
-                const gA = inputA.value;
-                const gB = document.getElementById(`oficial-b-${id}`).value;
-                if (gA !== "" && gB !== "") {
-                    await _supabase.from('jogos').update({ 
-                        gols_a_oficial: parseInt(gA), 
-                        gols_b_oficial: parseInt(gB) 
-                    }).eq('id', id);
-                }
-            }
+            try {
+                // 1. Salva os gols na tabela jogos individualmente para evitar o erro de WHERE clause
+                for (let inputA of inputs) {
+                    const id = inputA.id.replace('oficial-a-', '');
+                    const gA = inputA.value;
+                    const gB = document.getElementById(`oficial-b-${id}`).value;
 
-            btn.innerText = "RECALCULANDO RANKING...";
-            const { error } = await _supabase.rpc('admin_recalcular_tudo');
-            
-            if (error) alert("Erro: " + error.message);
-            else alert("Sucesso! Ranking e resultados atualizados.");
-            
-            btn.innerText = "ATUALIZAR RESULTADOS E RECALCULAR TUDO";
+                    // Só envia se ambos os campos estiverem preenchidos
+                    if (gA !== "" && gB !== "") {
+                        const { error: updateError } = await _supabase
+                            .from('jogos')
+                            .update({ 
+                                gols_a_oficial: parseInt(gA), 
+                                gols_b_oficial: parseInt(gB) 
+                            })
+                            .eq('id', id); // O "eq" é o WHERE que o erro estava pedindo!
+
+                        if (updateError) console.error("Erro no jogo " + id, updateError);
+                    }
+                }
+
+                btn.innerText = "RECALCULANDO RANKING...";
+                
+                // 2. Chama a função do banco que recalcula os pontos de todos
+                const { error: rpcError } = await _supabase.rpc('admin_recalcular_tudo');
+
+                if (rpcError) throw rpcError;
+
+                alert("Sucesso! Resultados salvos e ranking atualizado.");
+            } catch (err) {
+                alert("Erro no processamento: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+                carregarJogosAdmin(); // Recarrega a lista para mostrar os valores salvos
+            }
         }
     </script>
 </body>
