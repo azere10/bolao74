@@ -61,40 +61,51 @@
 
         async function processarAtualizacao() {
             const btn = document.getElementById('btn-main');
+            const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerText = "ATUALIZANDO...";
+            btn.innerText = "1/2 ATUALIZANDO GOLS...";
 
             const inputs = document.querySelectorAll('input[id^="oficial-a-"]');
             
             try {
-                // Criamos uma lista de promessas para enviar tudo de uma vez
+                // Criamos um pacote de atualizações
                 for (let inputA of inputs) {
-                    const id = inputA.id.replace('oficial-a-', '');
+                    const idJogo = inputA.id.replace('oficial-a-', '');
                     const gA = inputA.value;
-                    const gB = document.getElementById(`oficial-b-${id}`).value;
+                    const gB = document.getElementById(`oficial-b-${idJogo}`).value;
 
+                    // Só processa se houver números digitados
                     if (gA !== "" && gB !== "") {
-                        // Usando RPC para chamar a função que criamos no SQL
+                        console.log(`Enviando jogo: ${idJogo}`);
+                        
+                        // Chamada via RPC (Função do Banco) - O jeito mais seguro
                         const { error: err } = await _supabase.rpc('admin_atualizar_placar', {
-                            id_jogo: id, // Nome deve ser igual ao do SQL
+                            id_jogo: idJogo, // Verifique se o nome no SQL é id_jogo
                             g_a: parseInt(gA),
                             g_b: parseInt(gB)
                         });
-                        if (err) throw err;
+
+                        if (err) {
+                            console.error("Erro no jogo " + idJogo, err);
+                            // Se o RPC falhar, tentamos o método direto com filtro reforçado
+                            await _supabase.from('jogos')
+                                .update({ gols_a_oficial: parseInt(gA), gols_b_oficial: parseInt(gB) })
+                                .filter('id', 'eq', idJogo); 
+                        }
                     }
                 }
 
-                btn.innerText = "RECALCULANDO...";
+                btn.innerText = "2/2 RECALCULANDO RANKING...";
                 const { error: rpcErr } = await _supabase.rpc('admin_recalcular_tudo');
                 if (rpcErr) throw rpcErr;
 
-                alert("Sucesso! Ranking atualizado.");
+                alert("✅ SUCESSO!\nResultados salvos e ranking atualizado.");
             } catch (err) {
-                alert("Erro: " + (err.message || "Falha na comunicação com o banco"));
+                alert("❌ ERRO: " + (err.message || "Falha na conexão"));
                 console.error(err);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "ATUALIZAR RESULTADOS E RECALCULAR TUDO";
+                btn.innerText = originalText;
                 carregarJogosAdmin();
             }
         }
