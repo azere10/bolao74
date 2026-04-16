@@ -64,23 +64,43 @@
     <script>
         let currentUser = null;
 
+        // 1. Gerenciamento de Login Inteligente
         async function handleAuth() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            let { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+            if (!email || !password) return alert("Preencha e-mail e senha.");
+
+            // Tenta logar primeiro
+            const { data: signInData, error: signInError } = await _supabase.auth.signInWithPassword({ email, password });
             
-            if (error) {
-                const { data: signUpData, error: signUpError } = await _supabase.auth.signUp({ email, password });
-                if (signUpError) return alert("Erro: " + signUpError.message);
-                data = signUpData;
-                alert("Conta criada!");
+            if (signInError) {
+                // Se o erro for que o usuário não existe, tenta cadastrar
+                if (signInError.message.includes("Invalid login credentials")) {
+                    const { data: signUpData, error: signUpError } = await _supabase.auth.signUp({ email, password });
+                    
+                    if (signUpError) {
+                        return alert("Erro: " + signUpError.message);
+                    }
+                    
+                    // Se o cadastro funcionou
+                    if (signUpData.user) {
+                        alert("Bem-vindo! Sua conta nova foi criada com sucesso.");
+                        currentUser = signUpData.user;
+                        return initApp();
+                    }
+                } else {
+                    // Outros erros (como limite de tentativas)
+                    return alert("Aviso: " + signInError.message);
+                }
             }
 
-            currentUser = data.user;
-            initApp();
+            // Se logou direto (conta já existia)
+            if (signInData.user) {
+                currentUser = signInData.user;
+                initApp();
+            }
         }
-
         async function initApp() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
