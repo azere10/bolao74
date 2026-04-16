@@ -3,75 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolão Copa 2026 - Bolao74</title>
+    <title>Bolão74 - Copa 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 font-sans">
-
-    <header class="bg-blue-600 text-white p-4 shadow-lg mb-6">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold italic">BOLÃO74 ⚽</h1>
-            <div id="user-section" class="text-sm">
-                </div>
-        </div>
-    </header>
-
-    <main class="container mx-auto px-4 max-w-2xl">
-        
-        <div class="flex mb-6 bg-white rounded-lg shadow p-1">
-            <button onclick="showTab('jogos')" class="flex-1 py-2 rounded-md font-semibold text-blue-600 bg-blue-50" id="tab-jogos">Jogos</button>
-            <button onclick="showTab('ranking')" class="flex-1 py-2 rounded-md font-semibold text-gray-500" id="tab-ranking">Ranking</button>
-        </div>
-
-        <div id="content-jogos" class="space-y-4">
-            <p class="text-center text-gray-500 italic">Carregando jogos...</p>
-        </div>
-
-        <div id="content-ranking" class="hidden">
-            <div class="bg-white rounded-xl shadow overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 border-b">
-                        <tr>
-                            <th class="p-4">Pos</th>
-                            <th class="p-4">Amigo</th>
-                            <th class="p-4 text-right">Pts</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ranking-body">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
+<body class="bg-gray-100 font-sans pb-10">
 
     <script>
-        // CONFIGURAÇÕES DO SUPABASE (Substitua pelos seus dados)
+        // --- CONFIGURAÇÃO (COLE SEUS DADOS AQUI) ---
         const SUPABASE_URL = 'https://auwzjdjyaqvqvznpfvif.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg';
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    </script>
 
-        // Lógica de Troca de Abas
-        function showTab(tab) {
-            if(tab === 'jogos') {
-                document.getElementById('content-jogos').classList.remove('hidden');
-                document.getElementById('content-ranking').classList.add('hidden');
-                document.getElementById('tab-jogos').className = 'flex-1 py-2 rounded-md font-semibold text-blue-600 bg-blue-50';
-                document.getElementById('tab-ranking').className = 'flex-1 py-2 rounded-md font-semibold text-gray-500';
-            } else {
-                document.getElementById('content-jogos').classList.add('hidden');
-                document.getElementById('content-ranking').classList.remove('hidden');
-                document.getElementById('tab-ranking').className = 'flex-1 py-2 rounded-md font-semibold text-blue-600 bg-blue-50';
-                document.getElementById('tab-jogos').className = 'flex-1 py-2 rounded-md font-semibold text-gray-500';
-                carregarRanking();
+    <header class="bg-blue-700 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-black italic">BOLÃO74</h1>
+            <div id="auth-header" class="text-sm font-medium"></div>
+        </div>
+    </header>
+
+    <div id="login-screen" class="container mx-auto px-4 mt-10 max-w-sm">
+        <div class="bg-white p-8 rounded-2xl shadow-xl">
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Entrar no Bolão</h2>
+            <input type="email" id="email" placeholder="Seu e-mail" class="w-full p-3 border rounded-lg mb-4 outline-blue-500">
+            <input type="password" id="password" placeholder="Sua senha" class="w-full p-3 border rounded-lg mb-6 outline-blue-500">
+            <button onclick="handleAuth()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Entrar / Cadastrar</button>
+            <p class="text-[10px] text-gray-400 mt-4 text-center">Se for o primeiro acesso, sua conta será criada automaticamente com esses dados.</p>
+        </div>
+    </div>
+
+    <div id="main-content" class="hidden container mx-auto px-4 mt-6 max-w-2xl">
+        
+        <div class="flex mb-6 bg-white rounded-xl shadow p-1 border">
+            <button onclick="showTab('jogos')" id="tab-jogos" class="flex-1 py-3 rounded-lg font-bold text-blue-600 bg-blue-50 transition">JOGOS</button>
+            <button onclick="showTab('ranking')" id="tab-ranking" class="flex-1 py-3 rounded-lg font-bold text-gray-500 transition">RANKING</button>
+        </div>
+
+        <div id="view-jogos" class="space-y-4">
+            <div id="lista-jogos" class="space-y-4"></div>
+            <button onclick="salvarTodosPalpites()" class="w-full bg-green-500 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-green-600 sticky bottom-4">SALVAR MEUS PALPITES</button>
+        </div>
+
+        <div id="view-ranking" class="hidden">
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden border">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="p-4 text-gray-400 text-xs uppercase">Pos</th>
+                            <th class="p-4 text-gray-400 text-xs uppercase">Participante</th>
+                            <th class="p-4 text-gray-400 text-xs uppercase text-right">Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // 1. Gerenciamento de Login
+        async function handleAuth() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Tenta logar
+            let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            
+            // Se não existir, tenta cadastrar
+            if (error) {
+                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
+                if (signUpError) return alert("Erro no login: " + signUpError.message);
+                data = signUpData;
+                alert("Conta criada! Bem-vindo.");
             }
+
+            currentUser = data.user;
+            initApp();
         }
 
-        // Função para carregar jogos e verificar bloqueio de 5 min
-        async function carregarJogos() {
-            const { data: jogos, error } = await supabase.from('jogos').select('*').order('data_hora', { ascending: true });
+        async function initApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('auth-header').innerHTML = `Olá, ${currentUser.email.split('@')[0]} | <button onclick="location.reload()" class="underline text-blue-200">Sair</button>`;
             
-            const container = document.getElementById('content-jogos');
+            // Garantir que existe um perfil para o usuário
+            await supabase.from('perfis').upsert({ id: currentUser.id, nome_completo: currentUser.email.split('@')[0] });
+            
+            carregarJogos();
+        }
+
+        // 2. Carregar Jogos e Palpites
+        async function carregarJogos() {
+            const { data: jogos } = await supabase.from('jogos').select('*').order('data_hora', { ascending: true });
+            const { data: meusPalpites } = await supabase.from('palpites').select('*').eq('user_id', currentUser.id);
+            
+            const container = document.getElementById('lista-jogos');
             container.innerHTML = '';
 
             const agora = new Date();
@@ -79,28 +108,59 @@
             jogos.forEach(jogo => {
                 const dataJogo = new Date(jogo.data_hora);
                 const diffMinutos = (dataJogo - agora) / 1000 / 60;
-                const bloqueado = diffMinutos < 5; // BLOQUEIO DE 5 MINUTOS
+                const bloqueado = diffMinutos < 5;
+                
+                // Busca se já existe um palpite salvo
+                const p = meusPalpites.find(item => item.jogo_id === jogo.id) || { palpite_a: '', palpite_b: '' };
 
-                const card = `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 ${bloqueado ? 'border-red-400' : 'border-green-400'}">
-                        <div class="text-xs text-gray-400 mb-2">${dataJogo.toLocaleString()} - ${jogo.fase}</div>
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold w-1/3 text-right">${jogo.time_a}</span>
-                            <div class="flex space-x-2 items-center">
-                                <input type="number" ${bloqueado ? 'disabled' : ''} class="w-12 h-10 border rounded text-center font-bold text-xl ${bloqueado ? 'bg-gray-100' : ''}" placeholder="0">
-                                <span class="text-gray-400">x</span>
-                                <input type="number" ${bloqueado ? 'disabled' : ''} class="w-12 h-10 border rounded text-center font-bold text-xl ${bloqueado ? 'bg-gray-100' : ''}" placeholder="0">
-                            </div>
-                            <span class="font-bold w-1/3 text-left">${jogo.time_b}</span>
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border ${bloqueado ? 'opacity-75 grayscale' : 'border-l-4 border-l-blue-500'}">
+                        <div class="flex justify-between text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">
+                            <span>${dataJogo.toLocaleDateString()} ${dataJogo.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            <span class="bg-gray-100 px-2 py-0.5 rounded">${jogo.fase}</span>
                         </div>
-                        ${bloqueado ? '<p class="text-[10px] text-red-500 mt-2 text-center">Palpites encerrados</p>' : ''}
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="flex-1 text-right font-bold text-gray-700">${jogo.time_a}</span>
+                            <div class="flex items-center gap-1">
+                                <input type="number" id="p-a-${jogo.id}" value="${p.palpite_a}" ${bloqueado ? 'readonly' : ''} class="w-12 h-12 border-2 rounded-lg text-center font-black text-xl focus:border-blue-500 outline-none transition ${bloqueado ? 'bg-gray-100 border-transparent' : 'border-gray-200'}">
+                                <span class="text-gray-300 font-bold">×</span>
+                                <input type="number" id="p-b-${jogo.id}" value="${p.palpite_b}" ${bloqueado ? 'readonly' : ''} class="w-12 h-12 border-2 rounded-lg text-center font-black text-xl focus:border-blue-500 outline-none transition ${bloqueado ? 'bg-gray-100 border-transparent' : 'border-gray-200'}">
+                            </div>
+                            <span class="flex-1 text-left font-bold text-gray-700">${jogo.time_b}</span>
+                        </div>
+                        ${bloqueado ? '<div class="mt-2 text-center text-[9px] font-bold text-red-500">🔒 PALPITES ENCERRADOS</div>' : ''}
                     </div>
                 `;
-                container.innerHTML += card;
             });
         }
 
-        // Função simples para carregar o ranking
+        // 3. Salvar Palpites
+        async function salvarTodosPalpites() {
+            const inputs = document.querySelectorAll('input[id^="p-a-"]');
+            const listaPalpites = [];
+
+            for (let inputA of inputs) {
+                const jogoId = inputA.id.replace('p-a-', '');
+                const palpiteA = inputA.value;
+                const palpiteB = document.getElementById(`p-b-${jogoId}`).value;
+
+                if (palpiteA !== '' && palpiteB !== '' && !inputA.readOnly) {
+                    listaPalpites.push({
+                        user_id: currentUser.id,
+                        jogo_id: jogoId,
+                        palpite_a: parseInt(palpiteA),
+                        palpite_b: parseInt(palpiteB)
+                    });
+                }
+            }
+
+            const { error } = await supabase.from('palpites').upsert(listaPalpites, { onConflict: 'user_id,jogo_id' });
+            
+            if (error) alert("Erro ao salvar: " + error.message);
+            else alert("Tudo salvo! Boa sorte.");
+        }
+
+        // 4. Ranking
         async function carregarRanking() {
             const { data: perfis } = await supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
             const tbody = document.getElementById('ranking-body');
@@ -108,16 +168,22 @@
             
             perfis.forEach((perfil, index) => {
                 tbody.innerHTML += `
-                    <tr class="border-b last:border-0">
-                        <td class="p-4 font-bold text-gray-400">#${index + 1}</td>
-                        <td class="p-4 font-medium">${perfil.nome_completo}</td>
-                        <td class="p-4 text-right font-bold text-blue-600">${perfil.pontos_total}</td>
+                    <tr class="border-b">
+                        <td class="p-4"><span class="bg-gray-100 text-gray-500 w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold">${index + 1}</span></td>
+                        <td class="p-4 font-bold text-gray-800">${perfil.nome_completo}</td>
+                        <td class="p-4 text-right font-black text-blue-600 text-lg">${perfil.pontos_total || 0}</td>
                     </tr>
                 `;
             });
         }
 
-        carregarJogos();
+        function showTab(tab) {
+            document.getElementById('view-jogos').classList.toggle('hidden', tab !== 'jogos');
+            document.getElementById('view-ranking').classList.toggle('hidden', tab !== 'ranking');
+            document.getElementById('tab-jogos').className = tab === 'jogos' ? 'flex-1 py-3 rounded-lg font-bold text-blue-600 bg-blue-50 transition' : 'flex-1 py-3 rounded-lg font-bold text-gray-500 transition';
+            document.getElementById('tab-ranking').className = tab === 'ranking' ? 'flex-1 py-3 rounded-lg font-bold text-blue-600 bg-blue-50 transition' : 'flex-1 py-3 rounded-lg font-bold text-gray-500 transition';
+            if (tab === 'ranking') carregarRanking();
+        }
     </script>
 </body>
 </html>
