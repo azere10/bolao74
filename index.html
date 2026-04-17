@@ -65,12 +65,50 @@
         let abaAtual = 'grupos';
         let visaoGrupo = 'grupo';
 
+        // Mapeamento Corrigido conforme admin.html
         const MAPA_MATA_MATA = {
-            "segundas": [{id:"J73",tA:"2A",tB:"2B",d:"28/06 16:00"},{id:"J74",tA:"1E",tB:"3ABCD",d:"29/06 17:30"},{id:"J75",tA:"1F",tB:"2C",d:"29/06 22:00"},{id:"J76",tA:"1C",tB:"2F",d:"29/06 14:00"},{id:"J77",tA:"1I",tB:"3CDFGH",d:"30/06 18:00"},{id:"J78",tA:"2E",tB:"2I",d:"30/06 14:00"},{id:"J79",tA:"1A",tB:"3CEFHI",d:"30/06 22:00"},{id:"J80",tA:"1L",tB:"3EHIJK",d:"01/07 13:00"}],
-            "oitavas": [{id:"J89",tA:"Venc J74",tB:"Venc J77",d:"04/07 18:00"},{id:"J90",tA:"Venc J73",tB:"Venc J75",d:"04/07 14:00"}],
-            "quartas": [{id:"J97",tA:"Venc J89",tB:"Venc J90",d:"09/07 17:00"},{id:"J98",tA:"Venc J93",tB:"Venc J94",d:"10/07 16:00"}],
-            "semis": [{id:"J101",tA:"Venc J97",tB:"Venc J98",d:"14/07 16:00"},{id:"J102",tA:"Venc J99",tB:"Venc J100",d:"15/07 16:00"}],
-            "finais": [{id:"J103",tA:"Perd J101",tB:"Perd J102",d:"18/07 18:00"},{id:"J104",tA:"Venc J101",tB:"Venc J102",d:"19/07 16:00"}]
+            "segundas": [
+                { id: "J73", tA: "2A", tB: "2B", d: "28/06 16:00" },
+                { id: "J74", tA: "1E", tB: "3ABCD", d: "29/06 17:30" },
+                { id: "J75", tA: "1F", tB: "2C", d: "29/06 22:00" },
+                { id: "J76", tA: "1C", tB: "2F", d: "29/06 14:00" },
+                { id: "J77", tA: "1I", tB: "3CDFGH", d: "30/06 18:00" },
+                { id: "J78", tA: "2E", tB: "2I", d: "30/06 14:00" },
+                { id: "J79", tA: "1A", tB: "3CEFHI", d: "30/06 22:00" },
+                { id: "J80", tA: "1L", tB: "3EHIJK", d: "01/07 13:00" },
+                { id: "J81", tA: "1D", tB: "3BEFIJ", d: "01/07 21:00" },
+                { id: "J82", tA: "1G", tB: "3AEHIJ", d: "01/07 17:00" },
+                { id: "J83", tA: "2K", tB: "2L", d: "02/07 20:00" },
+                { id: "J84", tA: "1H", tB: "2J", d: "02/07 16:00" },
+                { id: "J85", tA: "1B", tB: "3EFGIJ", d: "03/07 00:00" },
+                { id: "J86", tA: "1J", tB: "2H", d: "03/07 19:00" },
+                { id: "J87", tA: "1K", tB: "3DEIJL", d: "03/07 22:30" },
+                { id: "J88", tA: "2D", tB: "2G", d: "03/07 15:00" }
+            ],
+            "oitavas": [
+                { id: "J89", tA: "Venc J74", tB: "Venc J77", d: "04/07 18:00" },
+                { id: "J90", tA: "Venc J73", tB: "Venc J75", d: "04/07 14:00" },
+                { id: "J91", tA: "Venc J76", tB: "Venc J78", d: "05/07 17:00" },
+                { id: "J92", tA: "Venc J79", tB: "Venc J80", d: "05/07 21:00" },
+                { id: "J93", tA: "Venc J83", tB: "Venc J84", d: "06/07 16:00" },
+                { id: "J94", tA: "Venc J81", tB: "Venc J82", d: "06/07 21:00" },
+                { id: "J95", tA: "Venc J86", tB: "Venc J88", d: "07/07 13:00" },
+                { id: "J96", tA: "Venc J85", tB: "Venc J87", d: "07/07 17:00" }
+            ],
+            "quartas": [
+                { id: "J97", tA: "Venc J89", tB: "Venc J90", d: "09/07 17:00" },
+                { id: "J98", tA: "Venc J93", tB: "Venc J94", d: "10/07 16:00" },
+                { id: "J99", tA: "Venc J91", tB: "Venc J92", d: "11/07 18:00" },
+                { id: "J100", tA: "Venc J95", tB: "Venc J96", d: "11/07 22:00" }
+            ],
+            "semis": [
+                { id: "J101", tA: "Venc J97", tB: "Venc J98", d: "14/07 16:00" },
+                { id: "J102", tA: "Venc J99", tB: "Venc J100", d: "15/07 16:00" }
+            ],
+            "finais": [
+                { id: "J103", tA: "Perd J101", tB: "Perd J102", d: "18/07 18:00" },
+                { id: "J104", tA: "Venc J101", tB: "Venc J102", d: "19/07 16:00" }
+            ]
         };
 
         async function handleAuth() {
@@ -118,10 +156,8 @@
         function renderizarConteudo() {
             const container = document.getElementById('view-conteudo');
             container.innerHTML = '';
-
             if (abaAtual === 'ranking') return renderizarRanking();
             if (abaAtual === 'grupos') return renderizarGrupos();
-
             const config = MAPA_MATA_MATA[abaAtual] || [];
             container.innerHTML = config.map(c => {
                 const jogo = todosJogos.find(j => j.fase.includes(c.id));
@@ -132,7 +168,6 @@
         function renderizarGrupos() {
             const container = document.getElementById('view-conteudo');
             const jogosGrupos = todosJogos.filter(j => j.fase.includes('Grupo'));
-
             if (visaoGrupo === 'dia') {
                 const dias = [...new Set(jogosGrupos.map(j => new Date(j.data_hora).toLocaleDateString()))];
                 dias.forEach(d => {
@@ -140,7 +175,6 @@
                     jogosGrupos.filter(j => new Date(j.data_hora).toLocaleDateString() === d).forEach(j => container.innerHTML += cardJogo(j));
                 });
             } else {
-                // Ordenação Alfabética dos Grupos de A a L
                 const nomesGrupos = [...new Set(jogosGrupos.map(j => j.fase))].sort();
                 nomesGrupos.forEach(f => {
                     const games = jogosGrupos.filter(j => j.fase === f);
@@ -172,7 +206,6 @@
             const existe = !!j;
             const bloqueado = existe ? (new Date(j.data_hora) - new Date()) / 60000 < 5 : true;
             const p = existe ? (meusPalpites.find(x => x.jogo_id === j.id) || {palpite_a:'', palpite_b:''}) : {palpite_a:'', palpite_b:''};
-            
             return `
                 <div class="bg-white p-3 rounded-xl border ${bloqueado && existe ? 'opacity-60 grayscale' : 'border-l-4 border-l-blue-500'} mb-2 shadow-sm">
                     <div class="flex justify-between text-[7px] font-black text-gray-400 uppercase mb-2">
@@ -204,7 +237,6 @@
                     else { t[j.time_a].pts++; t[j.time_b].pts++; }
                 }
             });
-            // Ordenação: Pontos > Saldo > Gols Pró
             return Object.values(t).sort((a,b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
         }
 
