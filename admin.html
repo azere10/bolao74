@@ -107,8 +107,55 @@
         }
 
         async function processarAtualizacao() {
-            // ... (mesma lógica de loop anterior para atualizar gols_a_oficial e gols_b_oficial)
-            // Após atualizar, chama o RPC recalcular_tudo
+            const btn = document.getElementById('btn-main');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "🔄 SALVANDO...";
+
+            try {
+                // Pegamos todos os inputs de gols
+                const inputsA = document.querySelectorAll('input[id^="g-a-"]');
+                
+                for (let inputA of inputsA) {
+                    const id = inputA.id.replace('g-a-', '');
+                    const gA = inputA.value;
+                    const gB = document.getElementById(`g-b-${id}`).value;
+
+                    // Só envia para o banco se os dois campos estiverem preenchidos
+                    if (gA !== "" && gB !== "") {
+                        // Usamos o RPC que criamos no SQL para pular as travas de segurança
+                        const { error: err } = await _supabase.rpc('admin_atualizar_placar', {
+                            id_jogo: id,
+                            g_a: parseInt(gA),
+                            g_b: parseInt(gB)
+                        });
+
+                        if (err) {
+                            console.error(`Erro no jogo ${id}:`, err);
+                            // Se o RPC falhar, tentamos o update direto com filtro de ID
+                            await _supabase.from('jogos')
+                                .update({ gols_a_oficial: parseInt(gA), gols_b_oficial: parseInt(gB) })
+                                .eq('id', id);
+                        }
+                    }
+                }
+
+                // Após salvar todos os gols, recalcula o ranking dos usuários
+                btn.innerText = "🔢 RECALCULANDO RANKING...";
+                const { error: rpcErr } = await _supabase.rpc('admin_recalcular_tudo');
+                
+                if (rpcErr) throw rpcErr;
+
+                alert("✅ SUCESSO!\nResultados salvos e ranking atualizado.");
+                await carregarDados(); // Atualiza a tela sem dar reload
+                
+            } catch (e) {
+                alert("❌ Erro ao salvar: " + e.message);
+                console.error(e);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
         }
 
         carregarDados();
