@@ -38,18 +38,50 @@
 
         // MAPEAMENTO DO CHAVEAMENTO (Baseado na imagem FIFA)
         const MAPA_MATA_MATA = {
-            "segundas": [
-                { id: "J74", timeA: "1E", timeB: "3ABCD", data: "2026-06-29 17:30", proximo: "J89", pos: "A" },
-                { id: "J77", timeA: "1I", timeB: "3CDFGH", data: "2026-06-30 18:00", proximo: "J89", pos: "B" },
-                { id: "J73", timeA: "2A", timeB: "2B", data: "2026-06-28 16:00", proximo: "J90", pos: "A" },
-                { id: "J75", timeA: "1F", timeB: "2C", data: "2026-06-29 22:00", proximo: "J90", pos: "B" }
-                // Adicione todos os J73 até J88 aqui conforme a imagem
-            ],
-            "oitavas": [
-                { id: "J89", timeA: "Venc J74", timeB: "Venc J77", data: "2026-07-04 18:00", proximo: "J97", pos: "A" },
-                { id: "J90", timeA: "Venc J73", timeB: "Venc J75", data: "2026-07-04 14:00", proximo: "J97", pos: "B" }
-            ]
-        };
+    "segundas": [
+        // Lado Esquerdo do Mapa
+        { id: "J73", timeA: "2A", timeB: "2B", data: "2026-06-28 16:00", proximo: "J90", pos: "A" },
+        { id: "J74", timeA: "1E", timeB: "3A/B/C/D", data: "2026-06-29 17:30", proximo: "J89", pos: "A" },
+        { id: "J75", timeA: "1F", timeB: "2C", data: "2026-06-29 22:00", proximo: "J90", pos: "B" },
+        { id: "J77", timeA: "1I", timeB: "3C/D/F/G/H", data: "2026-06-30 18:00", proximo: "J89", pos: "B" },
+        { id: "J81", timeA: "1D", timeB: "3B/E/F/I/J", data: "2026-07-01 21:00", proximo: "J94", pos: "A" },
+        { id: "J82", timeA: "1G", timeB: "3A/E/H/I/J", data: "2026-07-01 17:00", proximo: "J94", pos: "B" },
+        { id: "J83", timeA: "2K", timeB: "2L", data: "2026-07-02 20:00", proximo: "J93", pos: "A" },
+        { id: "J84", timeA: "1H", timeB: "2J", data: "2026-07-02 16:00", proximo: "J93", pos: "B" },
+        // Lado Direito do Mapa
+        { id: "J76", timeA: "1C", timeB: "2F", data: "2026-06-29 14:00", proximo: "J91", pos: "A" },
+        { id: "J78", timeA: "2E", timeB: "2I", data: "2026-06-30 14:00", proximo: "J91", pos: "B" },
+        { id: "J79", timeA: "1A", timeB: "3C/E/F/H/I", data: "2026-06-30 22:00", proximo: "J92", pos: "A" },
+        { id: "J80", timeA: "1L", timeB: "3E/H/I/J/K", data: "2026-07-01 13:00", proximo: "J92", pos: "B" },
+        { id: "J85", timeA: "1B", timeB: "3E/F/G/I/J", data: "2026-07-03 00:00", proximo: "J96", pos: "A" },
+        { id: "J87", timeA: "1K", timeB: "3D/E/I/J/L", data: "2026-07-03 22:30", proximo: "J96", pos: "B" },
+        { id: "J86", timeA: "1J", timeB: "2H", data: "2026-07-03 19:00", proximo: "J95", pos: "A" },
+        { id: "J88", timeA: "2D", timeB: "2G", data: "2026-07-03 15:00", proximo: "J95", pos: "B" }
+    ],
+    "oitavas": [
+        { id: "J89", timeA: "Venc J74", timeB: "Venc J77", data: "2026-07-04 18:00", proximo: "J97", pos: "A" },
+        { id: "J90", timeA: "Venc J73", timeB: "Venc J75", data: "2026-07-04 14:00", proximo: "J97", pos: "B" },
+        { id: "J91", timeA: "Venc J76", timeB: "Venc J78", data: "2026-07-05 17:00", proximo: "J99", pos: "A" },
+        { id: "J92", timeA: "Venc J79", timeB: "Venc J80", data: "2026-07-05 21:00", proximo: "J99", pos: "B" },
+        { id: "J93", timeA: "Venc J83", timeB: "Venc J84", data: "2026-07-06 16:00", proximo: "J98", pos: "A" },
+        { id: "J94", timeA: "Venc J81", timeB: "Venc J82", data: "2026-07-06 21:00", proximo: "J98", pos: "B" },
+        { id: "J95", timeA: "Venc J86", timeB: "Venc J88", data: "2026-07-07 13:00", proximo: "J100", pos: "A" },
+        { id: "J96", timeA: "Venc J85", timeB: "Venc J87", data: "2026-07-07 17:00", proximo: "J100", pos: "B" }
+    ],
+    "finais": [
+        // Quartas
+        { id: "J97", timeA: "Venc J89", timeB: "Venc J90", data: "2026-07-09 17:00", proximo: "J101", pos: "A" },
+        { id: "J98", timeA: "Venc J93", timeB: "Venc J94", data: "2026-07-10 16:00", proximo: "J101", pos: "B" },
+        { id: "J99", timeA: "Venc J91", timeB: "Venc J92", data: "2026-07-11 18:00", proximo: "J102", pos: "A" },
+        { id: "J100", timeA: "Venc J95", timeB: "Venc J96", data: "2026-07-11 22:00", proximo: "J102", pos: "B" },
+        // Semifinais
+        { id: "J101", timeA: "Venc J97", timeB: "Venc J98", data: "2026-07-14 16:00", proximo: "J104", pos: "A" },
+        { id: "J102", timeA: "Venc J99", timeB: "Venc J100", data: "2026-07-15 16:00", proximo: "J104", pos: "B" },
+        // 3º Lugar e Final
+        { id: "J103", timeA: "Perd J101", timeB: "Perd J102", data: "2026-07-18 18:00", proximo: null, pos: null },
+        { id: "J104", timeA: "Venc J101", timeB: "Venc J102", data: "2026-07-19 16:00", proximo: null, pos: null }
+    ]
+};
 
         async function carregarDados() {
             const { data } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
