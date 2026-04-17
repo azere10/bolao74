@@ -2,20 +2,26 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>FIFA Engine Pro - Bolão74</title>
+    <title>FIFA Engine Master - Bolão74</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .tab-active { border-bottom: 4px solid #3b82f6; color: white; background: rgba(59, 130, 246, 0.1); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
 </head>
 <body class="bg-slate-950 text-slate-200 font-sans min-h-screen pb-20">
 
     <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-black italic text-blue-500">BOLÃO74 ADMIN</h1>
-            <nav class="flex gap-2 bg-black p-1 rounded-lg">
-                <button onclick="mudarAba('grupos')" class="px-3 py-1 text-xs font-bold rounded hover:bg-slate-800">GRUPOS</button>
-                <button onclick="mudarAba('segundas')" class="px-3 py-1 text-xs font-bold rounded hover:bg-slate-800">2ªs DE FINAL</button>
-                <button onclick="mudarAba('oitavas')" class="px-3 py-1 text-xs font-bold rounded hover:bg-slate-800">OITAVAS</button>
-                <button onclick="mudarAba('finais')" class="px-3 py-1 text-xs font-bold rounded hover:bg-slate-800">FINAIS</button>
+        <div class="container mx-auto flex justify-between items-center flex-wrap gap-4">
+            <h1 class="text-xl font-black italic text-blue-500">BOLÃO74 ADMIN</h1>
+            <nav class="flex overflow-x-auto gap-1 bg-black p-1 rounded-lg no-scrollbar">
+                <button onclick="mudarAba('grupos')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-grupos">GRUPOS</button>
+                <button onclick="mudarAba('segundas')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-segundas">2ªs DE FINAL</button>
+                <button onclick="mudarAba('oitavas')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-oitavas">OITAVAS</button>
+                <button onclick="mudarAba('quartas')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-quartas">QUARTAS</button>
+                <button onclick="mudarAba('semis')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-semis">SEMIS</button>
+                <button onclick="mudarAba('finais')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-finais">FINAIS</button>
             </nav>
             <button onclick="processarAtualizacao()" id="btn-main" class="bg-green-600 px-6 py-2 rounded-lg font-black text-sm">SALVAR TUDO</button>
         </div>
@@ -23,9 +29,11 @@
 
     <main class="container mx-auto p-4 md:p-8">
         <div id="aba-grupos" class="secao grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        <div id="aba-segundas" class="secao hidden space-y-8"></div>
-        <div id="aba-oitavas" class="secao hidden space-y-8"></div>
-        <div id="aba-finais" class="secao hidden space-y-8"></div>
+        <div id="aba-segundas" class="secao hidden space-y-4"></div>
+        <div id="aba-oitavas" class="secao hidden space-y-4"></div>
+        <div id="aba-quartas" class="secao hidden space-y-4"></div>
+        <div id="aba-semis" class="secao hidden space-y-4"></div>
+        <div id="aba-finais" class="secao hidden space-y-4"></div>
     </main>
 
     <script>
@@ -36,60 +44,58 @@
         let todosJogos = [];
         let rankings = {};
 
-        // MAPEAMENTO DO CHAVEAMENTO (Baseado na imagem FIFA)
+        // MAPEAMENTO COMPLETO DA FASE FINAL (Conforme imagem FIFA)
         const MAPA_MATA_MATA = {
-    "segundas": [
-        // Lado Esquerdo do Mapa
-        { id: "J73", timeA: "2A", timeB: "2B", data: "2026-06-28 16:00", proximo: "J90", pos: "A" },
-        { id: "J74", timeA: "1E", timeB: "3A/B/C/D", data: "2026-06-29 17:30", proximo: "J89", pos: "A" },
-        { id: "J75", timeA: "1F", timeB: "2C", data: "2026-06-29 22:00", proximo: "J90", pos: "B" },
-        { id: "J77", timeA: "1I", timeB: "3C/D/F/G/H", data: "2026-06-30 18:00", proximo: "J89", pos: "B" },
-        { id: "J81", timeA: "1D", timeB: "3B/E/F/I/J", data: "2026-07-01 21:00", proximo: "J94", pos: "A" },
-        { id: "J82", timeA: "1G", timeB: "3A/E/H/I/J", data: "2026-07-01 17:00", proximo: "J94", pos: "B" },
-        { id: "J83", timeA: "2K", timeB: "2L", data: "2026-07-02 20:00", proximo: "J93", pos: "A" },
-        { id: "J84", timeA: "1H", timeB: "2J", data: "2026-07-02 16:00", proximo: "J93", pos: "B" },
-        // Lado Direito do Mapa
-        { id: "J76", timeA: "1C", timeB: "2F", data: "2026-06-29 14:00", proximo: "J91", pos: "A" },
-        { id: "J78", timeA: "2E", timeB: "2I", data: "2026-06-30 14:00", proximo: "J91", pos: "B" },
-        { id: "J79", timeA: "1A", timeB: "3C/E/F/H/I", data: "2026-06-30 22:00", proximo: "J92", pos: "A" },
-        { id: "J80", timeA: "1L", timeB: "3E/H/I/J/K", data: "2026-07-01 13:00", proximo: "J92", pos: "B" },
-        { id: "J85", timeA: "1B", timeB: "3E/F/G/I/J", data: "2026-07-03 00:00", proximo: "J96", pos: "A" },
-        { id: "J87", timeA: "1K", timeB: "3D/E/I/J/L", data: "2026-07-03 22:30", proximo: "J96", pos: "B" },
-        { id: "J86", timeA: "1J", timeB: "2H", data: "2026-07-03 19:00", proximo: "J95", pos: "A" },
-        { id: "J88", timeA: "2D", timeB: "2G", data: "2026-07-03 15:00", proximo: "J95", pos: "B" }
-    ],
-    "oitavas": [
-        { id: "J89", timeA: "Venc J74", timeB: "Venc J77", data: "2026-07-04 18:00", proximo: "J97", pos: "A" },
-        { id: "J90", timeA: "Venc J73", timeB: "Venc J75", data: "2026-07-04 14:00", proximo: "J97", pos: "B" },
-        { id: "J91", timeA: "Venc J76", timeB: "Venc J78", data: "2026-07-05 17:00", proximo: "J99", pos: "A" },
-        { id: "J92", timeA: "Venc J79", timeB: "Venc J80", data: "2026-07-05 21:00", proximo: "J99", pos: "B" },
-        { id: "J93", timeA: "Venc J83", timeB: "Venc J84", data: "2026-07-06 16:00", proximo: "J98", pos: "A" },
-        { id: "J94", timeA: "Venc J81", timeB: "Venc J82", data: "2026-07-06 21:00", proximo: "J98", pos: "B" },
-        { id: "J95", timeA: "Venc J86", timeB: "Venc J88", data: "2026-07-07 13:00", proximo: "J100", pos: "A" },
-        { id: "J96", timeA: "Venc J85", timeB: "Venc J87", data: "2026-07-07 17:00", proximo: "J100", pos: "B" }
-    ],
-    "finais": [
-        // Quartas
-        { id: "J97", timeA: "Venc J89", timeB: "Venc J90", data: "2026-07-09 17:00", proximo: "J101", pos: "A" },
-        { id: "J98", timeA: "Venc J93", timeB: "Venc J94", data: "2026-07-10 16:00", proximo: "J101", pos: "B" },
-        { id: "J99", timeA: "Venc J91", timeB: "Venc J92", data: "2026-07-11 18:00", proximo: "J102", pos: "A" },
-        { id: "J100", timeA: "Venc J95", timeB: "Venc J96", data: "2026-07-11 22:00", proximo: "J102", pos: "B" },
-        // Semifinais
-        { id: "J101", timeA: "Venc J97", timeB: "Venc J98", data: "2026-07-14 16:00", proximo: "J104", pos: "A" },
-        { id: "J102", timeA: "Venc J99", timeB: "Venc J100", data: "2026-07-15 16:00", proximo: "J104", pos: "B" },
-        // 3º Lugar e Final
-        { id: "J103", timeA: "Perd J101", timeB: "Perd J102", data: "2026-07-18 18:00", proximo: null, pos: null },
-        { id: "J104", timeA: "Venc J101", timeB: "Venc J102", data: "2026-07-19 16:00", proximo: null, pos: null }
-    ]
-};
+            "segundas": [
+                { id: "J73", timeA: "2A", timeB: "2B", data: "2026-06-28 16:00" },
+                { id: "J74", timeA: "1E", timeB: "3ABCD", data: "2026-06-29 17:30" },
+                { id: "J75", timeA: "1F", timeB: "2C", data: "2026-06-29 22:00" },
+                { id: "J76", timeA: "1C", timeB: "2F", data: "2026-06-29 14:00" },
+                { id: "J77", timeA: "1I", timeB: "3CDFGH", data: "2026-06-30 18:00" },
+                { id: "J78", timeA: "2E", timeB: "2I", data: "2026-06-30 14:00" },
+                { id: "J79", timeA: "1A", timeB: "3CEFHI", data: "2026-06-30 22:00" },
+                { id: "J80", timeA: "1L", timeB: "3EHIJK", data: "2026-07-01 13:00" },
+                { id: "J81", timeA: "1D", timeB: "3BEFIJ", data: "2026-07-01 21:00" },
+                { id: "J82", timeA: "1G", timeB: "3AEHIJ", data: "2026-07-01 17:00" },
+                { id: "J83", timeA: "2K", timeB: "2L", data: "2026-07-02 20:00" },
+                { id: "J84", timeA: "1H", timeB: "2J", data: "2026-07-02 16:00" },
+                { id: "J85", timeA: "1B", timeB: "3EFGIJ", data: "2026-07-03 00:00" },
+                { id: "J86", timeA: "1J", timeB: "2H", data: "2026-07-03 19:00" },
+                { id: "J87", timeA: "1K", timeB: "3DEIJL", data: "2026-07-03 22:30" },
+                { id: "J88", timeA: "2D", timeB: "2G", data: "2026-07-03 15:00" }
+            ],
+            "oitavas": [
+                { id: "J89", timeA: "Venc J74", timeB: "Venc J77", data: "2026-07-04 18:00" },
+                { id: "J90", timeA: "Venc J73", timeB: "Venc J75", data: "2026-07-04 14:00" },
+                { id: "J91", timeA: "Venc J76", timeB: "Venc J78", data: "2026-07-05 17:00" },
+                { id: "J92", timeA: "Venc J79", timeB: "Venc J80", data: "2026-07-05 21:00" },
+                { id: "J93", timeA: "Venc J83", timeB: "Venc J84", data: "2026-07-06 16:00" },
+                { id: "J94", timeA: "Venc J81", timeB: "Venc J82", data: "2026-07-06 21:00" },
+                { id: "J95", timeA: "Venc J86", timeB: "Venc J88", data: "2026-07-07 13:00" },
+                { id: "J96", timeA: "Venc J85", timeB: "Venc J87", data: "2026-07-07 17:00" }
+            ],
+            "quartas": [
+                { id: "J97", timeA: "Venc J89", timeB: "Venc J90", data: "2026-07-09 17:00" },
+                { id: "J98", timeA: "Venc J93", timeB: "Venc J94", data: "2026-07-10 16:00" },
+                { id: "J99", timeA: "Venc J91", timeB: "Venc J92", data: "2026-07-11 18:00" },
+                { id: "J100", timeA: "Venc J95", timeB: "Venc J96", data: "2026-07-11 22:00" }
+            ],
+            "semis": [
+                { id: "J101", timeA: "Venc J97", timeB: "Venc J98", data: "2026-07-14 16:00" },
+                { id: "J102", timeA: "Venc J99", timeB: "Venc J100", data: "2026-07-15 16:00" }
+            ],
+            "finais": [
+                { id: "J103", timeA: "Perd J101", timeB: "Perd J102", data: "2026-07-18 18:00" }, // 3º Lugar
+                { id: "J104", timeA: "Venc J101", timeB: "Venc J102", data: "2026-07-19 16:00" }  // Final
+            ]
+        };
 
         async function carregarDados() {
             const { data } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
             todosJogos = data;
             calcularRankings();
             renderizarGrupos();
-            renderizarMataMata('segundas');
-            renderizarMataMata('oitavas');
+            ['segundas', 'oitavas', 'quartas', 'semis', 'finais'].forEach(renderizarMataMata);
         }
 
         function calcularRankings() {
@@ -117,13 +123,19 @@
             container.innerHTML = Object.keys(rankings).map(fase => `
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
                     <h2 class="text-blue-500 font-black mb-4 uppercase text-sm">${fase}</h2>
-                    <div class="space-y-2 mb-4">
+                    <div class="space-y-3 mb-4">
                         ${todosJogos.filter(j => j.fase === fase).map(j => `
-                            <div class="flex items-center gap-2 text-xs">
-                                <span class="w-20 text-right">${j.time_a}</span>
-                                <input type="number" id="g-a-${j.id}" value="${j.gols_a_oficial ?? ''}" class="w-8 h-8 bg-slate-800 border border-slate-700 text-center rounded">
-                                <input type="number" id="g-b-${j.id}" value="${j.gols_b_oficial ?? ''}" class="w-8 h-8 bg-slate-800 border border-slate-700 text-center rounded">
-                                <span class="w-20">${j.time_b}</span>
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 text-right text-[10px] font-bold truncate">${j.time_a}</div>
+                                <div class="flex gap-1">
+                                    <input type="number" id="g-a-${j.id}" value="${j.gols_a_oficial ?? ''}" class="w-8 h-8 bg-slate-800 border border-slate-700 text-center rounded text-blue-400 font-bold">
+                                    <input type="number" id="g-b-${j.id}" value="${j.gols_b_oficial ?? ''}" class="w-8 h-8 bg-slate-800 border border-slate-700 text-center rounded text-blue-400 font-bold">
+                                </div>
+                                <div class="flex-1 text-left text-[10px] font-bold truncate">${j.time_b}</div>
+                                <div class="text-[8px] text-slate-500 leading-tight w-12 ml-1">
+                                    ${new Date(j.data_hora).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}<br>
+                                    ${new Date(j.data_hora).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -138,73 +150,94 @@
             const container = document.getElementById('aba-'+aba);
             const configuracoes = MAPA_MATA_MATA[aba];
             
-            container.innerHTML = configuracoes.map(conf => {
+            container.innerHTML = `<h2 class="text-xl font-black italic mb-6 text-center uppercase text-slate-400">${aba.replace('segundas', '16-AVOS')}</h2>` + 
+            configuracoes.map(conf => {
                 const jogoExistente = todosJogos.find(j => j.fase.includes(conf.id));
-                // Lógica de sugestão
-                let sugA = conf.timeA;
-                let sugB = conf.timeB;
-
-                // Tenta resolver 1A, 2B, etc
-                if(conf.timeA.match(/^[12][A-L]$/)) {
-                    const f = "Grupo " + conf.timeA[1];
-                    const pos = parseInt(conf.timeA[0]) - 1;
-                    sugA = rankings[f] && rankings[f][pos] ? rankings[f][pos].nome : conf.timeA;
-                }
-                // Tenta resolver vencedor de J anterior
-                if(conf.timeA.startsWith("Venc J")) {
-                    const jAnt = todosJogos.find(j => j.fase.includes(conf.timeA.split(' ')[1]));
-                    if(jAnt && jAnt.gols_a_oficial !== null) {
-                        sugA = jAnt.gols_a_oficial > jAnt.gols_b_oficial ? jAnt.time_a : jAnt.time_b;
-                    }
-                }
+                let sugA = resolverTime(conf.timeA);
+                let sugB = resolverTime(conf.timeB);
 
                 return `
-                    <div class="bg-slate-900 p-6 rounded-2xl border ${jogoExistente ? 'border-slate-800' : 'border-blue-500/50 bg-blue-900/10'} flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div class="text-center md:text-left">
-                            <span class="text-blue-500 font-bold text-xl">#${conf.id}</span>
-                            <p class="text-xs text-slate-500">${conf.data}</p>
+                    <div class="bg-slate-900 p-4 rounded-xl border ${jogoExistente ? 'border-slate-800' : 'border-blue-500/30 bg-blue-900/10'} flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="text-center md:text-left min-w-[100px]">
+                            <span class="text-blue-500 font-black text-lg">#${conf.id}</span>
+                            <p class="text-[9px] text-slate-500 font-bold">${conf.data}</p>
                         </div>
-                        <div class="flex items-center gap-4 font-black text-xl">
-                            <span class="${sugA.length > 3 ? 'text-white' : 'text-slate-600'}">${sugA}</span>
+                        <div class="flex items-center gap-4 font-black flex-1 justify-center">
+                            <span class="text-right flex-1 text-sm ${sugA.length > 3 ? 'text-white' : 'text-slate-600'}">${sugA}</span>
                             ${jogoExistente ? 
-                                `<input type="number" id="g-a-${jogoExistente.id}" value="${jogoExistente.gols_a_oficial ?? ''}" class="w-12 h-12 bg-slate-800 border-2 border-blue-500 rounded text-center">
-                                 <input type="number" id="g-b-${jogoExistente.id}" value="${jogoExistente.gols_b_oficial ?? ''}" class="w-12 h-12 bg-slate-800 border-2 border-blue-500 rounded text-center">` 
-                                : `<span class="text-slate-700 italic text-sm">Aguardando oficialização</span>`
+                                `<input type="number" id="g-a-${jogoExistente.id}" value="${jogoExistente.gols_a_oficial ?? ''}" class="w-10 h-10 bg-slate-800 border-2 border-blue-500 rounded text-center text-blue-400">
+                                 <input type="number" id="g-b-${jogoExistente.id}" value="${jogoExistente.gols_b_oficial ?? ''}" class="w-10 h-10 bg-slate-800 border-2 border-blue-500 rounded text-center text-blue-400">` 
+                                : `<div class="flex gap-1"><div class="w-10 h-10 bg-slate-950 rounded border border-slate-800"></div><div class="w-10 h-10 bg-slate-950 rounded border border-slate-800"></div></div>`
                             }
-                            <span class="${sugB.length > 3 ? 'text-white' : 'text-slate-600'}">${sugB}</span>
+                            <span class="text-left flex-1 text-sm ${sugB.length > 3 ? 'text-white' : 'text-slate-600'}">${sugB}</span>
                         </div>
-                        ${!jogoExistente ? 
-                            `<button onclick="oficializar('${sugA}', '${sugB}', '${aba.toUpperCase()}: ${conf.id}', '${conf.data}')" class="bg-blue-600 px-4 py-2 rounded font-bold text-xs">CRIAR NO BANCO</button>` 
-                            : `<span class="text-green-500 text-xs font-bold uppercase">Jogo Oficial</span>`
-                        }
+                        <div class="min-w-[120px] text-right">
+                            ${!jogoExistente ? 
+                                `<button onclick="oficializar('${sugA}', '${sugB}', '${aba.toUpperCase()}: ${conf.id}', '${conf.data}')" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-black text-[10px]">CRIAR NO BANCO</button>` 
+                                : `<span class="text-green-500 text-[10px] font-black uppercase tracking-widest">OFICIAL</span>`
+                            }
+                        </div>
                     </div>
                 `;
             }).join('');
         }
 
+        function resolverTime(label) {
+            // Caso 1: Classificado de Grupo (Ex: 1A, 2B)
+            if(label.match(/^[12][A-L]$/)) {
+                const f = "Grupo " + label[1];
+                const pos = parseInt(label[0]) - 1;
+                return rankings[f] && rankings[f][pos] ? rankings[f][pos].nome : label;
+            }
+            // Caso 2: Vencedor de Jogo Anterior (Ex: Venc J74)
+            if(label.startsWith("Venc J")) {
+                const cod = label.split(' ')[1];
+                const j = todosJogos.find(x => x.fase.includes(cod));
+                if(j && j.gols_a_oficial !== null) return j.gols_a_oficial > j.gols_b_oficial ? j.time_a : j.time_b;
+                return label;
+            }
+            // Caso 3: Perdedor (Ex: Perd J101 para 3º lugar)
+            if(label.startsWith("Perd J")) {
+                const cod = label.split(' ')[1];
+                const j = todosJogos.find(x => x.fase.includes(cod));
+                if(j && j.gols_a_oficial !== null) return j.gols_a_oficial < j.gols_b_oficial ? j.time_a : j.time_b;
+                return label;
+            }
+            return label; // Caso 3ABCD etc
+        }
+
         async function oficializar(ta, tb, fase, data) {
-            if(ta.length <= 3 || tb.length <= 3) return alert("Os times ainda não foram definidos pelos resultados dos grupos!");
-            const { error } = await _supabase.from('jogos').insert([{ time_a: ta, time_b: tb, fase: fase, data_hora: new Date(data.replace(' ', 'T') + ':00Z').toISOString() }]);
-            if(!error) { alert("Jogo criado!"); carregarDados(); }
+            if(ta.length <= 3 || tb.length <= 3) return alert("Times ainda não definidos!");
+            const { error } = await _supabase.from('jogos').insert([{ 
+                time_a: ta, time_b: tb, fase: fase, 
+                data_hora: new Date(data.replace(' ', 'T') + ':00Z').toISOString() 
+            }]);
+            if(!error) { alert("Jogo oficializado!"); carregarDados(); }
         }
 
         async function processarAtualizacao() {
             const btn = document.getElementById('btn-main'); btn.innerText = "🔄 SALVANDO...";
-            for (let j of todosJogos) {
-                const ga = document.getElementById(`g-a-${j.id}`)?.value;
-                const gb = document.getElementById(`g-b-${j.id}`)?.value;
-                if(ga !== undefined && ga !== "" && gb !== "") {
-                    await _supabase.rpc('admin_atualizar_placar', { id_jogo: j.id, g_a: parseInt(ga), g_b: parseInt(gb) });
+            btn.disabled = true;
+            try {
+                for (let j of todosJogos) {
+                    const ga = document.getElementById(`g-a-${j.id}`)?.value;
+                    const gb = document.getElementById(`g-b-${j.id}`)?.value;
+                    if(ga !== undefined && ga !== "" && gb !== "") {
+                        await _supabase.rpc('admin_atualizar_placar', { id_jogo: j.id, g_a: parseInt(ga), g_b: parseInt(gb) });
+                    }
                 }
-            }
-            await _supabase.rpc('admin_recalcular_tudo');
-            alert("Sucesso!"); carregarDados();
-            btn.innerText = "SALVAR TUDO";
+                await _supabase.rpc('admin_recalcular_tudo');
+                alert("Ranking recalculado!"); 
+                await carregarDados();
+            } catch (e) { alert("Erro ao salvar!"); }
+            btn.innerText = "SALVAR TUDO"; btn.disabled = false;
         }
 
         function mudarAba(id) {
             document.querySelectorAll('.secao').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
             document.getElementById('aba-'+id).classList.remove('hidden');
+            document.getElementById('tab-'+id).classList.add('tab-active');
         }
 
         carregarDados();
