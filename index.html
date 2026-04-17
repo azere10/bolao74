@@ -6,152 +6,207 @@
     <title>Bolão74 - Copa 2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .tab-active { border-bottom: 4px solid #3b82f6; color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans pb-10">
+<body class="bg-gray-100 font-sans pb-24">
 
     <script>
-        // --- CONFIGURAÇÃO ---
         const SUPABASE_URL = 'https://auwzjdjyaqvqvznpfvif.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg';
-        // Ajuste aqui para evitar conflito de nomes
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     </script>
 
     <header class="bg-blue-700 text-white p-4 shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-black italic">BOLÃO74</h1>
-            <div id="auth-header" class="text-sm font-medium"></div>
+            <div id="auth-header" class="text-xs font-bold"></div>
         </div>
     </header>
 
     <div id="login-screen" class="container mx-auto px-4 mt-10 max-w-sm">
-        <div class="bg-white p-8 rounded-2xl shadow-xl">
-            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Entrar no Bolão</h2>
-            <input type="email" id="email" placeholder="Seu e-mail" class="w-full p-3 border rounded-lg mb-4 outline-blue-500">
-            <input type="password" id="password" placeholder="Sua senha" class="w-full p-3 border rounded-lg mb-6 outline-blue-500">
-            <button onclick="handleAuth()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Entrar / Cadastrar</button>
-            <p class="text-[10px] text-gray-400 mt-4 text-center">Se for o primeiro acesso, sua conta será criada automaticamente.</p>
+        <div class="bg-white p-8 rounded-2xl shadow-xl border">
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 tracking-tighter uppercase italic">Entrar no Bolão</h2>
+            <input type="email" id="email" placeholder="Seu e-mail" class="w-full p-4 border rounded-xl mb-4 outline-blue-500">
+            <input type="password" id="password" placeholder="Sua senha" class="w-full p-4 border rounded-xl mb-6 outline-blue-500">
+            <button onclick="handleAuth()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 shadow-lg">ENTRAR / CADASTRAR</button>
         </div>
     </div>
 
-    <div id="main-content" class="hidden container mx-auto px-4 mt-6 max-w-2xl">
-        <div class="flex mb-6 bg-white rounded-xl shadow p-1 border">
-            <button onclick="showTab('jogos')" id="tab-jogos" class="flex-1 py-3 rounded-lg font-bold text-blue-600 bg-blue-50 transition">JOGOS</button>
-            <button onclick="showTab('ranking')" id="tab-ranking" class="flex-1 py-3 rounded-lg font-bold text-gray-500 transition">RANKING</button>
+    <div id="main-content" class="hidden container mx-auto px-2 mt-4 max-w-2xl">
+        
+        <nav class="flex overflow-x-auto gap-1 bg-white p-1 rounded-xl shadow-sm border mb-4 no-scrollbar">
+            <button onclick="mudarAba('grupos')" class="aba-btn px-4 py-2 text-[10px] font-black rounded-lg transition-all" id="tab-grupos">GRUPOS</button>
+            <button onclick="mudarAba('segundas')" class="aba-btn px-4 py-2 text-[10px] font-black rounded-lg transition-all" id="tab-segundas">16-AVOS</button>
+            <button onclick="mudarAba('oitavas')" class="aba-btn px-4 py-2 text-[10px] font-black rounded-lg transition-all" id="tab-oitavas">OITAVAS</button>
+            <button onclick="mudarAba('matamata')" class="aba-btn px-4 py-2 text-[10px] font-black rounded-lg transition-all" id="tab-matamata">FINAIS</button>
+            <button onclick="mudarAba('ranking')" class="aba-btn px-4 py-2 text-[10px] font-black rounded-lg transition-all" id="tab-ranking">RANKING</button>
+        </nav>
+
+        <div id="controles-grupos" class="hidden flex gap-2 mb-4">
+            <button onclick="setVisaoGrupo('grupo')" id="btn-visao-grupo" class="flex-1 bg-blue-600 text-white text-[10px] font-bold py-2 rounded-lg">VISÃO GRUPOS</button>
+            <button onclick="setVisaoGrupo('dia')" id="btn-visao-dia" class="flex-1 bg-gray-200 text-gray-600 text-[10px] font-bold py-2 rounded-lg">VISÃO POR DIA</button>
         </div>
 
-        <div id="view-jogos" class="space-y-4">
-            <div id="lista-jogos" class="space-y-4"></div>
-            <button onclick="salvarTodosPalpites()" class="w-full bg-green-500 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-green-600 sticky bottom-4">SALVAR MEUS PALPITES</button>
-        </div>
+        <div id="view-conteudo" class="space-y-6"></div>
 
-        <div id="view-ranking" class="hidden">
-            <div class="bg-white rounded-2xl shadow-lg overflow-hidden border text-black">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="p-4 text-gray-400 text-xs uppercase">Pos</th>
-                            <th class="p-4 text-gray-400 text-xs uppercase">Participante</th>
-                            <th class="p-4 text-gray-400 text-xs uppercase text-right">Pts</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ranking-body"></tbody>
-                </table>
-            </div>
-        </div>
+        <button onclick="salvarTodosPalpites()" id="btn-salvar" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-green-500 text-white font-black py-4 rounded-2xl shadow-2xl hover:bg-green-600 z-50">SALVAR PALPITES</button>
     </div>
 
     <script>
         let currentUser = null;
+        let todosJogos = [];
+        let meusPalpites = [];
+        let abaAtual = 'grupos';
+        let visaoGrupo = 'grupo'; // 'grupo' ou 'dia'
 
-        // 1. Gerenciamento de Login Inteligente
+        // --- MESMO MAPEAMENTO DO ADMIN PARA MÁSCARAS ---
+        const MAPA_MATA_MATA = {
+            "segundas": [{ id: "J73", timeA: "2A", timeB: "2B", data: "28/06 16:00" }, { id: "J74", timeA: "1E", timeB: "3ABCD", data: "29/06 17:30" }, { id: "J75", timeA: "1F", timeB: "2C", data: "29/06 22:00" }, { id: "J76", timeA: "1C", timeB: "2F", data: "29/06 14:00" }, { id: "J77", timeA: "1I", timeB: "3CDFGH", data: "30/06 18:00" }, { id: "J78", timeA: "2E", timeB: "2I", data: "30/06 14:00" }, { id: "J79", timeA: "1A", timeB: "3CEFHI", data: "30/06 22:00" }, { id: "J80", timeA: "1L", timeB: "3EHIJK", data: "01/07 13:00" }],
+            "oitavas": [{ id: "J89", timeA: "Venc J74", timeB: "Venc J77", data: "04/07 18:00" }, { id: "J90", timeA: "Venc J73", timeB: "Venc J75", data: "04/07 14:00" }],
+            "matamata": [{ id: "J104", timeA: "Venc J101", timeB: "Venc J102", data: "19/07 16:00" }]
+        };
+
         async function handleAuth() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-
             if (!email || !password) return alert("Preencha e-mail e senha.");
-
-            // Tenta logar primeiro
-            const { data: signInData, error: signInError } = await _supabase.auth.signInWithPassword({ email, password });
-            
-            if (signInError) {
-                // Se o erro for que o usuário não existe, tenta cadastrar
-                if (signInError.message.includes("Invalid login credentials")) {
-                    const { data: signUpData, error: signUpError } = await _supabase.auth.signUp({ email, password });
-                    
-                    if (signUpError) {
-                        return alert("Erro: " + signUpError.message);
-                    }
-                    
-                    // Se o cadastro funcionou
-                    if (signUpData.user) {
-                        alert("Bem-vindo! Sua conta nova foi criada com sucesso.");
-                        currentUser = signUpData.user;
-                        return initApp();
-                    }
-                } else {
-                    // Outros erros (como limite de tentativas)
-                    return alert("Aviso: " + signInError.message);
-                }
-            }
-
-            // Se logou direto (conta já existia)
-            if (signInData.user) {
-                currentUser = signInData.user;
-                initApp();
-            }
+            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+            if (error && error.message.includes("Invalid login credentials")) {
+                const { data: up, error: errUp } = await _supabase.auth.signUp({ email, password });
+                if (errUp) return alert(errUp.message);
+                currentUser = up.user; initApp();
+            } else if (data.user) { currentUser = data.user; initApp(); }
         }
+
         async function initApp() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('auth-header').innerHTML = `Olá, ${currentUser.email.split('@')[0]} | <button onclick="location.reload()" class="underline text-blue-200">Sair</button>`;
-            
+            document.getElementById('auth-header').innerHTML = `${currentUser.email} | <button onclick="location.reload()" class="underline">Sair</button>`;
             await _supabase.from('perfis').upsert({ id: currentUser.id, nome_completo: currentUser.email.split('@')[0] });
-            carregarJogos();
+            carregarDados();
         }
 
-        async function carregarJogos() {
-            const { data: jogos } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
-            const { data: meusPalpites } = await _supabase.from('palpites').select('*').eq('user_id', currentUser.id);
-            
-            const container = document.getElementById('lista-jogos');
+        async function carregarDados() {
+            const { data: j } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
+            const { data: p } = await _supabase.from('palpites').select('*').eq('user_id', currentUser.id);
+            todosJogos = j || []; meusPalpites = p || [];
+            renderizarAba();
+        }
+
+        function mudarAba(nome) {
+            abaAtual = nome;
+            document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
+            document.getElementById(`tab-${nome}`).classList.add('tab-active');
+            document.getElementById('controles-grupos').classList.toggle('hidden', nome !== 'grupos');
+            document.getElementById('btn-salvar').classList.toggle('hidden', nome === 'ranking');
+            renderizarAba();
+        }
+
+        function setVisaoGrupo(v) {
+            visaoGrupo = v;
+            document.getElementById('btn-visao-grupo').className = v === 'grupo' ? 'flex-1 bg-blue-600 text-white text-[10px] font-bold py-2 rounded-lg' : 'flex-1 bg-gray-200 text-gray-600 text-[10px] font-bold py-2 rounded-lg';
+            document.getElementById('btn-visao-dia').className = v === 'dia' ? 'flex-1 bg-blue-600 text-white text-[10px] font-bold py-2 rounded-lg' : 'flex-1 bg-gray-200 text-gray-600 text-[10px] font-bold py-2 rounded-lg';
+            renderizarAba();
+        }
+
+        function renderizarAba() {
+            const container = document.getElementById('view-conteudo');
             container.innerHTML = '';
-            const agora = new Date();
 
-            if (!jogos || jogos.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-500">Nenhum jogo cadastrado no banco.</p>';
-                return;
+            if (abaAtual === 'ranking') return renderizarRanking();
+            if (abaAtual === 'grupos') return renderizarFaseGrupos();
+
+            // Lógica Mata-Mata Sugerido / Oficial
+            const config = MAPA_MATA_MATA[abaAtual] || [];
+            container.innerHTML = config.map(conf => {
+                const jogoReal = todosJogos.find(j => j.fase.includes(conf.id));
+                return cardJogo(jogoReal, conf.timeA, conf.timeB, conf.data, conf.id);
+            }).join('');
+        }
+
+        function renderizarFaseGrupos() {
+            const container = document.getElementById('view-conteudo');
+            const jogosGrupos = todosJogos.filter(j => j.fase.includes('Grupo'));
+
+            if (visaoGrupo === 'dia') {
+                const gruposPorDia = jogosGrupos.reduce((acc, j) => {
+                    const d = new Date(j.data_hora).toLocaleDateString('pt-BR');
+                    if (!acc[d]) acc[d] = []; acc[d].push(j); return acc;
+                }, {});
+                Object.keys(gruposPorDia).forEach(dia => {
+                    container.innerHTML += `<h3 class="font-black text-gray-400 text-[10px] uppercase mb-2 mt-4 ml-2">${dia}</h3>`;
+                    gruposPorDia[dia].forEach(j => container.innerHTML += cardJogo(j));
+                });
+            } else {
+                const grupos = [...new Set(jogosGrupos.map(j => j.fase))];
+                grupos.forEach(f => {
+                    const games = jogosGrupos.filter(j => j.fase === f);
+                    const rank = calcularRankingGrupo(games);
+                    container.innerHTML += `
+                        <div class="bg-white rounded-2xl shadow-sm border p-4 mb-6">
+                            <h3 class="font-black text-blue-600 text-xs mb-4 uppercase italic border-b pb-2">${f}</h3>
+                            <div class="space-y-3 mb-6">${games.map(j => cardJogo(j)).join('')}</div>
+                            <table class="w-full text-[10px] border-t pt-2 uppercase font-bold text-gray-500">
+                                <thead><tr class="text-[8px] border-b"><th class="text-left py-2">Time</th><th class="text-center">P</th><th class="text-center">V</th><th class="text-center">SG</th></tr></thead>
+                                <tbody>${rank.map((t, i) => `<tr class="${i<2?'text-green-600 bg-green-50':''}">
+                                    <td class="py-2">${i+1}º ${t.nome}</td><td class="text-center">${t.pts}</td><td class="text-center">${t.v}</td><td class="text-center">${t.sg}</td></tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>`;
+                });
             }
+        }
 
-            jogos.forEach(jogo => {
-                const dataJogo = new Date(jogo.data_hora);
-                const diffMinutos = (dataJogo - agora) / 1000 / 60;
-                const bloqueado = diffMinutos < 5;
-                const p = (meusPalpites || []).find(item => item.jogo_id === jogo.id) || { palpite_a: '', palpite_b: '' };
+        function cardJogo(j, sugA = "", sugB = "", dataSug = "", idSug = "") {
+            const agora = new Date();
+            const existe = !!j;
+            const dataJogo = existe ? new Date(j.data_hora) : null;
+            const bloqueado = existe ? (dataJogo - agora) / 1000 / 60 < 5 : true;
+            const p = existe ? (meusPalpites.find(item => item.jogo_id === j.id) || { palpite_a: '', palpite_b: '' }) : { palpite_a: '', palpite_b: '' };
 
-                container.innerHTML += `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border ${bloqueado ? 'opacity-75 grayscale' : 'border-l-4 border-l-blue-500'} text-black">
-                        <div class="flex justify-between text-[10px] text-gray-400 mb-2 font-bold uppercase">
-                            <span>${dataJogo.toLocaleString()}</span>
-                            <span class="bg-gray-100 px-2 py-0.5 rounded">${jogo.fase}</span>
+            return `
+                <div class="bg-white p-4 rounded-xl shadow-sm border ${bloqueado && existe ? 'opacity-75 grayscale' : 'border-l-4 border-l-blue-500'} mb-2">
+                    <div class="flex justify-between text-[8px] text-gray-400 mb-2 font-black uppercase">
+                        <span>${existe ? dataJogo.toLocaleString() : dataSug + ' (AGUARDANDO)'}</span>
+                        <span class="bg-gray-100 px-2 py-0.5 rounded">${existe ? j.fase : 'MATA-MATA ' + idSug}</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="flex-1 text-right font-black text-[12px] truncate ${!existe ? 'text-gray-300' : ''}">${existe ? j.time_a : sugA}</span>
+                        <div class="flex items-center gap-1">
+                            <input type="number" id="p-a-${existe ? j.id : 'fake'}" value="${p.palpite_a}" ${bloqueado ? 'readonly' : ''} class="w-10 h-10 border rounded-lg text-center font-black text-lg ${bloqueado ? 'bg-gray-50' : 'border-blue-200'}">
+                            <span class="text-gray-300 text-xs">×</span>
+                            <input type="number" id="p-b-${existe ? j.id : 'fake'}" value="${p.palpite_b}" ${bloqueado ? 'readonly' : ''} class="w-10 h-10 border rounded-lg text-center font-black text-lg ${bloqueado ? 'bg-gray-50' : 'border-blue-200'}">
                         </div>
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="flex-1 text-right font-bold">${jogo.time_a}</span>
-                            <div class="flex items-center gap-1">
-                                <input type="number" id="p-a-${jogo.id}" value="${p.palpite_a}" ${bloqueado ? 'readonly' : ''} class="w-12 h-12 border-2 rounded-lg text-center font-black text-xl">
-                                <span>×</span>
-                                <input type="number" id="p-b-${jogo.id}" value="${p.palpite_b}" ${bloqueado ? 'readonly' : ''} class="w-12 h-12 border-2 rounded-lg text-center font-black text-xl">
-                            </div>
-                            <span class="flex-1 text-left font-bold">${jogo.time_b}</span>
-                        </div>
-                    </div>`;
+                        <span class="flex-1 text-left font-black text-[12px] truncate ${!existe ? 'text-gray-300' : ''}">${existe ? j.time_b : sugB}</span>
+                    </div>
+                </div>`;
+        }
+
+        function calcularRankingGrupo(jogos) {
+            const tab = {};
+            jogos.forEach(j => {
+                [j.time_a, j.time_b].forEach(t => { if (!tab[t]) tab[t] = { pts: 0, v: 0, sg: 0, gp: 0, nome: t }; });
+                if (j.gols_a_oficial !== null) {
+                    const ga = j.gols_a_oficial; const gb = j.gols_b_oficial;
+                    tab[j.time_a].gp += ga; tab[j.time_a].sg += (ga - gb);
+                    tab[j.time_b].gp += gb; tab[j.time_b].sg += (gb - ga);
+                    if (ga > gb) { tab[j.time_a].pts += 3; tab[j.time_a].v++; }
+                    else if (gb > ga) { tab[j.time_b].pts += 3; tab[j.time_b].v++; }
+                    else { tab[j.time_a].pts++; tab[j.time_b].pts++; }
+                }
             });
+            return Object.values(tab).sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
         }
 
         async function salvarTodosPalpites() {
             const inputs = document.querySelectorAll('input[id^="p-a-"]');
             const listaPalpites = [];
             for (let inputA of inputs) {
+                if(inputA.id.includes('fake')) continue;
                 const jogoId = inputA.id.replace('p-a-', '');
                 const palpiteA = inputA.value;
                 const palpiteB = document.getElementById(`p-b-${jogoId}`).value;
@@ -160,24 +215,28 @@
                 }
             }
             const { error } = await _supabase.from('palpites').upsert(listaPalpites, { onConflict: 'user_id,jogo_id' });
-            alert(error ? "Erro: " + error.message : "Palpites salvos!");
+            alert(error ? "Erro: " + error.message : "✅ Seus palpites foram salvos!");
+            carregarDados();
         }
 
         async function carregarRanking() {
-            const { data: perfis } = await _supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
-            const tbody = document.getElementById('ranking-body');
-            tbody.innerHTML = (perfis || []).map((p, i) => `
-                <tr class="border-b">
-                    <td class="p-4">#${i + 1}</td>
-                    <td class="p-4 font-bold text-gray-800">${p.nome_completo}</td>
-                    <td class="p-4 text-right font-black text-blue-600">${p.pontos_total || 0}</td>
-                </tr>`).join('');
-        }
-
-        function showTab(tab) {
-            document.getElementById('view-jogos').classList.toggle('hidden', tab !== 'jogos');
-            document.getElementById('view-ranking').classList.toggle('hidden', tab !== 'ranking');
-            if (tab === 'ranking') carregarRanking();
+            const { data } = await _supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
+            const container = document.getElementById('view-conteudo');
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden border">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b"><tr class="text-[10px] uppercase font-bold text-gray-400">
+                            <th class="p-4">Pos</th><th class="p-4">Participante</th><th class="p-4 text-right">Pts</th>
+                        </tr></thead>
+                        <tbody>${(data || []).map((p, i) => `
+                            <tr class="border-b ${p.id === currentUser.id ? 'bg-blue-50' : ''}">
+                                <td class="p-4 text-xs font-bold text-gray-400">#${i + 1}</td>
+                                <td class="p-4 font-black text-gray-800 text-sm">${p.nome_completo}</td>
+                                <td class="p-4 text-right font-black text-blue-600 text-lg">${p.pontos_total || 0}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
         }
     </script>
 </body>
