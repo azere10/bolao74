@@ -2,101 +2,77 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>FIFA Engine - Admin Bolão74</title>
+    <title>FIFA Engine Admin - Bolão74</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .tab-active { border-bottom: 4px solid #3b82f6; color: white; background: rgba(59, 130, 246, 0.1); }
-        .bracket-line { border-left: 2px solid #334155; border-bottom: 2px solid #334155; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-200 font-sans min-h-screen">
 
-    <div id="painel-admin" class="container mx-auto px-4 py-8">
-        <header class="mb-8 border-b border-slate-800 pb-6 flex justify-between items-center">
-            <h1 class="text-3xl font-black italic uppercase">FIFA Engine <span class="text-blue-500">2026</span></h1>
-            <div class="flex gap-4">
-                <button onclick="processarAtualizacao()" class="bg-green-600 px-6 py-2 rounded-lg font-bold hover:bg-green-500">SALVAR RESULTADOS</button>
+    <div id="login-admin" class="max-w-sm mx-auto mt-20 bg-slate-900 p-8 rounded-2xl border border-slate-800 text-center shadow-2xl">
+        <h2 class="text-2xl font-black mb-6 italic text-blue-500 text-center">FIFA ENGINE</h2>
+        <input type="password" id="senha-admin" value="" placeholder="Senha" class="w-full p-4 bg-slate-800 border border-slate-700 rounded-xl mb-4 text-center text-xl outline-none">
+        <button onclick="verificarSenha()" class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-black transition-all">ENTRAR</button>
+    </div>
+
+    <div id="painel-admin" class="hidden">
+        <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 p-4">
+            <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                <h1 class="text-2xl font-black italic uppercase">Admin <span class="text-blue-500">Bolão74</span></h1>
+                <nav class="flex overflow-x-auto gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800">
+                    <button onclick="mudarAba('grupos')" class="aba-btn px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap" id="tab-grupos">GRUPOS</button>
+                    <button onclick="mudarAba('tabelas')" class="aba-btn px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap" id="tab-tabelas">CLASSIFICAÇÃO</button>
+                    <button onclick="mudarAba('matamata')" class="aba-btn px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap" id="tab-matamata">MATA-MATA (MAPA)</button>
+                </nav>
+                <button onclick="processarAtualizacao()" id="btn-main" class="bg-green-600 hover:bg-green-500 text-white font-black px-6 py-2 rounded-lg shadow-lg text-sm transition-all">
+                    SALVAR E RECALCULAR
+                </button>
             </div>
         </header>
 
-        <nav class="flex overflow-x-auto gap-2 mb-8 bg-slate-900 p-2 rounded-2xl border border-slate-800 sticky top-4 z-50">
-            <button onclick="mudarAba('resultados')" class="aba-btn p-3 rounded-lg font-bold" id="tab-resultados">GRUPOS</button>
-            <button onclick="mudarAba('segundas')" class="aba-btn p-3 rounded-lg font-bold" id="tab-segundas">16-AVOS (J73-J88)</button>
-            <button onclick="mudarAba('oitavas')" class="aba-btn p-3 rounded-lg font-bold" id="tab-oitavas">OITAVAS (J89-J96)</button>
-            <button onclick="mudarAba('finais')" class="aba-btn p-3 rounded-lg font-bold" id="tab-finais">QUARTAS/SEMI/FINAL</button>
-        </nav>
-
-        <div id="conteudo-resultados" class="aba-conteudo space-y-4">
-            <div id="lista-grupos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </div>
-
-        <div id="conteudo-segundas" class="aba-conteudo hidden space-y-4">
-            <div class="bg-amber-900/20 border border-amber-500/30 p-4 rounded-xl text-sm mb-4">
-                Identifique os classificados nos grupos para que o sistema sugira os times aqui.
+        <main class="container mx-auto p-6">
+            <div id="conteudo-grupos" class="aba-conteudo space-y-6">
+                <div id="lista-grupos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
-            <div id="lista-segundas" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </div>
 
-        <div id="conteudo-oitavas" class="aba-conteudo hidden grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        <div id="conteudo-finais" class="aba-conteudo hidden grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div id="conteudo-tabelas" class="aba-conteudo hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
+            <div id="conteudo-matamata" class="aba-conteudo hidden space-y-8">
+                <div class="bg-blue-900/10 border border-blue-500/30 p-4 rounded-xl mb-6">
+                    <h3 class="font-bold text-blue-400 italic">MAPA DA FASE FINAL</h3>
+                    <p class="text-xs text-slate-400">O sistema sugere os confrontos conforme os resultados dos grupos são inseridos.</p>
+                </div>
+                <div id="lista-matamata" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </div>
+        </main>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://auwzjdjyaqvqvznpfvif.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
+        const SENHA_MESTRA = "1234";
+
         let todosJogos = [];
-        // Mapeamento da FIFA conforme imagem (simplificado para J73-J104)
-        const CHAVEAMENTO = {
-            "J89": { de: ["J74", "J77"], fase: "Oitavas", data: "2026-06-30T18:00:00Z" },
-            "J90": { de: ["J73", "J75"], fase: "Oitavas", data: "2026-07-04T14:00:00Z" },
-            "J97": { de: ["J89", "J90"], fase: "Quartas", data: "2026-07-09T17:00:00Z" }
-            // Adicione os outros J conforme a imagem para completar o mapa
-        };
+        let classificacaoGlobal = {};
 
-        async function carregarDados() {
-            const { data } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
-            todosJogos = data;
-            renderizarTudo();
+        function verificarSenha() {
+            if(document.getElementById('senha-admin').value === SENHA_MESTRA) {
+                sessionStorage.setItem('admin_logado', 'true');
+                mostrarPainel();
+            } else { alert("Senha Incorreta!"); }
         }
 
-        function renderizarTudo() {
-            renderizarFase('Grupo', 'lista-grupos');
-            renderizarMataMata('Segundas de final', 'lista-segundas');
-            renderizarMataMata('Oitavas', 'lista-oitavas');
-        }
+        if(sessionStorage.getItem('admin_logado') === 'true') { mostrarPainel(); }
 
-        function renderizarFase(filtro, containerId) {
-            const container = document.getElementById(containerId);
-            if(!container) return;
-            const jogos = todosJogos.filter(j => j.fase.includes(filtro));
-            container.innerHTML = jogos.map(j => cardJogo(j)).join('');
-        }
-
-        function cardJogo(j) {
-            const existeNoBanco = j.id && j.id.length > 10; // Verifica se é UUID real
-            return `
-                <div class="bg-slate-900 p-4 rounded-xl border ${existeNoBanco ? 'border-slate-800' : 'border-blue-500/50 bg-blue-900/10'}">
-                    <div class="flex justify-between text-[10px] mb-2 font-bold">
-                        <span class="text-blue-400">${j.fase}</span>
-                        <span>${new Date(j.data_hora).toLocaleString()}</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="flex-1 text-right font-bold">${j.time_a}</span>
-                        <input type="number" id="g-a-${j.id}" value="${j.gols_a_oficial ?? ''}" class="w-10 h-10 bg-slate-800 rounded text-center font-black">
-                        <input type="number" id="g-b-${j.id}" value="${j.gols_b_oficial ?? ''}" class="w-10 h-10 bg-slate-800 rounded text-center font-black">
-                        <span class="flex-1 font-bold">${j.time_b}</span>
-                    </div>
-                    ${!existeNoBanco ? `<button onclick="oficializarJogo('${j.time_a}', '${j.time_b}', '${j.fase}', '${j.data_hora}')" class="w-full mt-3 bg-blue-600 text-[10px] py-1 rounded font-bold uppercase">Criar Jogo no Bolão</button>` : ''}
-                </div>`;
-        }
-
-        async function oficializarJogo(tA, tB, fase, data) {
-            const { error } = await _supabase.from('jogos').insert([{ time_a: tA, time_b: tB, fase: fase, data_hora: data }]);
-            if(!error) { alert("Jogo oficializado!"); carregarDados(); }
+        function mostrarPainel() {
+            document.getElementById('login-admin').classList.add('hidden');
+            document.getElementById('painel-admin').classList.remove('hidden');
+            mudarAba('grupos');
+            carregarDados();
         }
 
         function mudarAba(nome) {
@@ -104,62 +80,98 @@
             document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
             document.getElementById(`conteudo-${nome}`).classList.remove('hidden');
             document.getElementById(`tab-${nome}`).classList.add('tab-active');
+            if(nome === 'tabelas' || nome === 'matamata') atualizarLogicaTorneio();
+        }
+
+        async function carregarDados() {
+            const { data } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
+            todosJogos = data;
+            renderizarGrupos();
+        }
+
+        function renderizarGrupos() {
+            const container = document.getElementById('lista-grupos');
+            const grupos = todosJogos.filter(j => j.fase.includes('Grupo'));
+            container.innerHTML = grupos.map(j => cardJogo(j)).join('');
+        }
+
+        function cardJogo(j) {
+            return `
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                    <div class="flex justify-between text-[9px] font-bold text-slate-500 mb-2">
+                        <span>${j.fase}</span>
+                        <span>${new Date(j.data_hora).toLocaleDateString()}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="flex-1 text-right font-bold text-sm truncate">${j.time_a}</span>
+                        <input type="number" id="g-a-${j.id}" value="${j.gols_a_oficial ?? ''}" class="w-10 h-10 bg-slate-800 border border-slate-700 rounded text-center font-black text-blue-400">
+                        <input type="number" id="g-b-${j.id}" value="${j.gols_b_oficial ?? ''}" class="w-10 h-10 bg-slate-800 border border-slate-700 rounded text-center font-black text-blue-400">
+                        <span class="flex-1 text-left font-bold text-sm truncate">${j.time_b}</span>
+                    </div>
+                </div>`;
+        }
+
+        function atualizarLogicaTorneio() {
+            // 1. Calcular Classificação de todos os Grupos
+            const gruposFases = [...new Set(todosJogos.filter(j => j.fase.includes('Grupo')).map(j => j.fase))];
+            classificacaoGlobal = {};
+
+            gruposFases.forEach(fase => {
+                const games = todosJogos.filter(j => j.fase === fase);
+                const tabela = {};
+                games.forEach(j => {
+                    [j.time_a, j.time_b].forEach(t => { if(!tabela[t]) tabela[t] = {pts:0, sg:0, gp:0, nome:t}; });
+                    const ga = parseInt(document.getElementById(`g-a-${j.id}`)?.value || j.gols_a_oficial);
+                    const gb = parseInt(document.getElementById(`g-b-${j.id}`)?.value || j.gols_b_oficial);
+                    if(!isNaN(ga) && !isNaN(gb)) {
+                        tabela[j.time_a].gp += ga; tabela[j.time_a].sg += (ga-gb);
+                        tabela[j.time_b].gp += gb; tabela[j.time_b].sg += (gb-ga);
+                        if(ga>gb) tabela[j.time_a].pts+=3; else if(gb>ga) tabela[j.time_b].pts+=3; else {tabela[j.time_a].pts++; tabela[j.time_b].pts++;}
+                    }
+                });
+                classificacaoGlobal[fase] = Object.values(tabela).sort((a,b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+            });
+
+            // 2. Renderizar Tabelas
+            const containerTabelas = document.getElementById('conteudo-tabelas');
+            containerTabelas.innerHTML = Object.keys(classificacaoGlobal).map(fase => `
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                    <h4 class="text-blue-500 font-bold mb-2 italic text-sm">${fase.toUpperCase()}</h4>
+                    <table class="w-full text-[10px]">
+                        ${classificacaoGlobal[fase].map((t, i) => `
+                            <tr class="${i < 2 ? 'text-green-400' : 'text-slate-500'}">
+                                <td class="py-1">${i+1}º ${t.nome}</td><td class="text-right font-bold">${t.pts}p</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                </div>
+            `).join('');
+
+            // 3. Renderizar Mata-Mata Sugerido
+            const containerMM = document.getElementById('lista-matamata');
+            const mmJogos = todosJogos.filter(j => !j.fase.includes('Grupo'));
+            containerMM.innerHTML = mmJogos.map(j => cardJogo(j)).join('');
         }
 
         async function processarAtualizacao() {
             const btn = document.getElementById('btn-main');
-            const originalText = btn.innerText;
+            btn.innerText = "🔄 PROCESSANDO...";
             btn.disabled = true;
-            btn.innerText = "🔄 SALVANDO...";
-
             try {
-                // Pegamos todos os inputs de gols
-                const inputsA = document.querySelectorAll('input[id^="g-a-"]');
-                
-                for (let inputA of inputsA) {
-                    const id = inputA.id.replace('g-a-', '');
-                    const gA = inputA.value;
-                    const gB = document.getElementById(`g-b-${id}`).value;
-
-                    // Só envia para o banco se os dois campos estiverem preenchidos
-                    if (gA !== "" && gB !== "") {
-                        // Usamos o RPC que criamos no SQL para pular as travas de segurança
-                        const { error: err } = await _supabase.rpc('admin_atualizar_placar', {
-                            id_jogo: id,
-                            g_a: parseInt(gA),
-                            g_b: parseInt(gB)
-                        });
-
-                        if (err) {
-                            console.error(`Erro no jogo ${id}:`, err);
-                            // Se o RPC falhar, tentamos o update direto com filtro de ID
-                            await _supabase.from('jogos')
-                                .update({ gols_a_oficial: parseInt(gA), gols_b_oficial: parseInt(gB) })
-                                .eq('id', id);
-                        }
+                for (let j of todosJogos) {
+                    const ga = document.getElementById(`g-a-${j.id}`)?.value;
+                    const gb = document.getElementById(`g-b-${j.id}`)?.value;
+                    if (ga !== "" && gb !== "" && ga !== undefined) {
+                        await _supabase.rpc('admin_atualizar_placar', { id_jogo: j.id, g_a: parseInt(ga), g_b: parseInt(gb) });
                     }
                 }
-
-                // Após salvar todos os gols, recalcula o ranking dos usuários
-                btn.innerText = "🔢 RECALCULANDO RANKING...";
-                const { error: rpcErr } = await _supabase.rpc('admin_recalcular_tudo');
-                
-                if (rpcErr) throw rpcErr;
-
-                alert("✅ SUCESSO!\nResultados salvos e ranking atualizado.");
-                await carregarDados(); // Atualiza a tela sem dar reload
-                
-            } catch (e) {
-                alert("❌ Erro ao salvar: " + e.message);
-                console.error(e);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = originalText;
-            }
+                await _supabase.rpc('admin_recalcular_tudo');
+                alert("✨ Sucesso! Resultados e Ranking atualizados.");
+                await carregarDados();
+            } catch (e) { alert("Erro: " + e.message); }
+            btn.disabled = false;
+            btn.innerText = "SALVAR E RECALCULAR";
         }
-
-        carregarDados();
     </script>
 </body>
-</html>
 </html>
