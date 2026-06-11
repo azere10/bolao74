@@ -81,6 +81,80 @@
             }
         }
 
+        async function abrirAuditoriaUsuario(userId, nomeCompleto) {
+            document.getElementById('auditoria-titulo').innerText = `Palpites de ${nomeCompleto}`;
+            const conteudo = document.getElementById('auditoria-conteudo');
+            conteudo.innerHTML = '<p class="text-center text-gray-500 font-bold py-4">🔄 Carregando histórico...</p>';
+            document.getElementById('modal-auditoria').classList.remove('hidden');
+
+            // Busca os palpites do usuário alvo
+            const { data: palpitesAlvo, error } = await _supabase.from('palpites').select('*').eq('user_id', userId);
+            if (error) return conteudo.innerHTML = '<p class="text-center text-red-500">Erro ao carregar auditoria.</p>';
+
+            const agora = new Date();
+
+            // Renderiza linha por linha dos palpites calculando a pontuação transparente
+            const listaHtml = todosJogos.map(j => {
+                const palp = palpitesAlvo.find(p => p.jogo_id === j.id);
+                const dataJogo = new Date(j.data_hora);
+                
+                // Regra de segurança: bloqueia visualização se faltar mais de 5 minutos para o jogo iniciar
+                const minutosRestantes = (dataJogo - agora) / 60000;
+                const palpiteBloqueadoParaPublico = minutosRestantes > 5 && userId !== currentUser.id;
+
+                let textoPalpite = '<span class="text-gray-400">Não palpitou</span>';
+                let pontosGerados = 0;
+                let badgeCor = 'bg-gray-100 text-gray-400';
+
+                if (palp) {
+                    if (palpiteBloqueadoParaPublico) {
+                        textoPalpite = '<span class="text-amber-600 font-bold italic">🔒 Oculto até o jogo iniciar</span>';
+                    } else {
+                        textoPalpite = `<span class="font-black text-gray-800">${palp.palpite_a} × ${palp.palpite_b}</span>`;
+                        
+                        // Executa a árvore lógica idêntica à do banco para mostrar os pontos na tela
+                        if (j.gols_a_oficial !== null && j.gols_b_oficial !== null) {
+                            if (palp.palpite_a === j.gols_a_oficial && p.palpite_b === j.gols_b_oficial) {
+                                pontosGerados = 25; badgeCor = 'bg-green-600 text-white';
+                            } else if (j.gols_a_oficial !== j.gols_b_oficial && Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial) && (palp.palpite_a - palp.palpite_b) === (j.gols_a_oficial - j.gols_b_oficial)) {
+                                pontosGerados = 18; badgeCor = 'bg-blue-600 text-white';
+                            } else if (Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial)) {
+                                pontosGerados = 15; badgeCor = 'bg-indigo-600 text-white';
+                            } else if (palp.palpite_a === j.gols_a_oficial || palp.palpite_b === j.gols_b_oficial) {
+                                pontosGerados = 3; badgeCor = 'bg-gray-500 text-white';
+                            }
+                        }
+                    }
+                }
+
+                const placarOficial = (j.gols_a_oficial !== null) ? `${j.gols_a_oficial}×${j.gols_b_oficial}` : '---';
+
+                return `
+                    <div class="bg-white p-3 rounded-xl border flex justify-between items-center gap-2 shadow-sm">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[8px] font-bold text-gray-400 uppercase">${j.fase} | Oficial: <span class="text-gray-700">${placerOficial}</span></p>
+                            <p class="font-bold text-gray-700 truncate text-[11px] mt-0.5">${j.time_a} x ${j.time_b}</p>
+                        </div>
+                        <div class="text-center px-2 border-l border-r border-gray-100 min-w-[100px]">
+                            <p class="text-[7px] text-gray-400 font-bold uppercase tracking-wider">Palpite</p>
+                            <p class="text-[10px] mt-0.5">${textoPalpite}</p>
+                        </div>
+                        <div class="text-right min-w-[50px]">
+                            <span class="px-2 py-1 rounded font-black text-[10px] ${badgeCor}">
+                                +${pontosGerados} Pts
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            conteudo.innerHTML = listaHtml || '<p class="text-center text-gray-400 py-4">Nenhum palpite computado.</p>';
+        }
+
+        function fecharModalAuditoria() {
+            document.getElementById('modal-auditoria').classList.add('hidden');
+        }
+
         async function handleAuthSimplificado() {
             const userLogin = document.getElementById('usuario').value.trim().toLowerCase();
             const pass = document.getElementById('password').value;
