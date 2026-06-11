@@ -214,27 +214,47 @@
         async function salvarTodosPalpites() {
             const inputs = document.querySelectorAll('input[id^="p-a-"]');
             const upserts = [];
+            
             inputs.forEach(iA => {
-                if(iA.id.includes('fake-') || iA.readOnly) return;
+                if(iA.id.includes('fake') || iA.readOnly) return;
+                
                 const idJ = iA.id.replace('p-a-', '');
                 const vA = iA.value;
-                const vB = document.getElementById(`p-b-${idJ}`).value;
-                if(vA !== '' && vB !== '') upserts.push({user_id:currentUser.id, jogo_id:idJ, palpite_a:parseInt(vA), palpite_b:parseInt(vB)});
+                const elB = document.getElementById(`p-b-${idJ}`);
+                
+                if (!elB) return;
+                const vB = elB.value;
+                
+                if(vA !== '' && vB !== '') {
+                    upserts.push({
+                        user_id: currentUser.id, 
+                        jogo_id: idJ, 
+                        palpite_a: parseInt(vA), 
+                        palpite_b: parseInt(vB)
+                    });
+                }
             });
-            if(upserts.length === 0) return alert("Nenhum palpite novo para salvar.");
+
+            if(upserts.length === 0) return alert("Nenhum palpite preenchido para salvar.");
+
             const { error } = await _supabase.from('palpites').upsert(upserts, { onConflict: 'user_id,jogo_id' });
-            alert(error ? "Erro ao salvar palpites" : "✅ Palpites Salvos!");
-            carregarDados();
+            
+            if (error) {
+                alert("Erro ao salvar palpites: " + error.message);
+            } else {
+                alert("✅ Seus palpites foram salvos com sucesso!");
+                carregarDados();
+            }
         }
 
         async function renderizarRanking() {
-            const { data } = await _supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
+            const { data } = await _supabase.from('perfis').select('*').order('points_total', { ascending: false });
             document.getElementById('view-conteudo').innerHTML = `
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden border">
                     <table class="w-full text-left">
                         <thead class="bg-gray-50 border-b"><tr class="text-[9px] uppercase text-gray-400 font-bold"><th class="p-4">Pos</th><th class="p-4">Nome</th><th class="p-4 text-right">Pts</th></tr></thead>
                         <tbody>${(data||[]).map((p, i) => `
-                            <tr class="border-b ${p.id===currentUser.id?'bg-blue-50':''}">
+                            <tr class="border-b ${currentUser && p.id===currentUser.id?'bg-blue-50':''}">
                                 <td class="p-4 text-xs font-bold text-gray-400">#${i+1}</td>
                                 <td class="p-4 font-black text-gray-800 text-xs">${p.nome_completo}</td>
                                 <td class="p-4 text-right font-black text-blue-600">${p.pontos_total||0}</td>
