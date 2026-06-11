@@ -201,7 +201,7 @@
         let listaPalpites = [];
         let listaPerfis = [];
         let regrasPontuacao = {
-            placarExato: 25,       // Regras Oficiais do seu bolão
+            placarExato: 25,       // Regras Oficiais do seu bolão (Base)
             vencedorGols: 18,
             vencedorSimples: 15,
             golParcial: 3,
@@ -526,6 +526,37 @@
         }
 
         /**
+         * Retorna o fator multiplicador oficial com base no nome ou identificação da fase do mata-mata
+         */
+        function obterMultiplicadorFase(fase) {
+            if (!fase) return 1.0;
+            const faseNormalizada = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            if (faseNormalizada.includes("16-avos") || faseNormalizada.includes("16 avos") || faseNormalizada.includes("dezasseis")) {
+                return 1.2;
+            }
+            if (faseNormalizada.includes("oitavas") || faseNormalizada.includes("oitavos")) {
+                return 1.5;
+            }
+            if (faseNormalizada.includes("quartas") || faseNormalizada.includes("quartos")) {
+                return 2.0;
+            }
+            if (faseNormalizada.includes("semifinal") || faseNormalizada.includes("semifinais") || faseNormalizada.includes("meia") || faseNormalizada.includes("meias")) {
+                return 2.5;
+            }
+            if (faseNormalizada.includes("final") || faseNormalizada.includes("finais")) {
+                // Previne conflitos de fases compostas
+                if (faseNormalizada.includes("oitava") || faseNormalizada.includes("quarta") || faseNormalizada.includes("semi")) {
+                    if (faseNormalizada.includes("semi")) return 2.5;
+                    if (faseNormalizada.includes("quarta")) return 2.0;
+                    if (faseNormalizada.includes("oitava")) return 1.5;
+                }
+                return 3.0;
+            }
+            return 1.0; // Padrão: Fase de Grupos
+        }
+
+        /**
          * Processador inteligente que reconstrói a pontuação de todos os utilizadores a partir do zero (Resolve o Bug 2 e Bug 3)
          */
         async function recalcularPontosGerais() {
@@ -599,7 +630,7 @@
         }
 
         /**
-         * Motor de Regras Oficiais do Bolão (Conforme o print fornecido pelo utilizador)
+         * Motor de Regras Oficiais do Bolão (Conforme o print fornecido pelo utilizador, com multiplicadores de fase)
          */
         function avaliarRegrasPalpite(palpite, jogo, regras) {
             const pM = parseInt(palpite.palpite_a);
@@ -609,43 +640,63 @@
 
             if (isNaN(pM) || isNaN(pV) || isNaN(jM) || isNaN(jV)) return 0;
 
+            const multiplicador = obterMultiplicadorFase(jogo.fase);
+            let pontosBase = 0;
+
             // REGRA 1: Placar Exato (Acertou em cheio) -> 25 Pts
             if (pM === jM && pV === jV) {
-                return regras.placarExato; // 25
-            }
+                pontosBase = regras.placarExato; // 25
+            } else {
+                const vencedorPalpite = pM > pV ? 1 : (pM < pV ? 2 : 0);
+                const vencedorReal = jM > jV ? 1 : (jM < jV ? 2 : 0);
 
-            const vencedorPalpite = pM > pV ? 1 : (pM < pV ? 2 : 0);
-            const vencedorReal = jM > jV ? 1 : (jM < jV ? 2 : 0);
+                // Verifica se acertou a tendência do jogo (Vencedor ou Empate)
+                if (vencedorPalpite === vencedorReal) {
+                    if (vencedorReal === 0) {
+                        // Foi empate, mas não foi exato (ex: apostou 1x1, acabou 2x2)
+                        pontosBase = regras.vencedorSimples; // 15
+                    } else {
+                        // Acertou o vencedor do jogo
+                        const saldoPalpite = pM - pV;
+                        const saldoReal = jM - jV;
 
-            // Verifica se acertou a tendência do jogo (Vencedor ou Empate)
-            if (vencedorPalpite === vencedorReal) {
-                if (vencedorReal === 0) {
-                    // Foi empate, mas não foi exato (ex: apostou 1x1, acabou 2x2)
-                    // Registra-se como acerto de Empate Simples (Regra de 15 Pts)
-                    return regras.vencedorSimples; // 15
-                } else {
-                    // Acertou o vencedor do jogo
-                    const saldoPalpite = pM - pV;
-                    const saldoReal = jM - jV;
-
-                    // REGRA 2: Acertou o Vencedor e o Saldo de Gols -> 18 Pts
-                    if (saldoPalpite === saldoReal) {
-                        return regras.vencedorGols; // 18
+                        // REGRA 2: Acertou o Vencedor e o Saldo de Gols -> 18 Pts
+                        if (saldoPalpite === saldoReal) {
+                            pontosBase = regras.vencedorGols; // 18
+                        } else {
+                            // REGRA 3: Acertou Vencedor/Empate, mas Errou o saldo -> 15 Pts
+                            pontosBase = regras.vencedorSimples; // 15
+                        }
                     }
-
-                    // REGRA 3: Acertou Vencedor/Empate, mas Errou o saldo -> 15 Pts
-                    return regras.vencedorSimples; // 15
+                } else {
+                    // Errou a tendência (vencedor ou empate real foi diferente do palpite)
+                    // REGRA 4: Errou a tendência, mas acertou os gols de 1 dos 2 times -> 3 Pts
+                    if (pM === jM || pV === jV) {
+                        pontosBase = regras.golParcial; // 3
+                    } else {
+                        pontosBase = regras.erro; // 0
+                    }
                 }
             }
 
-            // Errou a tendência (vencedor ou empate real foi diferente do palpite)
-            // REGRA 4: Errou a tendência, mas acertou os gols de 1 dos 2 times -> 3 Pts
-            if (pM === jM || pV === jV) {
-                return regras.golParcial; // 3
-            }
+            // Arredonda para baixo os multiplicadores de mata-mata que dão valores decimais (.5)
+            return Math.floor(pontosBase * multiplicador);
+        }
 
-            // Errou completamente -> 0 Pts
-            return regras.erro; // 0
+        /**
+         * Função utilitária para gerar UUID v4 no lado do cliente
+         * Evita o erro de restrição de ID nulo no Supabase quando a tabela não possui autogeração ativa
+         */
+        function gerarUUID() {
+            try {
+                return crypto.randomUUID();
+            } catch (e) {
+                // Fallback robusto para navegadores mais antigos ou contextos de rede inseguros
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
         }
 
         // =========================================================================
@@ -705,7 +756,8 @@
                     mostrarNotificacao("Utilizador atualizado com sucesso!", "success");
                 } else {
                     // Modo Criação (Senha padrão: 123456)
-                    // Gera um login simplificado sem espaços nem acentos
+                    // CORREÇÃO CRÍTICA: Geração local do UUID para contornar restrição de ID nulo no Supabase!
+                    const novoId = gerarUUID();
                     const loginLimpo = nome
                         .toLowerCase()
                         .normalize("NFD")
@@ -715,6 +767,7 @@
                     const { error } = await supabaseClient
                         .from('perfis')
                         .insert([{
+                            id: novoId, // Injeta o UUID gerado
                             nome_completo: nome,
                             usuario_login: loginLimpo,
                             senha_plana: "123456",
@@ -780,7 +833,6 @@
             const tbody = document.getElementById('auditoria-tabela-corpo');
             tbody.innerHTML = "";
 
-            // Filtra os palpites deste utilizador específico
             const palpitesUser = listaPalpites.filter(p => p.user_id === userId);
 
             if (palpitesUser.length === 0) {
@@ -789,13 +841,11 @@
                 return;
             }
 
-            // Agrupa palpites por ID do jogo para comparação
             const mapaPalpites = new Map(palpitesUser.map(p => [p.jogo_id, p]));
 
-            // Exibe todos os palpites correlacionados cronologicamente
             listaJogos.forEach(jogo => {
                 const palpite = mapaPalpites.get(jogo.id);
-                if (!palpite) return; // Se não tem palpite para este jogo, ignora
+                if (!palpite) return; 
 
                 const pM = palpite.palpite_a;
                 const pV = palpite.palpite_b;
@@ -804,27 +854,53 @@
 
                 const isFinalizado = jM !== null && jV !== null;
                 const pontosGanho = isFinalizado ? avaliarRegrasPalpite(palpite, jogo, regrasPontuacao) : 0;
+                const multiplicador = obterMultiplicadorFase(jogo.fase);
 
-                // Estilo visual da tag de pontuação conforme a regra atingida
                 let badgeClass = "bg-slate-800 text-slate-400";
                 let regraNome = "Sem Resultado Oficial";
 
                 if (isFinalizado) {
-                    if (pontosGanho === 25) {
+                    // Identificação retroativa da regra base para fins visuais
+                    const vencedorPalpite = pM > pV ? 1 : (pM < pV ? 2 : 0);
+                    const vencedorReal = jM > jV ? 1 : (jM < jV ? 2 : 0);
+
+                    let rawRule = "";
+                    if (pM === jM && pV === jV) {
+                        rawRule = "Placar Exato";
+                    } else if (vencedorPalpite === vencedorReal) {
+                        if (vencedorReal === 0) {
+                            rawRule = "Vencedor/Empate Simples";
+                        } else {
+                            const saldoPalpite = pM - pV;
+                            const saldoReal = jM - jV;
+                            if (saldoPalpite === saldoReal) {
+                                rawRule = "Vencedor + Saldo";
+                            } else {
+                                rawRule = "Vencedor/Empate Simples";
+                            }
+                        }
+                    } else if (pM === jM || pV === jV) {
+                        rawRule = "Golo Parcial";
+                    } else {
+                        rawRule = "Errou";
+                    }
+
+                    // Define estilo da badge com base na regra de pontuação correspondente
+                    if (rawRule === "Placar Exato") {
                         badgeClass = "bg-emerald-950 text-emerald-400 border border-emerald-500/30";
-                        regraNome = "Placar Exato (+25)";
-                    } else if (pontosGanho === 18) {
+                        regraNome = `Placar Exato (+${pontosGanho})`;
+                    } else if (rawRule === "Vencedor + Saldo") {
                         badgeClass = "bg-teal-950 text-teal-400 border border-teal-500/30";
-                        regraNome = "Vencedor + Saldo (+18)";
-                    } else if (pontosGanho === 15) {
+                        regraNome = `Venc. + Saldo (+${pontosGanho})`;
+                    } else if (rawRule === "Vencedor/Empate Simples") {
                         badgeClass = "bg-blue-950 text-blue-400 border border-blue-500/30";
-                        regraNome = "Vencedor/Empate Simples (+15)";
-                    } else if (pontosGanho === 3) {
+                        regraNome = `Venc/Empate Simples (+${pontosGanho})`;
+                    } else if (rawRule === "Golo Parcial") {
                         badgeClass = "bg-slate-900 text-amber-500 border border-amber-500/20";
-                        regraNome = "Golo Parcial (+3)";
+                        regraNome = `Golo Parcial (+${pontosGanho})`;
                     } else {
                         badgeClass = "bg-red-950/50 text-red-400 border border-red-500/10";
-                        regraNome = "Errou Tudo (0)";
+                        regraNome = `Errou Tudo (0)`;
                     }
                 }
 
@@ -841,9 +917,12 @@
                     <td class="p-3 text-center font-mono font-bold text-white text-xs">${isFinalizado ? `${jM} - ${jV}` : '—'}</td>
                     <td class="p-3 text-center font-mono font-bold text-blue-400 text-xs">${pM} - ${pV}</td>
                     <td class="p-3 text-center">
-                        <span class="px-2.5 py-1 rounded text-[10px] font-bold ${badgeClass}">
-                            ${regraNome}
-                        </span>
+                        <div class="flex flex-col gap-1 items-center">
+                            <span class="px-2.5 py-1 rounded text-[10px] font-bold ${badgeClass}">
+                                ${regraNome}
+                            </span>
+                            ${multiplicador > 1 ? `<span class="text-[9px] text-slate-400 italic">Multiplicador: x${multiplicador}</span>` : ''}
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
