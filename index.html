@@ -45,15 +45,14 @@
             <button onclick="mudarAba('regras')" class="aba-btn flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all" id="tab-regras">REGRAS</button>
         </nav>
 
-        <div id="controles-matamata" class="hidden bg-slate-100 p-2 rounded-xl border mb-4 items-center justify-between gap-2">
-            <label class="text-[9px] font-black text-slate-500 uppercase ml-1">Fase:</label>
-            <select id="select-fase-matamata" onchange="selecionarSubFaseMataMata(this.value)" class="flex-1 bg-white border p-2 rounded-lg text-xs font-bold text-slate-800 outline-none focus:ring-2 ring-blue-500">
-                <option value="segundas">16-AVOS DE FINAL</option>
-                <option value="oitavas">OITAVAS DE FINAL</option>
-                <option value="quartas">QUARTAS DE FINAL</option>
-                <option value="semis">SEMIFINAIS</option>
-                <option value="finais">FINAIS E 3º LUGAR</option>
-            </select>
+        <div id="controles-matamata" class="hidden bg-white p-2 rounded-xl border mb-4 flex-col gap-2 shadow-sm">
+            <div class="grid grid-cols-3 gap-1.5 w-full">
+                <button onclick="selecionarSubFaseMataMata('segundas')" id="btn-sub-segundas" class="sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-blue-600 text-white">16-Avos</button>
+                <button onclick="selecionarSubFaseMataMata('oitavas')" id="btn-sub-oitavas" class="sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500">Oitavas</button>
+                <button onclick="selecionarSubFaseMataMata('quartas')" id="btn-sub-quartas" class="sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500">Quartas</button>
+                <button onclick="selecionarSubFaseMataMata('semis')" id="btn-sub-semis" class="sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500 col-span-1">Semis</button>
+                <button onclick="selecionarSubFaseMataMata('finais')" id="btn-sub-finais" class="sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500 col-span-2">Finais</button>
+            </div>
         </div>
 
         <div id="controles-grupos" class="flex gap-2 mb-4">
@@ -285,32 +284,46 @@
         function mudarAba(nome) {
             abaAtual = nome;
             
-            // Gerenciamento visual dos botões principais
+            // Controle dos botões do menu principal
             document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
             document.getElementById(`tab-${nome}`).classList.add('tab-active');
             
-            // Exibe os filtros de Grupo apenas na aba grupos
+            // Exibe ou oculta os filtros de Grupo
             document.getElementById('controles-grupos').style.display = nome === 'grupos' ? 'flex' : 'none';
             
-            // Exibe ou oculta o seletor de fases do Mata-Mata
+            // Gerenciamento do painel Mata-Mata com transição flex
             const painelMataMata = document.getElementById('controles-matamata');
             if (nome === 'matamata') {
                 painelMataMata.classList.remove('hidden');
                 painelMataMata.classList.add('flex');
+                // Força a atualização das cores dos botões ao entrar na aba
+                selecionarSubFaseMataMata(subFaseAtiva);
             } else {
                 painelMataMata.classList.remove('flex');
                 painelMataMata.classList.add('hidden');
             }
             
-            // Oculta o botão flutuante de salvar se estiver no ranking ou nas regras
+            // Controle do botão flutuante de salvar
             document.getElementById('btn-salvar').style.display = (nome === 'ranking' || nome === 'regras') ? 'none' : 'block';
             
             renderizarConteudo();
         }
 
-        // Nova função chamada ao mudar o Select do Mata-Mata
+        // Função responsável pela troca de cores idêntica à visão por grupos
         function selecionarSubFaseMataMata(faseSelecionada) {
             subFaseAtiva = faseSelecionada;
+            
+            // Reseta todos os botões secundários para o estado cinza desativado
+            document.querySelectorAll('.sub-fase-btn').forEach(btn => {
+                btn.className = "sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500";
+            });
+            
+            // Ativa com azul apenas o botão correspondente à fase selecionada
+            const btnAtivo = document.getElementById(`btn-sub-${faseSelecionada}`);
+            if (btnAtivo) {
+                btnAtivo.className = "sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-blue-600 text-white shadow-sm";
+            }
+            
             renderizarConteudo();
         }
         
