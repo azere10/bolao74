@@ -93,7 +93,7 @@
             const { data: users } = await _supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
             const tbody = document.getElementById('lista-usuarios-tabela');
             
-            // Atualiza o cabeçalho da tabela para incluir a coluna de Pontos
+            // Atualiza o cabeçalho da tabela para incluir as colunas corretas
             const thead = document.querySelector('#aba-usuarios table thead tr');
             if (thead) {
                 thead.innerHTML = `
@@ -117,13 +117,32 @@
                     </td>
                     <td class="p-4 text-slate-400 font-mono text-xs">${u.usuario_login || '---'}</td>
                     <td class="p-4 text-slate-500 font-mono text-xs select-none">••••••</td>
-                    <td class="p-4 text-center">
-                        <button onclick="deletarUsuarioSistema('${u.id}')" class="bg-red-950/50 hover:bg-red-900 text-red-400 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">Excluir</button>
+                    <td class="p-4 text-center space-x-2">
+                        <button onclick="alterarSenhaUsuarioAdmin('${u.id}', '${u.nome_completo}')" class="bg-blue-950/60 hover:bg-blue-900 text-blue-400 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors">Alterar Senha</button>
+                        <button onclick="deletarUsuarioSistema('${u.id}')" class="bg-red-950/50 hover:bg-red-900 text-red-400 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors">Excluir</button>
                     </td>
                 </tr>
             `).join('');
         }
 
+        // Nova função para você redefinir senhas pelo painel
+        async function alterarSenhaUsuarioAdmin(id, nome) {
+            const novaSenha = prompt(`Digite a nova senha para o usuário "${nome}":`);
+            if (novaSenha === null) return; // Se o admin cancelar
+            if (novaSenha.trim() === "") return alert("A senha não pode ser vazia!");
+
+            const { error } = await _supabase
+                .from('perfis')
+                .update({ senha_plana: novaSenha.trim() })
+                .eq('id', id);
+
+            if (error) {
+                alert("Erro ao alterar senha: " + error.message);
+            } else {
+                alert(`✅ Senha de "${nome}" atualizada com sucesso!`);
+                carregarDados();
+            }
+        }
         async function criarUsuarioSistema() {
             const nome = document.getElementById('add-nome').value.trim();
             const login = document.getElementById('add-login').value.trim().toLowerCase();
