@@ -72,6 +72,7 @@
         let meusPalpites = [];
         let abaAtual = 'grupos';
         let visaoGrupo = 'grupo';
+        let subFaseAtiva = 'segundas'; // Controla qual fase do mata-mata está selecionada internamente
 
         const MAPA_MATA_MATA = {
             "segundas": [{id:"J73",tA:"2A",tB:"2B",d:"28/06 16:00"},{id:"J74",tA:"1E",tB:"3ABCD",d:"29/06 17:30"},{id:"J75",tA:"1F",tB:"2C",d:"29/06 22:00"},{id:"J76",tA:"1C",tB:"2F",d:"29/06 14:00"},{id:"J77",tA:"1I",tB:"3CDFGH",d:"30/06 18:00"},{id:"J78",tA:"2E",tB:"2I",d:"30/06 14:00"},{id:"J79",tA:"1A",tB:"3CEFHI",d:"30/06 22:00"},{id:"J80",tA:"1L",tB:"3EHIJK",d:"01/07 13:00"},{id:"J81",tA:"1D",tB:"3BEFIJ",d:"01/07 21:00"},{id:"J82",tA:"1G",tB:"3AEHIJ",d:"01/07 17:00"},{id:"J83",tA:"2K",tB:"2L",d:"02/07 20:00"},{id:"J84",tA:"1H",tB:"2J",d:"02/07 16:00"},{id:"J85",tA:"1B",tB:"3EFGIJ",d:"03/07 00:00"},{id:"J86",tA:"1J",tB:"2H",d:"03/07 19:00"},{id:"J87",tA:"1K",tB:"3DEIJL",d:"03/07 22:30"},{id:"J88",tA:"2D",tB:"2G",d:"03/07 15:00"}],
@@ -283,15 +284,36 @@
 
         function mudarAba(nome) {
             abaAtual = nome;
+            
+            // Gerenciamento visual dos botões principais
             document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
             document.getElementById(`tab-${nome}`).classList.add('tab-active');
+            
+            // Exibe os filtros de Grupo apenas na aba grupos
             document.getElementById('controles-grupos').style.display = nome === 'grupos' ? 'flex' : 'none';
             
-            // Oculta o botão salvar se estiver no ranking ou nas regras
+            // Exibe ou oculta o seletor de fases do Mata-Mata
+            const painelMataMata = document.getElementById('controles-matamata');
+            if (nome === 'matamata') {
+                painelMataMata.classList.remove('hidden');
+                painelMataMata.classList.add('flex');
+            } else {
+                painelMataMata.classList.remove('flex');
+                painelMataMata.classList.add('hidden');
+            }
+            
+            // Oculta o botão flutuante de salvar se estiver no ranking ou nas regras
             document.getElementById('btn-salvar').style.display = (nome === 'ranking' || nome === 'regras') ? 'none' : 'block';
+            
             renderizarConteudo();
         }
 
+        // Nova função chamada ao mudar o Select do Mata-Mata
+        function selecionarSubFaseMataMata(faseSelecionada) {
+            subFaseAtiva = faseSelecionada;
+            renderizarConteudo();
+        }
+        
         function setVisaoGrupo(v) {
             visaoGrupo = v;
             document.getElementById('btn-visao-grupo').className = v === 'grupo' ? 'flex-1 bg-blue-600 text-white text-[9px] font-bold py-2 rounded-lg' : 'flex-1 bg-gray-200 text-gray-500 text-[9px] font-bold py-2 rounded-lg';
@@ -302,10 +324,14 @@
         function renderizarConteudo() {
             const container = document.getElementById('view-conteudo');
             container.innerHTML = '';
+            
+            // Direcionamentos das Abas Secas
             if (abaAtual === 'ranking') return renderizarRanking();
-            if (abaAtual === 'regras') return renderizarRegras(); // Direcionamento para a nova função
+            if (abaAtual === 'regras') return renderizarRegras();
             if (abaAtual === 'grupos') return renderizarGrupos();
-            const config = MAPA_MATA_MATA[abaAtual] || [];
+            
+            // Se chegou aqui, a aba atual é 'matamata' -> Renderiza com base no subFaseAtiva
+            const config = MAPA_MATA_MATA[subFaseAtiva] || [];
             container.innerHTML = config.map(c => {
                 const jogo = todosJogos.find(j => j.fase.includes(c.id));
                 return cardJogo(jogo, c.tA, c.tB, c.d, c.id);
