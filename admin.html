@@ -110,26 +110,49 @@
 
             if(!nome || !login || !senha) return alert("Preencha todos os campos!");
 
-            // Criamos um UUID via JS para alimentar a chave primária
-            const uuidFalso = crypto.randomUUID();
+            // Geramos o ID único do usuário aqui no painel
+            const novoUserId = crypto.randomUUID();
 
-            const { error } = await _supabase.from('perfis').insert([{
-                id: uuidFalso,
+            // 1. Criamos o Perfil do usuário
+            const { error: errorPerfil } = await _supabase.from('perfis').insert([{
+                id: novoUserId,
                 nome_completo: nome,
                 usuario_login: login,
                 senha_plana: senha,
                 pontos_total: 0
             }]);
 
-            if(error) {
-                alert("Erro ao criar usuário (provavelmente este login já existe): " + error.message);
-            } else {
-                alert("Usuário criado e liberado!");
-                document.getElementById('add-nome').value = '';
-                document.getElementById('add-login').value = '';
-                document.getElementById('add-senha').value = '';
-                carregarDados();
+            if(errorPerfil) {
+                return alert("Erro ao criar perfil (Login já existe ou formato inválido): " + errorPerfil.message);
             }
+
+            // 2. Criamos as linhas de palpites em branco para cada jogo existente na base
+            if (todosJogos && todosJogos.length > 0) {
+                const palpitesEmBranco = todosJogos
+                    .filter(j => j.id) // Garante que o jogo possui um ID válido
+                    .map(j => ({
+                        user_id: novoUserId,
+                        jogo_id: j.id,
+                        palpite_a: null,
+                        palpite_b: null
+                    }));
+
+                if (palpitesEmBranco.length > 0) {
+                    const { error: errorPalpites } = await _supabase.from('palpites').insert(palpitesEmBranco);
+                    if (errorPalpites) {
+                        console.error("Aviso: Falha ao gerar tabela inicial de palpites:", errorPalpites.message);
+                    }
+                }
+            }
+
+            alert("✨ Usuário '" + nome + "' criado e configurado com sucesso!");
+            
+            // Limpa o formulário
+            document.getElementById('add-nome').value = '';
+            document.getElementById('add-login').value = '';
+            document.getElementById('add-senha').value = '';
+            
+            carregarDados();
         }
 
         async function deletarUsuarioSistema(id) {
