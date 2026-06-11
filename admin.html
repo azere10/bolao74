@@ -1,371 +1,501 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <title>FIFA Engine Master - Bolão74 Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolão74 - Painel Admin</title>
+    <!-- Tailwind CSS para Estilização Premium -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CDN do Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .tab-active { border-bottom: 4px solid #3b82f6; color: white; background: rgba(59, 130, 246, 0.1); }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        /* Personalização para o tema escuro premium */
+        body {
+            background-color: #0b132b;
+            color: #f8fafc;
+        }
+        .card-grupo {
+            background-color: #1c2541;
+            border: 1px solid #2a3759;
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 font-sans min-h-screen pb-20">
+<body class="min-h-screen font-sans antialiased pb-12">
 
-    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center flex-wrap gap-4">
-            <h1 class="text-xl font-black italic text-blue-500">BOLÃO74 ADMIN</h1>
-            <nav class="flex overflow-x-auto gap-1 bg-black p-1 rounded-lg no-scrollbar">
-                <button onclick="mudarAba('grupos')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-grupos">GRUPOS</button>
-                <button onclick="mudarAba('segundas')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-segundas">2ªs DE FINAL</button>
-                <button onclick="mudarAba('oitavas')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-oitavas">OITAVAS</button>
-                <button onclick="mudarAba('quartas')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-quartas">QUARTAS</button>
-                <button onclick="mudarAba('semis')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-semis">SEMIS</button>
-                <button onclick="mudarAba('finais')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-finais">FINAIS</button>
-                <button onclick="mudarAba('usuarios')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded text-amber-400" id="tab-usuarios">GERE. USUÁRIOS</button>
-            </nav>
-            <button onclick="processarAtualizacao()" id="btn-main" class="bg-green-600 px-6 py-2 rounded-lg font-black text-sm">SALVAR TUDO</button>
+    <!-- CABEÇALHO / BARRA SUPERIOR -->
+    <header class="max-w-7xl mx-auto px-4 py-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-800">
+        <h1 class="text-3xl font-extrabold tracking-wider text-blue-400">BOLÃO74 ADMIN</h1>
+        <div class="flex items-center gap-3">
+            <button onclick="guardarTodosResultados()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-lg shadow-lg hover:shadow-emerald-900/30 transition-all transform active:scale-95 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                GUARDAR TUDO
+            </button>
         </div>
     </header>
 
-    <main class="container mx-auto p-4 md:p-8">
-        <div id="aba-grupos" class="secao grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        <div id="aba-segundas" class="secao hidden space-y-4"></div>
-        <div id="aba-oitavas" class="secao hidden space-y-4"></div>
-        <div id="aba-quartas" class="secao hidden space-y-4"></div>
-        <div id="aba-semis" class="secao hidden space-y-4"></div>
-        <div id="aba-finais" class="secao hidden space-y-4"></div>
+    <!-- BANNER DE FEEDBACK / NOTIFICAÇÕES (Substitui os pop-ups de alerta bloqueantes) -->
+    <div id="feedback-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4"></div>
 
-        <div id="aba-usuarios" class="secao hidden space-y-6">
-            <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 max-w-md mx-auto">
-                <h3 class="text-md font-black uppercase text-blue-500 mb-4">Criar Usuário Simplificado</h3>
-                <div class="space-y-3">
-                    <input type="text" id="add-nome" placeholder="Nome Completo / Exibição" class="w-full bg-slate-950 p-3 rounded border border-slate-800 outline-none focus:border-blue-500 text-sm">
-                    <input type="text" id="add-login" placeholder="Usuário para entrar (Ex: joao74)" class="w-full bg-slate-950 p-3 rounded border border-slate-800 outline-none focus:border-blue-500 text-sm">
-                    <input type="text" id="add-senha" placeholder="Senha Acesso" class="w-full bg-slate-950 p-3 rounded border border-slate-800 outline-none focus:border-blue-500 text-sm">
-                    <button onclick="criarUsuarioSistema()" class="w-full bg-blue-600 py-3 rounded font-black text-sm hover:bg-blue-500">CRIAR PARTICIPANTE</button>
-                </div>
-            </div>
+    <!-- ECRÃ DE CARREGAMENTO (SPINNER) -->
+    <div id="loading-overlay" class="fixed inset-0 bg-[#0b132b]/80 z-40 flex flex-col items-center justify-center transition-opacity duration-300">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+        <p class="text-blue-300 font-medium">A carregar dados do Supabase...</p>
+    </div>
 
-            <div class="bg-slate-900 rounded-xl border border-slate-800 max-w-2xl mx-auto overflow-hidden">
-                <table class="w-full text-left text-xs text-slate-400">
-                    <thead class="bg-slate-950 text-[10px] font-bold uppercase border-b border-slate-800 text-slate-500">
-                        <tr>
-                            <th class="p-4">Participante</th>
-                            <th class="p-4">Login</th>
-                            <th class="p-4">Senha</th>
-                            <th class="p-4 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-usuarios-tabela" class="divide-y divide-slate-800/50"></tbody>
-                </table>
-            </div>
+    <!-- CONTEÚDO PRINCIPAL (GRUPOS E JOGOS) -->
+    <main class="max-w-7xl mx-auto px-4 mt-8">
+        <div id="grid-grupos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Os cartões dos grupos serão desenhados aqui dinamicamente -->
         </div>
     </main>
 
     <script>
-        const SUPABASE_URL = 'https://auwzjdjyaqvqvznpfvif.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // =========================================================================
+        // CONFIGURAÇÃO DO SUPABASE
+        // =========================================================================
+        const SUPABASE_URL = "https://auwzjdjyaqvqvznpfvif.supabase.co";
+        
+        // ATENÇÃO: Substitua o texto abaixo pela sua chave real (Project API anon key)
+        // Encontra esta chave no painel do Supabase em: Settings -> API -> anon public
+        const SUPABASE_KEY = "sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg"; 
 
-        let todosJogos = [];
-        let rankings = {};
+        // RESOLVIDO: Renomeado de 'supabase' para 'supabaseClient' para evitar conflitos com o objeto global do CDN
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const MAPA_MATA_MATA = {
-            "segundas": [{ id: "J73", timeA: "2A", timeB: "2B", data: "2026-06-28 16:00" },{ id: "J74", timeA: "1E", timeB: "3ABCD", data: "2026-06-29 17:30" },{ id: "J75", timeA: "1F", timeB: "2C", data: "2026-06-29 22:00" },{ id: "J76", timeA: "1C", timeB: "2F", data: "2026-06-29 14:00" },{ id: "J77", timeA: "1I", timeB: "3CDFGH", data: "2026-06-30 18:00" },{ id: "J78", timeA: "2E", timeB: "2I", data: "2026-06-30 14:00" },{ id: "J79", timeA: "1A", timeB: "3CEFHI", data: "2026-06-30 22:00" },{ id: "J80", timeA: "1L", timeB: "3EHIJK", data: "2026-07-01 13:00" },{ id: "J81", timeA: "1D", timeB: "3BEFIJ", data: "2026-07-01 21:00" },{ id: "J82", timeA: "1G", timeB: "3AEHIJ", data: "2026-07-01 17:00" },{ id: "J83", timeA: "2K", timeB: "2L", data: "2026-07-02 20:00" },{ id: "J84", timeA: "1H", timeB: "2J", data: "2026-07-02 16:00" },{ id: "J85", timeA: "1B", timeB: "3EFGIJ", data: "2026-07-03 00:00" },{ id: "J86", timeA: "1J", timeB: "2H", data: "2026-07-03 19:00" },{ id: "J87", timeA: "1K", timeB: "3DEIJL", data: "2026-07-03 22:30" },{ id: "J88", timeA: "2D", timeB: "2G", data: "2026-07-03 15:00" }],
-            "oitavas": [{ id: "J89", timeA: "Venc J74", timeB: "Venc J77", data: "2026-07-04 18:00" },{ id: "J90", timeA: "Venc J73", timeB: "Venc J75", data: "2026-07-04 14:00" },{ id: "J91", timeA: "Venc J76", timeB: "Venc J78", data: "2026-07-05 17:00" },{ id: "J92", timeA: "Venc J79", timeB: "Venc J80", data: "2026-07-05 21:00" },{ id: "J93", timeA: "Venc J83", timeB: "Venc J84", data: "2026-07-06 16:00" },{ id: "J94", timeA: "Venc J81", timeB: "Venc J82", data: "2026-07-06 21:00" },{ id: "J95", timeA: "Venc J86", timeB: "Venc J88", data: "2026-07-07 13:00" },{ id: "J96", timeA: "Venc J85", timeB: "Venc J87", data: "2026-07-07 17:00" }],
-            "quartas": [{ id: "J97", timeA: "Venc J89", timeB: "Venc J90", data: "2026-07-09 17:00" },{ id: "J98", timeA: "Venc J93", timeB: "Venc J94", data: "2026-07-10 16:00" },{ id: "J99", timeA: "Venc J91", timeB: "Venc J92", data: "2026-07-11 18:00" },{ id: "J100", timeA: "Venc J95", timeB: "Venc J96", data: "2026-07-11 22:00" }],
-            "semis": [{ id: "J101", timeA: "Venc J97", timeB: "Venc J98", data: "2026-07-14 16:00" },{ id: "J102", timeA: "Venc J99", timeB: "Venc J100", data: "2026-07-15 16:00" }],
-            "finais": [{ id: "J103", timeA: "Perd J101", timeB: "Perd J102", data: "2026-07-18 18:00" },{ id: "J104", timeA: "Venc J101", timeB: "Venc J102", data: "2026-07-19 16:00" }]
-        };
+        // Memória local para armazenamento de dados temporários
+        let listaJogos = [];
+        let listaPalpites = [];
+        let listaPerfis = [];
+        let regrasPontuacao = {};
 
-        async function carregarDados() {
-            const { data } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
-            todosJogos = data || [];
-            calcularRankings();
-            renderizarGrupos();
-            ['segundas', 'oitavas', 'quartas', 'semis', 'finais'].forEach(renderizarMataMata);
-            carregarUsuariosAdmin();
-        }
-
-        async function carregarUsuariosAdmin() {
-            // Busca os perfis ordenados por maior pontuação (Ranking)
-            const { data: users } = await _supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
-            const tbody = document.getElementById('lista-usuarios-tabela');
-            
-            // Atualiza o cabeçalho da tabela para incluir as colunas corretas
-            const thead = document.querySelector('#aba-usuarios table thead tr');
-            if (thead) {
-                thead.innerHTML = `
-                    <th class="p-4">Pos</th>
-                    <th class="p-4">Participante</th>
-                    <th class="p-4 text-center">Pontos</th>
-                    <th class="p-4">Login</th>
-                    <th class="p-4">Senha</th>
-                    <th class="p-4 text-center">Ações</th>
-                `;
+        // Executado assim que a página termina de carregar
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (SUPABASE_KEY === "SUA_CHAVE_ANON_DO_SUPABASE_AQUI") {
+                mostrarNotificacao("Por favor, configure a sua chave Anon do Supabase no código!", "danger");
+                document.getElementById('loading-overlay').classList.add('hidden');
+                return;
             }
+            await carregarDadosDoBanco();
+        });
 
-            tbody.innerHTML = (users || []).map((u, i) => `
-                <tr class="hover:bg-slate-900/30 ${i === 0 ? 'bg-amber-500/5' : ''}">
-                    <td class="p-4 font-bold text-slate-500 text-xs">#${i + 1}</td>
-                    <td class="p-4 font-bold text-white text-sm">
-                        ${u.nome_completo} ${i === 0 ? '👑' : ''}
-                    </td>
-                    <td class="p-4 text-center font-black text-blue-400 text-sm bg-slate-900/40">
-                        ${u.pontos_total || 0}
-                    </td>
-                    <td class="p-4 text-slate-400 font-mono text-xs">${u.usuario_login || '---'}</td>
-                    <td class="p-4 text-slate-500 font-mono text-xs select-none">••••••</td>
-                    <td class="p-4 text-center space-x-2">
-                        <button onclick="alterarSenhaUsuarioAdmin('${u.id}', '${u.nome_completo}')" class="bg-blue-950/60 hover:bg-blue-900 text-blue-400 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors">Alterar Senha</button>
-                        <button onclick="deletarUsuarioSistema('${u.id}')" class="bg-red-950/50 hover:bg-red-900 text-red-400 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors">Excluir</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+        /**
+         * Procura todos os registos necessários para carregar a página e efetuar cálculos
+         */
+        async function carregarDadosDoBanco() {
+            mostrarSpinner(true, "A aceder ao banco de dados...");
+            try {
+                // 1. Carrega as configurações de pontuação mais recentes (Resolve o Bug 3)
+                const { data: config, error: errConfig } = await supabaseClient
+                    .from('configuracoes')
+                    .select('*')
+                    .single();
 
-        // Nova função para você redefinir senhas pelo painel
-        async function alterarSenhaUsuarioAdmin(id, nome) {
-            const novaSenha = prompt(`Digite a nova senha para o usuário "${nome}":`);
-            if (novaSenha === null) return; // Se o admin cancelar
-            if (novaSenha.trim() === "") return alert("A senha não pode ser vazia!");
+                if (errConfig) {
+                    console.warn("Tabela de configurações não encontrada. A usar valores padrão.");
+                    regrasPontuacao = {
+                        placarExato: 10,
+                        vencedorGols: 7,
+                        vencedorSimples: 5,
+                        erro: 0
+                    };
+                } else {
+                    regrasPontuacao = {
+                        placarExato: config.pts_placar_exato || 10,
+                        vencedorGols: config.pts_vencedor_gols || 7,
+                        vencedorSimples: config.pts_vencedor_simples || 5,
+                        erro: 0
+                    };
+                }
 
-            const { error } = await _supabase
-                .from('perfis')
-                .update({ senha_plana: novaSenha.trim() })
-                .eq('id', id);
+                // 2. Carrega todos os jogos agendados
+                const { data: jogos, error: errJogos } = await supabaseClient
+                    .from('jogos')
+                    .select('*')
+                    .order('grupo', { ascending: true })
+                    .order('id', { ascending: true });
 
-            if (error) {
-                alert("Erro ao alterar senha: " + error.message);
-            } else {
-                alert(`✅ Senha de "${nome}" atualizada com sucesso!`);
-                carregarDados();
-            }
-        }
-        async function criarUsuarioSistema() {
-            const nome = document.getElementById('add-nome').value.trim();
-            const login = document.getElementById('add-login').value.trim().toLowerCase();
-            const senha = document.getElementById('add-senha').value;
+                if (errJogos) throw errJogos;
+                listaJogos = jogos || [];
 
-            if(!nome || !login || !senha) return alert("Preencha todos os campos!");
+                // 3. Carrega palpites e perfis de utilizadores para o cálculo da classificação
+                const { data: palpites, error: errPalpites } = await supabaseClient.from('palpites').select('*');
+                if (errPalpites) throw errPalpites;
+                listaPalpites = palpites || [];
 
-            const novoUserId = crypto.randomUUID();
+                const { data: perfis, error: errPerfis } = await supabaseClient.from('perfis').select('*');
+                if (errPerfis) throw errPerfis;
+                listaPerfis = perfis || [];
 
-            const { error } = await _supabase.from('perfis').insert([{
-                id: novoUserId,
-                nome_completo: nome,
-                usuario_login: login,
-                senha_plana: senha,
-                pontos_total: 0
-            }]);
+                // Desenha os grupos no ecrã
+                renderizarGrupos();
 
-            if(error) {
-                alert("Erro ao criar usuário: " + error.message);
-            } else {
-                alert("✨ Usuário criado com sucesso!");
-                document.getElementById('add-nome').value = '';
-                document.getElementById('add-login').value = '';
-                document.getElementById('add-senha').value = '';
-                carregarDados();
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                mostrarNotificacao(`Falha ao conectar ao Supabase: ${error.message}`, "danger");
+            } finally {
+                mostrarSpinner(false);
             }
         }
 
-        async function deletarUsuarioSistema(id) {
-            if(confirm("Tem certeza que deseja excluir este participante? Todos os palpites dele serão apagados permanentemente!")) {
-                const { error } = await _supabase.rpc('admin_excluir_usuario', { user_id_param: id });
-                if(error) alert("Erro: " + error.message);
-                else { alert("Participante excluído."); carregarDados(); }
-            }
-        }
+        /**
+         * Desenha dinamicamente as tabelas de grupos e os respetivos inputs de golos
+         */
+        function renderizarGrupos() {
+            const grid = document.getElementById('grid-grupos');
+            grid.innerHTML = "";
 
-        function calcularRankings() {
-            const grupos = [...new Set(todosJogos.filter(j => j.fase.includes('Grupo')).map(j => j.fase))];
-            rankings = {};
-            grupos.forEach(fase => {
-                const jf = todosJogos.filter(j => j.fase === fase);
-                const tab = {};
-                jf.forEach(j => {
-                    [j.time_a, j.time_b].forEach(t => { if(!tab[t]) tab[t] = {pts:0, sg:0, gp:0, nome:t}; });
-                    if(j.gols_a_oficial !== null) {
-                        tab[j.time_a].gp += j.gols_a_oficial; tab[j.time_a].sg += (j.gols_a_oficial - j.gols_b_oficial);
-                        tab[j.time_b].gp += j.gols_b_oficial; tab[j.time_b].sg += (j.gols_b_oficial - j.gols_a_oficial);
-                        if(j.gols_a_oficial > j.gols_b_oficial) tab[j.time_a].pts += 3;
-                        else if(j.gols_b_oficial > j.gols_a_oficial) tab[j.time_b].pts += 3;
-                        else { tab[j.time_a].pts += 1; tab[j.time_b].pts += 1; }
-                    }
+            const gruposMap = {};
+            listaJogos.forEach(jogo => {
+                const grp = jogo.grupo ? jogo.grupo.toUpperCase() : "SEM GRUPO";
+                if (!gruposMap[grp]) gruposMap[grp] = [];
+                gruposMap[grp].push(jogo);
+            });
+
+            Object.keys(gruposMap).sort().forEach(nomeGrupo => {
+                const jogosDoGrupo = gruposMap[nomeGrupo];
+                
+                const card = document.createElement('div');
+                card.className = "card-grupo rounded-xl p-5 flex flex-col justify-between shadow-xl transition-all duration-300";
+
+                let htmlJogos = "";
+                jogosDoGrupo.forEach(jogo => {
+                    const golsM = jogo.gols_mandante !== null && jogo.gols_mandante !== undefined ? jogo.gols_mandante : "";
+                    const golsV = jogo.gols_visitante !== null && jogo.gols_visitante !== undefined ? jogo.gols_visitante : "";
+                    
+                    const statusClass = jogo.status === 'finalizado' ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/30';
+
+                    htmlJogos += `
+                        <div class="linha-jogo flex items-center justify-between py-2 border-b border-slate-800 last:border-b-0 gap-2 ${statusClass} rounded px-2 my-1 transition-all" data-jogo-id="${jogo.id}">
+                            <!-- Equipa Mandante -->
+                            <span class="w-1/3 text-right text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_mandante}</span>
+                            
+                            <!-- Inputs de Pontuação -->
+                            <div class="flex items-center gap-1 justify-center w-1/3">
+                                <input type="number" 
+                                       placeholder="-" 
+                                       value="${golsM}" 
+                                       class="input-gols-mandante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                                <span class="text-xs text-slate-500 font-bold px-0.5">x</span>
+                                <input type="number" 
+                                       placeholder="-" 
+                                       value="${golsV}" 
+                                       class="input-gols-visitante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                            </div>
+                            
+                            <!-- Equipa Visitante -->
+                            <span class="w-1/3 text-left text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_visitante}</span>
+                        </div>
+                    `;
                 });
-                rankings[fase] = Object.values(tab).sort((a,b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
+
+                const classificacaoHTML = calcularClassificacaoGrupo(jogosDoGrupo);
+
+                card.innerHTML = `
+                    <div>
+                        <h2 class="text-lg font-extrabold text-blue-400 mb-4 tracking-wide pb-1 border-b border-blue-500/20">GRUPO ${nomeGrupo}</h2>
+                        <div class="flex flex-col gap-1.5 mb-5">
+                            ${htmlJogos}
+                        </div>
+                    </div>
+                    <!-- Tabela de Classificação do Grupo -->
+                    <div class="pt-4 border-t border-slate-800/80">
+                        <div class="text-[11px] uppercase font-bold text-slate-400 mb-2">Classificação Provisória</div>
+                        <div class="space-y-1">
+                            ${classificacaoHTML}
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
             });
         }
 
-        function renderizarGrupos() {
-            const container = document.getElementById('aba-grupos');
-            container.innerHTML = Object.keys(rankings).map(fase => `
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                    <h2 class="text-blue-500 font-black mb-4 uppercase text-sm">${fase}</h2>
-                    <div class="space-y-3 mb-4">
-                        ${todosJogos.filter(j => j.fase === fase).map(j => `
-                            <div class="flex items-center gap-2">
-                                <div class="flex-1 text-right text-[10px] font-bold truncate">${j.time_a}</div>
-                                <div class="flex gap-1">
-                                    <input type="number" id="g-a-${j.id}" value="${j.gols_a_oficial ?? ''}" class="w-8 h-8 bg-slate-800 border border-slate-700 text-center rounded text-blue-400 font-bold">
-                                    <input type="number" id="g-b-${j.id}" value="${j.gols_b_oficial ?? ''}" class="w-8 h-8 bg-slate-800 border border-slate-700 text-center rounded text-blue-400 font-bold">
-                                </div>
-                                <div class="flex-1 text-left text-[10px] font-bold truncate">${j.time_b}</div>
-                            </div>
-                        `).join('')}
+        /**
+         * Calcula dinamicamente a tabela do grupo baseado nos golos introduzidos
+         */
+        function calcularClassificacaoGrupo(jogos) {
+            const tabela = {};
+
+            jogos.forEach(j => {
+                if (!tabela[j.time_mandante]) tabela[j.time_mandante] = { pontos: 0, time: j.time_mandante };
+                if (!tabela[j.time_visitante]) tabela[j.time_visitante] = { pontos: 0, time: j.time_visitante };
+
+                if (j.gols_mandante !== null && j.gols_visitante !== null) {
+                    const gM = parseInt(j.gols_mandante);
+                    const gV = parseInt(j.gols_visitante);
+                    
+                    if (gM > gV) {
+                        tabela[j.time_mandante].pontos += 3;
+                    } else if (gM < gV) {
+                        tabela[j.time_visitante].pontos += 3;
+                    } else {
+                        tabela[j.time_mandante].pontos += 1;
+                        tabela[j.time_visitante].pontos += 1;
+                    }
+                }
+            });
+
+            const ordenados = Object.values(tabela).sort((a, b) => b.pontos - a.pontos);
+
+            let htmlClassificacao = "";
+            ordenados.forEach((equipe, index) => {
+                let corColocacao = "text-slate-400";
+                if (index === 0) corColocacao = "text-emerald-400 font-bold";
+                if (index === 1) corColocacao = "text-blue-400 font-semibold";
+
+                htmlClassificacao += `
+                    <div class="flex justify-between items-center text-xs py-0.5 px-1 hover:bg-slate-800/30 rounded">
+                        <span class="${corColocacao}">${index + 1}º ${equipe.time}</span>
+                        <span class="font-mono font-bold text-slate-300">${equipe.pontos}pt</span>
                     </div>
-                    <table class="w-full text-[10px] border-t border-slate-800 pt-2">
-                        ${rankings[fase].map((t, i) => `<tr class="${i<2?'text-green-400':''}"><td>${i+1}º ${t.nome}</td><td class="text-right">${t.pts}p</td></tr>`).join('')}
-                    </table>
-                </div>
-            `).join('');
+                `;
+            });
+
+            return htmlClassificacao;
         }
 
-        function renderizarMataMata(aba) {
-            const container = document.getElementById('aba-'+aba);
-            const configuracoes = MAPA_MATA_MATA[aba];
-            container.innerHTML = `<h2 class="text-xl font-black italic mb-6 text-center uppercase text-slate-400">${aba.replace('segundas', '16-AVOS')}</h2>` + 
-            configuracoes.map(conf => {
-                const jogoExistente = todosJogos.find(j => j.fase.includes(conf.id));
-                let sugA = resolverTime(conf.timeA);
-                let sugB = resolverTime(conf.timeB);
-                return `
-                    <div class="bg-slate-900 p-4 rounded-xl border ${jogoExistente ? 'border-slate-800' : 'border-blue-500/30 bg-blue-900/10'} flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div class="text-center md:text-left min-w-[100px]">
-                            <span class="text-blue-500 font-black text-lg">#${conf.id}</span>
-                            <p class="text-[9px] text-slate-500 font-bold">${conf.data}</p>
-                        </div>
-                        <div class="flex items-center gap-4 font-black flex-1 justify-center">
-                            <span class="text-right flex-1 text-sm ${sugA.length > 3 ? 'text-white' : 'text-slate-600'}">${sugA}</span>
-                            ${jogoExistente ? 
-                                `<input type="number" id="g-a-${jogoExistente.id}" value="${jogoExistente.gols_a_oficial ?? ''}" class="w-10 h-10 bg-slate-800 border-2 border-blue-500 rounded text-center text-blue-400">
-                                 <input type="number" id="g-b-${jogoExistente.id}" value="${jogoExistente.gols_b_oficial ?? ''}" class="w-10 h-10 bg-slate-800 border-2 border-blue-500 rounded text-center text-blue-400">` 
-                                : `<div class="flex gap-1"><div class="w-10 h-10 bg-slate-950 rounded border border-slate-800"></div><div class="w-10 h-10 bg-slate-950 rounded border border-slate-800"></div></div>`
-                            }
-                            <span class="text-left flex-1 text-sm ${sugB.length > 3 ? 'text-white' : 'text-slate-600'}">${sugB}</span>
-                        </div>
-                        <div class="min-w-[120px] text-right">
-                            ${!jogoExistente ? 
-                                `<button onclick="oficializar('${sugA}', '${sugB}', '${aba.toUpperCase()}: ${conf.id}', '${conf.data}')" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-black text-[10px]">CRIAR NO BANCO</button>` 
-                                : `<span class="text-green-500 text-[10px] font-black uppercase tracking-widest">OFICIAL</span>`
-                            }
-                        </div>
-                    </div>`;
-            }).join('');
-        }
-
-        function resolverTime(label) {
-            if(label.match(/^[12][A-L]$/)) {
-                const f = "Grupo " + label[1];
-                const pos = parseInt(label[0]) - 1;
-                return rankings[f] && rankings[f][pos] ? rankings[f][pos].nome : label;
-            }
-            if(label.startsWith("Venc J")) {
-                const cod = label.split(' ')[1];
-                const j = todosJogos.find(x => x.fase.includes(cod));
-                if(j && j.gols_a_oficial !== null) return j.gols_a_oficial > j.gols_b_oficial ? j.time_a : j.time_b;
-                return label;
-            }
-            if(label.startsWith("Perd J")) {
-                const cod = label.split(' ')[1];
-                const j = todosJogos.find(x => x.fase.includes(cod));
-                if(j && j.gols_a_oficial !== null) return j.gols_a_oficial < j.gols_b_oficial ? j.time_a : j.time_b;
-                return label;
-            }
-            return label;
-        }
-
-        async function oficializar(ta, tb, fase, data) {
-            if(ta.length <= 3 || tb.length <= 3) return alert("Times ainda não definidos!");
-            const { error } = await _supabase.from('jogos').insert([{ 
-                time_a: ta, time_b: tb, fase: fase, 
-                data_hora: new Date(data.replace(' ', 'T') + ':00Z').toISOString() 
-            }]);
-            if(!error) { alert("Jogo oficializado!"); carregarDados(); }
-        }
-
-        async function processarAtualizacao() {
-            const btn = document.getElementById('btn-main'); 
-            btn.innerText = "🔄 SALVANDO...";
-            btn.disabled = true;
+        /**
+         * Recolhe os golos e atualiza o banco de dados (Garante a cláusula WHERE - Resolve o Bug 1)
+         */
+        async function guardarTodosResultados() {
+            mostrarSpinner(true, "A registar resultados oficiais...");
             
-            try {
-                const inputsA = document.querySelectorAll('input[id^="g-a-"]');
-                const promessas = [];
+            const linhas = document.querySelectorAll('.linha-jogo');
+            const atualizacoes = [];
 
-                // Expressão regular para validar se o ID extraído é um UUID válido do Postgres
-                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            for (const linha of linhas) {
+                const jogoId = linha.getAttribute('data-jogo-id');
+                const inputM = linha.querySelector('.input-gols-mandante');
+                const inputV = linha.querySelector('.input-gols-visitante');
 
-                for (let inputA of inputsA) {
-                    if (!inputA.id || inputA.id.includes('fake')) continue;
-                    
-                    const idJogo = inputA.id.replace('g-a-', '').trim();
-                    
-                    // CRÍTICO: Validação estrutural do ID. Se não for um UUID legítimo, ignora silenciosamente
-                    if (!idJogo || !uuidRegex.test(idJogo)) {
-                        console.warn(`[Bolão74] Input ignorado por possuir ID incompatível com o banco: "${idJogo}"`);
-                        continue;
-                    }
-
-                    const gaValue = inputA.value.trim();
-                    const elB = document.getElementById(`g-b-${idJogo}`);
-                    if (!elB) continue;
-                    const gbValue = elB.value.trim();
-
-                    // Caso 1: Ambos os campos preenchidos -> Atualiza o placar
-                    if (gaValue !== "" && gbValue !== "") {
-                        promessas.push(
-                            _supabase
-                                .from('jogos')
-                                .update({ 
-                                    gols_a_oficial: parseInt(gaValue), 
-                                    gols_b_oficial: parseInt(gbValue) 
-                                })
-                                .eq('id', idJogo)
-                        );
-                    } 
-                    // Caso 2: Ambos os campos vazios -> Reseta para NULL
-                    else if (gaValue === "" && gbValue === "") {
-                        promessas.push(
-                            _supabase
-                                .from('jogos')
-                                .update({ 
-                                    gols_a_oficial: null, 
-                                    gols_b_oficial: null 
-                                })
-                                .eq('id', idJogo)
-                        );
-                    }
+                // Validação crítica para evitar erros de integridade ou falta de ID
+                if (!jogoId || jogoId === "undefined" || jogoId === "null") {
+                    console.warn("Registo ignorado: Falta ID do jogo.");
+                    continue;
                 }
-                
-                // Executa as requisições seguras em paralelo
-                if (promessas.length > 0) {
-                    await Promise.all(promessas);
+
+                // Ignora campos vazios para não fechar jogos sem pontuação
+                if (inputM.value === "" || inputV.value === "") {
+                    continue; 
                 }
-                
-                // Dispara o motor de recálculo soberano sem acúmulos
-                const { error: rpcError } = await _supabase.rpc('admin_recalcular_tudo');
-                if (rpcError) throw rpcError;
-                
-                alert("✅ Resultados oficiais gravados e ranking recalculado com sucesso!"); 
-                await carregarDados();
-            } catch (e) { 
-                alert("Erro crítico ao salvar placares: " + e.message); 
-                console.error(e);
+
+                const golsM = parseInt(inputM.value, 10);
+                const golsV = parseInt(inputV.value, 10);
+
+                if (isNaN(golsM) || isNaN(golsV)) {
+                    continue;
+                }
+
+                // Executa a atualização aplicando de forma correta e explícita o filtro WHERE (.eq)
+                atualizacoes.push(
+                    supabaseClient
+                        .from('jogos')
+                        .update({
+                            gols_mandante: golsM,
+                            gols_visitante: golsV,
+                            status: 'finalizado'
+                        })
+                        .eq('id', jogoId) // EXIGIDO PELO SUPABASE PARA EVITAR O ERRO DO PRINT
+                );
             }
-            btn.innerText = "SALVAR TUDO"; btn.disabled = false;
-        }
-        
-        function mudarAba(id) {
-            document.querySelectorAll('.secao').forEach(s => s.classList.add('hidden'));
-            document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
-            document.getElementById('aba-'+id).classList.remove('hidden');
-            document.getElementById('tab-'+id).classList.add('tab-active');
+
+            if (atualizacoes.length === 0) {
+                mostrarSpinner(false);
+                mostrarNotificacao("Nenhum resultado novo detetado para guardar.", "warning");
+                return;
+            }
+
+            try {
+                const resultados = await Promise.all(atualizacoes);
+                
+                // Valida se ocorreu erro durante os updates
+                for (const r of resultados) {
+                    if (r.error) throw r.error;
+                }
+
+                mostrarNotificacao("Resultados oficiais guardados com sucesso!", "success");
+                
+                // Recarrega todos os dados frescos do banco antes de recalcular
+                await carregarDadosDoBanco();
+                // Inicia o processo de atualização de pontuação
+                await recalcularPontosGerais();
+
+            } catch (error) {
+                console.error("Erro ao guardar dados:", error);
+                mostrarNotificacao(`Erro crítico: ${error.message}`, "danger");
+                mostrarSpinner(false);
+            }
         }
 
-        carregarDados();
+        /**
+         * Processador inteligente que reconstrói a pontuação de todos os utilizadores a partir do zero (Resolve o Bug 2 e Bug 3)
+         */
+        async function recalcularPontosGerais() {
+            mostrarSpinner(true, "A recalcular o ranking geral sem acumulações...");
+            try {
+                // 1. Garante a leitura das pontuações de referência mais recentes (Resolve Bug 3)
+                const { data: config, error: configError } = await supabaseClient
+                    .from('configuracoes')
+                    .select('*')
+                    .single();
+
+                if (!configError && config) {
+                    regrasPontuacao = {
+                        placarExato: config.pts_placar_exato || 10,
+                        vencedorGols: config.pts_vencedor_gols || 7,
+                        vencedorSimples: config.pts_vencedor_simples || 5,
+                        erro: 0
+                    };
+                }
+
+                // 2. Inicializa o mapa com 0 pontos para todos os perfis (Zera os acumulados antigos - Resolve Bug 2)
+                const mapaPontosNovos = {};
+                listaPerfis.forEach(user => {
+                    mapaPontosNovos[user.id] = 0; 
+                });
+
+                const jogosFinalizados = listaJogos.filter(j => j.status === 'finalizado');
+                const mapaJogos = new Map(jogosFinalizados.map(j => [j.id, j]));
+
+                const updatesPalpites = [];
+                
+                // 3. Avalia os palpites apenas contra os jogos finalizados atuais
+                for (const palpite of listaPalpites) {
+                    const jogo = mapaJogos.get(palpite.jogo_id);
+                    
+                    if (!jogo) continue; 
+
+                    const pontosDoPalpite = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
+
+                    // Atualiza a pontuação obtida individual do palpite para consulta do utilizador
+                    updatesPalpites.push(
+                        supabaseClient
+                            .from('palpites')
+                            .update({ pontos_obtidos: pontosDoPalpite })
+                            .eq('id', palpite.id)
+                    );
+
+                    // Soma de forma limpa na memória sem ler acumulados anteriores do banco
+                    if (mapaPontosNovos[palpite.usuario_id] !== undefined) {
+                        mapaPontosNovos[palpite.usuario_id] += pontosDoPalpite;
+                    }
+                }
+
+                if (updatesPalpites.length > 0) {
+                    await Promise.all(updatesPalpites);
+                }
+
+                // 4. Sobrescreve o total calculado na tabela de classificação dos utilizadores
+                const updatesPerfis = Object.keys(mapaPontosNovos).map(userId => {
+                    return supabaseClient
+                        .from('perfis')
+                        .update({ pontos: mapaPontosNovos[userId] })
+                        .eq('id', userId);
+                });
+
+                const resultadosPerfis = await Promise.all(updatesPerfis);
+                for (const r of resultadosPerfis) {
+                    if (r.error) throw r.error;
+                }
+
+                mostrarNotificacao("Ranking e pontuações recalculados com sucesso!", "success");
+                
+                // Recarrega o ecrã com a classificação e valores atualizados
+                await carregarDadosDoBanco();
+
+            } catch (error) {
+                console.error("Erro no recálculo geral:", error);
+                mostrarNotificacao(`Erro no recálculo: ${error.message}`, "danger");
+            } finally {
+                mostrarSpinner(false);
+            }
+        }
+
+        /**
+         * Motor de regras: compara o palpite contra o resultado final real do jogo
+         */
+        function avaliarRegrasPalpite(palpite, jogo, regras) {
+            const pM = parseInt(palpite.gols_mandante);
+            const pV = parseInt(palpite.gols_visitante);
+            const jM = parseInt(jogo.gols_mandante);
+            const jV = parseInt(jogo.gols_visitante);
+
+            if (isNaN(pM) || isNaN(pV) || isNaN(jM) || isNaN(jV)) return 0;
+
+            const vencedorPalpite = pM > pV ? 1 : (pM < pV ? 2 : 0);
+            const vencedorReal = jM > jV ? 1 : (jM < jV ? 2 : 0);
+
+            // Regra 1: Acertou o Placar Cheio
+            if (pM === jM && pV === jV) {
+                return regras.placarExato;
+            }
+
+            // Se errou a tendência (vencedor ou empate), pontua zero
+            if (vencedorPalpite !== vencedorReal) {
+                return regras.erro;
+            }
+
+            // Regra 2: Acertou Vencedor + Gols de uma das equipas
+            if (pM === jM || pV === jV) {
+                return regras.vencedorGols;
+            }
+
+            // Regra 3: Acertou apenas a tendência simples (Vencedor ou Empate Simples)
+            return regras.vencedorSimples;
+        }
+
+        /**
+         * Controla o painel visual de carregamento
+         */
+        function mostrarSpinner(visivel, mensagem = "A carregar...") {
+            const overlay = document.getElementById('loading-overlay');
+            const texto = overlay.querySelector('p');
+            texto.textContent = mensagem;
+
+            if (visivel) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            } else {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
+        }
+
+        /**
+         * Cria caixas de alerta dinâmicas no canto do ecrã sem travar a navegação
+         */
+        function mostrarNotificacao(mensagem, tipo = 'info') {
+            const container = document.getElementById('feedback-container');
+            const alertBox = document.createElement('div');
+            
+            let classesTipo = 'bg-blue-600 border-blue-500 text-white';
+            if (tipo === 'success') classesTipo = 'bg-emerald-800/90 border-emerald-500 text-emerald-200';
+            if (tipo === 'warning') classesTipo = 'bg-amber-800/90 border-amber-500 text-amber-200';
+            if (tipo === 'danger') classesTipo = 'bg-red-900/90 border-red-600 text-red-200';
+
+            alertBox.className = `p-4 rounded-xl border shadow-2xl flex justify-between items-center transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto ${classesTipo}`;
+            alertBox.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="font-medium text-xs sm:text-sm">${mensagem}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-white hover:text-slate-300 font-bold ml-4 text-xs">✕</button>
+            `;
+
+            container.appendChild(alertBox);
+
+            setTimeout(() => {
+                alertBox.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                alertBox.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => {
+                    alertBox.remove();
+                }, 300);
+            }, 5000);
+        }
     </script>
 </body>
 </html>
