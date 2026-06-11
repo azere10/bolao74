@@ -138,7 +138,7 @@
             
             const termoBusca = (filtroMataMataAtual || '').toLowerCase();
             const list = dadosJogos.filter(j => {
-                if (!j.fase) return false; // Ignora se o registro vier corrompido ou nulo do banco
+                if (!j.fase) return false; 
                 return j.fase.toLowerCase().includes(termoBusca);
             });
 
