@@ -21,17 +21,17 @@
     </script>
 
     <header class="bg-blue-700 text-white p-4 shadow-md sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
+        <div class="container mx-auto flex justify-between items-center flex-wrap gap-2">
             <h1 class="text-xl font-black italic">BOLÃO74</h1>
-            <div id="auth-header" class="text-[10px] font-bold uppercase tracking-widest"></div>
+            <div id="auth-header" class="text-[10px] font-bold uppercase tracking-widest flex items-center gap-3"></div>
         </div>
     </header>
 
     <div id="login-screen" class="container mx-auto px-4 mt-10 max-w-sm">
         <div class="bg-white p-8 rounded-2xl shadow-xl border">
             <h2 class="text-xl font-black mb-6 text-center italic text-gray-800">ENTRAR NO BOLÃO</h2>
-            <input type="text" id="usuario" placeholder="Nome de Usuário" class="w-full p-4 border rounded-xl mb-4 outline-none focus:ring-2 ring-blue-500 font-bold text-center">
-            <input type="password" id="password" placeholder="Sua Senha" class="w-full p-4 border rounded-xl mb-6 outline-none focus:ring-2 ring-blue-500 font-bold text-center">
+            <input type="text" id="usuario" placeholder="Nome de Usuário" onkeydown="verificarEnterLogin(event)" class="w-full p-4 border rounded-xl mb-4 outline-none focus:ring-2 ring-blue-500 font-bold text-center">
+            <input type="password" id="password" placeholder="Sua Senha" onkeydown="verificarEnterLogin(event)" class="w-full p-4 border rounded-xl mb-6 outline-none focus:ring-2 ring-blue-500 font-bold text-center">
             <button onclick="handleAuthSimplificado()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-700">ENTRAR</button>
         </div>
     </div>
