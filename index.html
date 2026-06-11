@@ -195,8 +195,8 @@
             document.getElementById('view-conteudo').innerHTML = `
                 <div class="space-y-4">
                     <div class="bg-white rounded-xl shadow-sm border p-5">
-                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">🎯 Critérios de Pontuação</h3>
-                        <p class="text-slate-500 text-[11px] mb-4 font-medium leading-relaxed">Os pontos são calculados automaticamente jogo por jogo, baseados estritamente no placar oficial do tempo normal/prorrogação (não inclui disputa por pênaltis).</p>
+                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">🎯 Pontuação Base (Fase de Grupos)</h3>
+                        <p class="text-slate-500 text-[11px] mb-4 font-medium leading-relaxed">Os pontos abaixo servem como base para o campeonato. Eles são calculados considerando apenas o tempo normal e prorrogação (disputa de pênaltis não conta).</p>
                         
                         <div class="space-y-2 text-xs font-bold">
                             <div class="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-100">
@@ -212,9 +212,36 @@
                                 <span class="bg-indigo-600 text-white px-2 py-0.5 rounded text-[11px]">15 Pts</span>
                             </div>
                             <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                <span class="text-gray-700">Acertou os gols de apenas 1 dos times</span>
+                                <span class="text-gray-700">Errou a tendência, mas acertou os gols de 1 dos times</span>
                                 <span class="bg-gray-500 text-white px-2 py-0.5 rounded text-[11px]">3 Pts</span>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-blue-600">
+                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">📈 Multiplicadores do Mata-Mata</h3>
+                        <p class="text-slate-500 text-[11px] mb-3 font-medium leading-relaxed">Para manter a disputa acirrada até o fim, a pontuação base ganha peso progressivo à medida que o torneio afunila:</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-[11px] font-bold text-gray-700">
+                                <thead class="bg-gray-50 text-[9px] uppercase border-b text-gray-400">
+                                    <tr>
+                                        <th class="py-2 text-left">Fase</th>
+                                        <th class="py-2 text-center">Peso</th>
+                                        <th class="py-2 text-center text-green-600">Placar Exato</th>
+                                        <th class="py-2 text-center text-blue-600">Venc+Saldo</th>
+                                        <th class="py-2 text-center text-indigo-600">Vencedor</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <tr><td class="py-2 text-gray-500">Grupos</td><td class="text-center text-gray-500">x1.0</td><td class="text-center font-black">25</td><td class="text-center font-black">18</td><td class="text-center font-black">15</td></tr>
+                                    <tr><td class="py-2">16-Avos</td><td class="text-center text-blue-600">x1.2</td><td class="text-center font-black text-green-600">30</td><td class="text-center font-black text-blue-600">21</td><td class="text-center font-black text-indigo-600">18</td></tr>
+                                    <tr><td class="py-2">Oitavas</td><td class="text-center text-blue-600">x1.5</td><td class="text-center font-black text-green-600">37</td><td class="text-center font-black text-blue-600">27</td><td class="text-center font-black text-indigo-600">22</td></tr>
+                                    <tr><td class="py-2">Quartas</td><td class="text-center text-blue-600">x2.0</td><td class="text-center font-black text-green-600">50</td><td class="text-center font-black text-blue-600">36</td><td class="text-center font-black text-indigo-600">30</td></tr>
+                                    <tr><td class="py-2">Semifinais</td><td class="text-center text-blue-600">x2.5</td><td class="text-center font-black text-green-600">62</td><td class="text-center font-black text-blue-600">45</td><td class="text-center font-black text-indigo-600">37</td></tr>
+                                    <tr class="bg-blue-50/40"><td class="py-2 text-blue-700">Finais</td><td class="text-center text-blue-700">x3.0</td><td class="text-center font-black text-green-600">75</td><td class="text-center font-black text-blue-600">54</td><td class="text-center font-black text-indigo-600">45</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -223,11 +250,11 @@
                         <ul class="space-y-2 text-xs text-gray-600 font-bold leading-relaxed">
                             <li class="flex items-start gap-2">
                                 <span>🔒</span>
-                                <span>O palpite de cada jogo fecha automaticamente <span class="text-amber-600 font-black">5 minutos antes</span> do horário de início da partida marcada na tabela.</span>
+                                <span>O bloqueio de cada partida ocorre de forma automática <span class="text-amber-600 font-black">5 minutos antes</span> do horário de início oficial marcado na tabela.</span>
                             </li>
                             <li class="flex items-start gap-2">
                                 <span>🔄</span>
-                                <span>Você pode alterar e modificar os palpites que já salvou <span class="text-green-600 font-black">quantas vezes quiser</span>, desde que o cronômetro do jogo ainda não tenha atingido o limite de 5 minutos.</span>
+                                <span>Dentro desse prazo, você tem total liberdade para alterar, revisar e salvar as suas apostas <span class="text-green-600 font-black">quantas vezes quiser</span>.</span>
                             </li>
                         </ul>
                     </div>
@@ -235,9 +262,9 @@
                     <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-emerald-500">
                         <h3 class="text-emerald-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">💰 Valores e Premiações</h3>
                         <div class="bg-emerald-50 text-emerald-800 font-black text-center p-3 rounded-xl border border-emerald-100 text-sm mb-4">
-                            Inscrição: R$ 10,00 por participante
+                            Taxa de Inscrição: R$ 10,00 por participante
                         </div>
-                        <p class="text-slate-500 text-[11px] mb-3 font-medium leading-relaxed">Todo o valor total arrecadado com as inscrições do bolão será distribuído integralmente entre os 3 primeiros colocados do ranking ao final do torneio, seguindo as proporções:</p>
+                        <p class="text-slate-500 text-[11px] mb-3 font-medium leading-relaxed">O montante total arrecadado com as inscrições do bolão será convertido integralmente em premiação, sendo distribuído ao final do torneio na seguinte proporção:</p>
                         
                         <table class="w-full text-xs font-bold text-gray-700">
                             <tbody>
@@ -250,7 +277,6 @@
                 </div>
             `;
         }
-
         function initAppSimplificado() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
