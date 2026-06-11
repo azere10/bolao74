@@ -112,9 +112,9 @@
                     } else {
                         textoPalpite = `<span class="font-black text-gray-800">${palp.palpite_a} × ${palp.palpite_b}</span>`;
                         
-                        // Executa a árvore lógica idêntica à do banco para mostrar os pontos na tela
+                        // CORREÇÃO CRÍTICA: Ajustado de 'p.palpite_b' para 'palp.palpite_b'
                         if (j.gols_a_oficial !== null && j.gols_b_oficial !== null) {
-                            if (palp.palpite_a === j.gols_a_oficial && p.palpite_b === j.gols_b_oficial) {
+                            if (palp.palpite_a === j.gols_a_oficial && palp.palpite_b === j.gols_b_oficial) {
                                 pontosGerados = 25; badgeCor = 'bg-green-600 text-white';
                             } else if (j.gols_a_oficial !== j.gols_b_oficial && Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial) && (palp.palpite_a - palp.palpite_b) === (j.gols_a_oficial - j.gols_b_oficial)) {
                                 pontosGerados = 18; badgeCor = 'bg-blue-600 text-white';
@@ -132,7 +132,7 @@
                 return `
                     <div class="bg-white p-3 rounded-xl border flex justify-between items-center gap-2 shadow-sm">
                         <div class="flex-1 min-w-0">
-                            <p class="text-[8px] font-bold text-gray-400 uppercase">${j.fase} | Oficial: <span class="text-gray-700">${placerOficial}</span></p>
+                            <p class="text-[8px] font-bold text-gray-400 uppercase">${j.fase} | Oficial: <span class="text-gray-700">${placarOficial}</span></p>
                             <p class="font-bold text-gray-700 truncate text-[11px] mt-0.5">${j.time_a} x ${j.time_b}</p>
                         </div>
                         <div class="text-center px-2 border-l border-r border-gray-100 min-w-[100px]">
