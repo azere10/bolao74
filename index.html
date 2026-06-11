@@ -145,7 +145,9 @@
             document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
             document.getElementById(`tab-${nome}`).classList.add('tab-active');
             document.getElementById('controles-grupos').style.display = nome === 'grupos' ? 'flex' : 'none';
-            document.getElementById('btn-salvar').style.display = nome === 'ranking' ? 'none' : 'block';
+            
+            // Oculta o botão salvar se estiver no ranking ou nas regras
+            document.getElementById('btn-salvar').style.display = (nome === 'ranking' || nome === 'regras') ? 'none' : 'block';
             renderizarConteudo();
         }
 
