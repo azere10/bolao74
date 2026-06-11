@@ -123,7 +123,11 @@
             document.querySelectorAll('.fase-mm-btn').forEach(b => {
                 b.className = "fase-mm-btn px-4 py-2 bg-slate-800 text-slate-400 font-black text-xs rounded-lg transition-all";
             });
-            document.getElementById(`btn-fase-${fase}`).className = "fase-mm-btn px-4 py-2 bg-blue-600 text-white font-black text-xs rounded-lg transition-all shadow-md";
+            
+            const btnAtivo = document.getElementById(`btn-fase-${fase}`);
+            if (btnAtivo) {
+                btnAtivo.className = "fase-mm-btn px-4 py-2 bg-blue-600 text-white font-black text-xs rounded-lg transition-all shadow-md";
+            }
             renderizarPainelMataMata();
         }
 
@@ -131,7 +135,18 @@
             const container = document.getElementById('lista-jogos-matamata');
             if(!container) return;
             container.innerHTML = '';
-            const list = dadosJogos.filter(j => j.fase.toLowerCase().includes(filtroMataMataAtual.toLowerCase()));
+            
+            const termoBusca = (filtroMataMataAtual || '').toLowerCase();
+            const list = dadosJogos.filter(j => {
+                if (!j.fase) return false; // Ignora se o registro vier corrompido ou nulo do banco
+                return j.fase.toLowerCase().includes(termoBusca);
+            });
+
+            if(list.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center p-8 text-slate-500 font-bold text-xs uppercase tracking-wider">Nenhum jogo configurado para esta fase no banco.</div>`;
+                return;
+            }
+
             container.innerHTML = list.map(j => cardAdminJogo(j)).join('');
         }
 
@@ -145,7 +160,7 @@
                 <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow flex flex-col justify-between">
                     <div class="flex justify-between items-center text-[9px] font-black uppercase text-slate-500 tracking-wider mb-3 border-b border-slate-800/60 pb-1">
                         <span>📅 ${dtStr}</span>
-                        <span>${j.fase}</span>
+                        <span>${j.fase ? j.fase : 'Mata-Mata'}</span>
                     </div>
                     <div class="grid grid-cols-7 items-center gap-2">
                         <div class="col-span-2 text-right font-black text-xs text-slate-200 uppercase tracking-tight truncate">${j.time_a}</div>
@@ -194,7 +209,7 @@
                 alert("✅ Resultados oficiais salvos e ranking atualizado com sucesso!"); 
                 await carregarDados();
             } catch (e) { 
-                alert("Erro crítico: " + e.message); 
+                alert("Erro crítico ao consolidar ranking: " + e.message); 
             }
             btn.innerText = "SALVAR TUDO"; btn.disabled = false;
         }
