@@ -292,20 +292,20 @@
             btn.disabled = true;
             
             try {
-                // Captura todos os inputs do time A
                 const inputsA = document.querySelectorAll('input[id^="g-a-"]');
                 const promessas = [];
 
+                // Expressão regular para validar se o ID extraído é um UUID válido do Postgres
+                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
                 for (let inputA of inputsA) {
-                    // Ignora IDs falsos ou gerados incorretamente
                     if (!inputA.id || inputA.id.includes('fake')) continue;
                     
-                    // Extrai e limpa o ID do jogo
                     const idJogo = inputA.id.replace('g-a-', '').trim();
                     
-                    // Validação de segurança: se o ID for vazio, pula para o próximo para não travar o banco
-                    if (!idJogo) {
-                        console.warn("Aviso: ID do jogo ignorado por estar vazio.", inputA.id);
+                    // CRÍTICO: Validação estrutural do ID. Se não for um UUID legítimo, ignora silenciosamente
+                    if (!idJogo || !uuidRegex.test(idJogo)) {
+                        console.warn(`[Bolão74] Input ignorado por possuir ID incompatível com o banco: "${idJogo}"`);
                         continue;
                     }
 
@@ -314,7 +314,7 @@
                     if (!elB) continue;
                     const gbValue = elB.value.trim();
 
-                    // Caso 1: Ambos preenchidos -> Atualiza direto na tabela jogos
+                    // Caso 1: Ambos os campos preenchidos -> Atualiza o placar
                     if (gaValue !== "" && gbValue !== "") {
                         promessas.push(
                             _supabase
@@ -323,10 +323,10 @@
                                     gols_a_oficial: parseInt(gaValue), 
                                     gols_b_oficial: parseInt(gbValue) 
                                 })
-                                .eq('id', idJogo) // Onde o ID é igual ao do jogo atual
+                                .eq('id', idJogo)
                         );
                     } 
-                    // Caso 2: Ambos os campos limpos -> Reseta os placares para NULL
+                    // Caso 2: Ambos os campos vazios -> Reseta para NULL
                     else if (gaValue === "" && gbValue === "") {
                         promessas.push(
                             _supabase
@@ -340,12 +340,12 @@
                     }
                 }
                 
-                // Executa todas as atualizações no banco em paralelo
+                // Executa as requisições seguras em paralelo
                 if (promessas.length > 0) {
                     await Promise.all(promessas);
                 }
                 
-                // Ativa o motor para recalcular a tabela de pontos do zero absoluto
+                // Dispara o motor de recálculo soberano sem acúmulos
                 const { error: rpcError } = await _supabase.rpc('admin_recalcular_tudo');
                 if (rpcError) throw rpcError;
                 
