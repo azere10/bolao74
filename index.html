@@ -79,7 +79,6 @@
 
             if(!userLogin || !pass) return alert("Preencha o Usuário e a Senha.");
 
-            // Fazemos uma query direta na tabela perfis para validar o login customizado
             const { data: perfis, error } = await _supabase
                 .from('perfis')
                 .select('*')
@@ -90,7 +89,6 @@
                 return alert("Usuário ou senha incorretos!");
             }
 
-            // Atribuímos o perfil encontrado como o usuário ativo da sessão
             currentUser = perfis[0];
             initAppSimplificado();
         }
@@ -98,7 +96,7 @@
         function initAppSimplificado() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('auth-header').innerHTML = `${currentUser.nome_completo} | <button onclick="location.reload()" class="underline">SAIR</button>`;
+            document.getElementById('auth-header').innerHTML = `${currentUser.nome_completo} | <button onclick="location.reload()" class="underline text-red-300">SAIR</button>`;
             carregarDados();
         }
 
@@ -178,6 +176,7 @@
             const existe = !!j;
             const bloqueado = existe ? (new Date(j.data_hora) - new Date()) / 60000 < 5 : true;
             const p = existe ? (meusPalpites.find(x => x.jogo_id === j.id) || {palpite_a:'', palpite_b:''}) : {palpite_a:'', palpite_b:''};
+            const inputId = existe ? j.id : 'fake-' + idS;
             return `
                 <div class="bg-white p-3 rounded-xl border ${bloqueado && existe ? 'opacity-60 grayscale' : 'border-l-4 border-l-blue-500'} mb-2 shadow-sm">
                     <div class="flex justify-between text-[7px] font-black text-gray-400 uppercase mb-2">
@@ -187,9 +186,9 @@
                     <div class="flex items-center justify-between gap-2">
                         <span class="flex-1 text-right font-black text-[11px] truncate ${!existe?'text-gray-300':''}">${existe?j.time_a:sA}</span>
                         <div class="flex items-center gap-1">
-                            <input type="number" id="p-a-${existe?j.id:'f'}" value="${p.palpite_a}" ${bloqueado?'readonly':''} class="w-9 h-9 border rounded-lg text-center font-black text-md ${bloqueado?'bg-gray-100':'border-blue-100'}">
+                            <input type="number" id="p-a-${inputId}" value="${p.palpite_a}" ${bloqueado?'readonly':''} class="w-9 h-9 border rounded-lg text-center font-black text-md ${bloqueado?'bg-gray-100':'border-blue-100'}">
                             <span class="text-gray-200">×</span>
-                            <input type="number" id="p-b-${existe?j.id:'f'}" value="${p.palpite_b}" ${bloqueado?'readonly':''} class="w-9 h-9 border rounded-lg text-center font-black text-md ${bloqueado?'bg-gray-100':'border-blue-100'}">
+                            <input type="number" id="p-b-${inputId}" value="${p.palpite_b}" ${bloqueado?'readonly':''} class="w-9 h-9 border rounded-lg text-center font-black text-md ${bloqueado?'bg-gray-100':'border-blue-100'}">
                         </div>
                         <span class="flex-1 text-left font-black text-[11px] truncate ${!existe?'text-gray-300':''}">${existe?j.time_b:sB}</span>
                     </div>
@@ -216,14 +215,15 @@
             const inputs = document.querySelectorAll('input[id^="p-a-"]');
             const upserts = [];
             inputs.forEach(iA => {
-                if(iA.id.includes('f') || iA.readOnly) return;
+                if(iA.id.includes('fake-') || iA.readOnly) return;
                 const idJ = iA.id.replace('p-a-', '');
                 const vA = iA.value;
                 const vB = document.getElementById(`p-b-${idJ}`).value;
                 if(vA !== '' && vB !== '') upserts.push({user_id:currentUser.id, jogo_id:idJ, palpite_a:parseInt(vA), palpite_b:parseInt(vB)});
             });
+            if(upserts.length === 0) return alert("Nenhum palpite novo para salvar.");
             const { error } = await _supabase.from('palpites').upsert(upserts, { onConflict: 'user_id,jogo_id' });
-            alert(error ? "Erro ao salvar" : "✅ Palpites Salvos!");
+            alert(error ? "Erro ao salvar palpites" : "✅ Palpites Salvos!");
             carregarDados();
         }
 
