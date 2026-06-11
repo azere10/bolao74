@@ -16,167 +16,274 @@
         <div class="container mx-auto flex justify-between items-center flex-wrap gap-4">
             <h1 class="text-xl font-black italic text-blue-500">BOLÃO74 ADMIN</h1>
             <nav class="flex overflow-x-auto gap-1 bg-black p-1 rounded-lg no-scrollbar">
-                <button onclick="mudarAba('grupos')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded tab-active" id="tab-grupos">GRUPOS</button>
-                <button onclick="mudarAba('matamata')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-matamata">MATA-MATA</button>
-                <button onclick="mudarAba('perfis')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-perfis">CADASTRAR PARTICIPANTE</button>
+                <button onclick="mudarAba('grupos')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-grupos">GRUPOS</button>
+                <button onclick="mudarAba('segundas')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-segundas">2ªs DE FINAL</button>
+                <button onclick="mudarAba('oitavas')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-oitavas">OITAVAS</button>
+                <button onclick="mudarAba('quartas')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-quartas">QUARTAS</button>
+                <button onclick="mudarAba('semis')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-semis">SEMIS</button>
+                <button onclick="mudarAba('finais')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded" id="tab-finais">FINAIS</button>
+                <button onclick="mudarAba('usuarios')" class="aba-btn px-3 py-1 text-[10px] font-bold rounded text-amber-400" id="tab-usuarios">GERE. USUÁRIOS</button>
             </nav>
+            <button onclick="processarAtualizacao()" id="btn-main" class="bg-green-600 px-6 py-2 rounded-lg font-black text-sm">SALVAR TUDO</button>
         </div>
     </header>
 
-    <main class="container mx-auto p-4 max-w-4xl">
-        
-        <section id="aba-grupos" class="secao space-y-6">
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
-                <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">Seletor de Grupo</h2>
-                <div class="flex flex-wrap gap-1.5" id="botoes-filtros-grupos">
-                    </div>
-            </div>
-            <div id="lista-jogos-grupos" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                </div>
-        </section>
+    <main class="container mx-auto p-4 md:p-8">
+        <div id="aba-grupos" class="secao grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <div id="aba-segundas" class="secao hidden space-y-4"></div>
+        <div id="aba-oitavas" class="secao hidden space-y-4"></div>
+        <div id="aba-quartas" class="secao hidden space-y-4"></div>
+        <div id="aba-semis" class="secao hidden space-y-4"></div>
+        <div id="aba-finais" class="secao hidden space-y-4"></div>
 
-        <section id="aba-matamata" class="secao hidden space-y-6">
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
-                <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">Fases do Mata-Mata</h2>
-                <div class="flex flex-wrap gap-1.5">
-                    <button onclick="filtrarMataMata('segundas')" id="btn-fase-segundas" class="fase-mm-btn px-4 py-2 bg-blue-600 text-white font-black text-xs rounded-lg transition-all shadow-md">16-AVOS</button>
-                    <button onclick="filtrarMataMata('oitavas')" id="btn-fase-oitavas" class="fase-mm-btn px-4 py-2 bg-slate-800 text-slate-400 font-black text-xs rounded-lg transition-all">OITAVAS</button>
-                    <button onclick="filtrarMataMata('quartas')" id="btn-fase-quartas" class="fase-mm-btn px-4 py-2 bg-slate-800 text-slate-400 font-black text-xs rounded-lg transition-all">QUARTAS</button>
-                    <button onclick="filtrarMataMata('semis')" id="btn-fase-semis" class="fase-mm-btn px-4 py-2 bg-slate-800 text-slate-400 font-black text-xs rounded-lg transition-all">SEMIS</button>
-                    <button onclick="filtrarMataMata('finais')" id="btn-fase-finais" class="fase-mm-btn px-4 py-2 bg-slate-800 text-slate-400 font-black text-xs rounded-lg transition-all">FINAIS</button>
+        <div id="aba-usuarios" class="secao hidden space-y-6">
+            <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 max-w-md mx-auto">
+                <h3 class="text-md font-black uppercase text-blue-500 mb-4">Criar Usuário Simplificado</h3>
+                <div class="space-y-3">
+                    <input type="text" id="add-nome" placeholder="Nome Completo / Exibição" class="w-full bg-slate-950 p-3 rounded border border-slate-800 outline-none focus:border-blue-500 text-sm">
+                    <input type="text" id="add-login" placeholder="Usuário para entrar (Ex: joao74)" class="w-full bg-slate-950 p-3 rounded border border-slate-800 outline-none focus:border-blue-500 text-sm">
+                    <input type="text" id="add-senha" placeholder="Senha Acesso" class="w-full bg-slate-950 p-3 rounded border border-slate-800 outline-none focus:border-blue-500 text-sm">
+                    <button onclick="criarUsuarioSistema()" class="w-full bg-blue-600 py-3 rounded font-black text-sm hover:bg-blue-500">CRIAR PARTICIPANTE</button>
                 </div>
             </div>
-            <div id="lista-jogos-matamata" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                </div>
-        </section>
 
-        <section id="aba-perfis" class="secao hidden max-w-md mx-auto">
-            <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg space-y-4">
-                <div>
-                    <h2 class="text-md font-black text-white italic uppercase tracking-wider">Novo Participante</h2>
-                    <p class="text-[10px] text-slate-500 font-medium">Cadastre o nome exato que o usuário usará para acessar via URL (?user=Nome)</p>
-                </div>
-                <div class="space-y-1.5">
-                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Nome Completo</label>
-                    <input type="text" id="novo-perfil-nome" placeholder="Ex: João Silva" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white font-bold outline-none focus:ring-2 ring-blue-500">
-                </div>
-                <button onclick="cadastrarPerfil()" class="w-full bg-blue-600 text-white font-black text-xs p-3.5 rounded-lg shadow-md hover:bg-blue-700 transition-all uppercase tracking-wider">
-                    ➕ INSERIR PARTICIPANTE
-                </button>
+            <div class="bg-slate-900 rounded-xl border border-slate-800 max-w-2xl mx-auto overflow-hidden">
+                <table class="w-full text-left text-xs text-slate-400">
+                    <thead class="bg-slate-950 text-[10px] font-bold uppercase border-b border-slate-800 text-slate-500">
+                        <tr>
+                            <th class="p-4">Participante</th>
+                            <th class="p-4">Login</th>
+                            <th class="p-4">Senha</th>
+                            <th class="p-4 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-usuarios-tabela" class="divide-y divide-slate-800/50"></tbody>
+                </table>
             </div>
-        </section>
-
-    </main>
-
-    <div class="fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur border-t border-slate-800 p-4 z-40">
-        <div class="container mx-auto max-w-4xl flex justify-between items-center">
-            <p class="text-[10px] font-bold text-slate-500 uppercase max-w-xs hidden sm:block">Atenção: Ao clicar em salvar, todos os placares preenchidos serão consolidados e as pontuações recalculadas do zero absoluto.</p>
-            <button id="btn-main" onclick="processarAtualizacao()" class="w-full sm:w-auto bg-green-600 text-white font-black text-xs px-8 py-3.5 rounded-lg shadow-xl hover:bg-green-700 active:scale-95 transition-all uppercase tracking-wider border border-green-700">
-                SALVAR TUDO
-            </button>
         </div>
-    </div>
+    </main>
 
     <script>
         const SUPABASE_URL = 'https://auwzjdjyaqvqvznpfvif.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let dadosJogos = [];
-        let filtroGrupoAtual = 'A';
-        let filtroMataMataAtual = 'segundas';
+        let todosJogos = [];
+        let rankings = {};
+
+        const MAPA_MATA_MATA = {
+            "segundas": [{ id: "J73", timeA: "2A", timeB: "2B", data: "2026-06-28 16:00" },{ id: "J74", timeA: "1E", timeB: "3ABCD", data: "2026-06-29 17:30" },{ id: "J75", timeA: "1F", timeB: "2C", data: "2026-06-29 22:00" },{ id: "J76", timeA: "1C", timeB: "2F", data: "2026-06-29 14:00" },{ id: "J77", timeA: "1I", timeB: "3CDFGH", data: "2026-06-30 18:00" },{ id: "J78", timeA: "2E", timeB: "2I", data: "2026-06-30 14:00" },{ id: "J79", timeA: "1A", timeB: "3CEFHI", data: "2026-06-30 22:00" },{ id: "J80", timeA: "1L", timeB: "3EHIJK", data: "2026-07-01 13:00" },{ id: "J81", timeA: "1D", timeB: "3BEFIJ", data: "2026-07-01 21:00" },{ id: "J82", timeA: "1G", timeB: "3AEHIJ", data: "2026-07-01 17:00" },{ id: "J83", timeA: "2K", timeB: "2L", data: "2026-07-02 20:00" },{ id: "J84", timeA: "1H", timeB: "2J", data: "2026-07-02 16:00" },{ id: "J85", timeA: "1B", timeB: "3EFGIJ", data: "2026-07-03 00:00" },{ id: "J86", timeA: "1J", timeB: "2H", data: "2026-07-03 19:00" },{ id: "J87", timeA: "1K", timeB: "3DEIJL", data: "2026-07-03 22:30" },{ id: "J88", timeA: "2D", timeB: "2G", data: "2026-07-03 15:00" }],
+            "oitavas": [{ id: "J89", timeA: "Venc J74", timeB: "Venc J77", data: "2026-07-04 18:00" },{ id: "J90", timeA: "Venc J73", timeB: "Venc J75", data: "2026-07-04 14:00" },{ id: "J91", timeA: "Venc J76", timeB: "Venc J78", data: "2026-07-05 17:00" },{ id: "J92", timeA: "Venc J79", timeB: "Venc J80", data: "2026-07-05 21:00" },{ id: "J93", timeA: "Venc J83", timeB: "Venc J84", data: "2026-07-06 16:00" },{ id: "J94", timeA: "Venc J81", timeB: "Venc J82", data: "2026-07-06 21:00" },{ id: "J95", timeA: "Venc J86", timeB: "Venc J88", data: "2026-07-07 13:00" },{ id: "J96", timeA: "Venc J85", timeB: "Venc J87", data: "2026-07-07 17:00" }],
+            "quartas": [{ id: "J97", timeA: "Venc J89", timeB: "Venc J90", data: "2026-07-09 17:00" },{ id: "J98", timeA: "Venc J93", timeB: "Venc J94", data: "2026-07-10 16:00" },{ id: "J99", timeA: "Venc J91", timeB: "Venc J92", data: "2026-07-11 18:00" },{ id: "J100", timeA: "Venc J95", timeB: "Venc J96", data: "2026-07-11 22:00" }],
+            "semis": [{ id: "J101", timeA: "Venc J97", timeB: "Venc J98", data: "2026-07-14 16:00" },{ id: "J102", timeA: "Venc J99", timeB: "Venc J100", data: "2026-07-15 16:00" }],
+            "finais": [{ id: "J103", timeA: "Perd J101", timeB: "Perd J102", data: "2026-07-18 18:00" },{ id: "J104", timeA: "Venc J101", timeB: "Venc J102", data: "2026-07-19 16:00" }]
+        };
 
         async function carregarDados() {
-            const { data, error } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
-            if (!error && data) {
-                dadosJogos = data;
-                renderizarFiltrosGrupos();
-                renderizarPainelGrupos();
-                renderizarPainelMataMata();
-            }
+            const { data } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
+            todosJogos = data || [];
+            calcularRankings();
+            renderizarGrupos();
+            ['segundas', 'oitavas', 'quartas', 'semis', 'finais'].forEach(renderizarMataMata);
+            carregarUsuariosAdmin();
         }
 
-        function renderizarFiltrosGrupos() {
-            const box = document.getElementById('botoes-filtros-grupos');
-            if(!box) return;
-            box.innerHTML = '';
-            ['A','B','C','D','E','F','G','H','I','J','K','L'].forEach(g => {
-                const act = filtroGrupoAtual === g;
-                box.innerHTML += `
-                    <button onclick="definirGrupoFiltro('${g}')" class="px-3.5 py-2 font-black text-xs rounded-lg transition-all ${act ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-800 text-slate-400'}">
-                        G-${g}
-                    </button>`;
-            });
-        }
-
-        function definirGrupoFiltro(g) {
-            filtroGrupoAtual = g;
-            renderizarFiltrosGrupos();
-            renderizarPainelGrupos();
-        }
-
-        function renderizarPainelGrupos() {
-            const container = document.getElementById('lista-jogos-grupos');
-            if(!container) return;
-            container.innerHTML = '';
-            const list = dadosJogos.filter(j => j.fase === `Grupo ${filtroGrupoAtual}`);
-            container.innerHTML = list.map(j => cardAdminJogo(j)).join('');
-        }
-
-        function filtrarMataMata(fase) {
-            filtroMataMataAtual = fase;
-            document.querySelectorAll('.fase-mm-btn').forEach(b => {
-                b.className = "fase-mm-btn px-4 py-2 bg-slate-800 text-slate-400 font-black text-xs rounded-lg transition-all";
-            });
+        async function carregarUsuariosAdmin() {
+            // Busca os perfis ordenados por maior pontuação (Ranking)
+            const { data: users } = await _supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
+            const tbody = document.getElementById('lista-usuarios-tabela');
             
-            const btnAtivo = document.getElementById(`btn-fase-${fase}`);
-            if (btnAtivo) {
-                btnAtivo.className = "fase-mm-btn px-4 py-2 bg-blue-600 text-white font-black text-xs rounded-lg transition-all shadow-md";
+            // Atualiza o cabeçalho da tabela para incluir as colunas corretas
+            const thead = document.querySelector('#aba-usuarios table thead tr');
+            if (thead) {
+                thead.innerHTML = `
+                    <th class="p-4">Pos</th>
+                    <th class="p-4">Participante</th>
+                    <th class="p-4 text-center">Pontos</th>
+                    <th class="p-4">Login</th>
+                    <th class="p-4">Senha</th>
+                    <th class="p-4 text-center">Ações</th>
+                `;
             }
-            renderizarPainelMataMata();
+
+            tbody.innerHTML = (users || []).map((u, i) => `
+                <tr class="hover:bg-slate-900/30 ${i === 0 ? 'bg-amber-500/5' : ''}">
+                    <td class="p-4 font-bold text-slate-500 text-xs">#${i + 1}</td>
+                    <td class="p-4 font-bold text-white text-sm">
+                        ${u.nome_completo} ${i === 0 ? '👑' : ''}
+                    </td>
+                    <td class="p-4 text-center font-black text-blue-400 text-sm bg-slate-900/40">
+                        ${u.pontos_total || 0}
+                    </td>
+                    <td class="p-4 text-slate-400 font-mono text-xs">${u.usuario_login || '---'}</td>
+                    <td class="p-4 text-slate-500 font-mono text-xs select-none">••••••</td>
+                    <td class="p-4 text-center space-x-2">
+                        <button onclick="alterarSenhaUsuarioAdmin('${u.id}', '${u.nome_completo}')" class="bg-blue-950/60 hover:bg-blue-900 text-blue-400 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors">Alterar Senha</button>
+                        <button onclick="deletarUsuarioSistema('${u.id}')" class="bg-red-950/50 hover:bg-red-900 text-red-400 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors">Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        function renderizarPainelMataMata() {
-            const container = document.getElementById('lista-jogos-matamata');
-            if(!container) return;
-            container.innerHTML = '';
+        // Nova função para você redefinir senhas pelo painel
+        async function alterarSenhaUsuarioAdmin(id, nome) {
+            const novaSenha = prompt(`Digite a nova senha para o usuário "${nome}":`);
+            if (novaSenha === null) return; // Se o admin cancelar
+            if (novaSenha.trim() === "") return alert("A senha não pode ser vazia!");
 
-            const termoBusca = (filtroMataMataAtual || '').toLowerCase();
-            const list = dadosJogos.filter(j => {
-                if (!j.fase) return false;
-                return j.fase.toLowerCase().includes(termoBusca);
+            const { error } = await _supabase
+                .from('perfis')
+                .update({ senha_plana: novaSenha.trim() })
+                .eq('id', id);
+
+            if (error) {
+                alert("Erro ao alterar senha: " + error.message);
+            } else {
+                alert(`✅ Senha de "${nome}" atualizada com sucesso!`);
+                carregarDados();
+            }
+        }
+        async function criarUsuarioSistema() {
+            const nome = document.getElementById('add-nome').value.trim();
+            const login = document.getElementById('add-login').value.trim().toLowerCase();
+            const senha = document.getElementById('add-senha').value;
+
+            if(!nome || !login || !senha) return alert("Preencha todos os campos!");
+
+            const novoUserId = crypto.randomUUID();
+
+            const { error } = await _supabase.from('perfis').insert([{
+                id: novoUserId,
+                nome_completo: nome,
+                usuario_login: login,
+                senha_plana: senha,
+                pontos_total: 0
+            }]);
+
+            if(error) {
+                alert("Erro ao criar usuário: " + error.message);
+            } else {
+                alert("✨ Usuário criado com sucesso!");
+                document.getElementById('add-nome').value = '';
+                document.getElementById('add-login').value = '';
+                document.getElementById('add-senha').value = '';
+                carregarDados();
+            }
+        }
+
+        async function deletarUsuarioSistema(id) {
+            if(confirm("Tem certeza que deseja excluir este participante? Todos os palpites dele serão apagados permanentemente!")) {
+                const { error } = await _supabase.rpc('admin_excluir_usuario', { user_id_param: id });
+                if(error) alert("Erro: " + error.message);
+                else { alert("Participante excluído."); carregarDados(); }
+            }
+        }
+
+        function calcularRankings() {
+            const grupos = [...new Set(todosJogos.filter(j => j.fase.includes('Grupo')).map(j => j.fase))];
+            rankings = {};
+            grupos.forEach(fase => {
+                const jf = todosJogos.filter(j => j.fase === fase);
+                const tab = {};
+                jf.forEach(j => {
+                    [j.time_a, j.time_b].forEach(t => { if(!tab[t]) tab[t] = {pts:0, sg:0, gp:0, nome:t}; });
+                    if(j.gols_a_oficial !== null) {
+                        tab[j.time_a].gp += j.gols_a_oficial; tab[j.time_a].sg += (j.gols_a_oficial - j.gols_b_oficial);
+                        tab[j.time_b].gp += j.gols_b_oficial; tab[j.time_b].sg += (j.gols_b_oficial - j.gols_a_oficial);
+                        if(j.gols_a_oficial > j.gols_b_oficial) tab[j.time_a].pts += 3;
+                        else if(j.gols_b_oficial > j.gols_a_oficial) tab[j.time_b].pts += 3;
+                        else { tab[j.time_a].pts += 1; tab[j.time_b].pts += 1; }
+                    }
+                });
+                rankings[fase] = Object.values(tab).sort((a,b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
             });
-
-            if (list.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center p-8 text-slate-500 font-bold text-xs uppercase tracking-wider">Nenhum jogo configurado para esta fase no banco.</div>`;
-                return;
-            }
-
-            container.innerHTML = list.map(j => cardAdminJogo(j)).join('');
         }
 
-        function cardAdminJogo(j) {
-            const valA = j.gols_a_oficial !== null ? j.gols_a_oficial : '';
-            const valB = j.gols_b_oficial !== null ? j.gols_b_oficial : '';
-            const date = new Date(j.data_hora);
-            const dtStr = date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) + ' ' + date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+        function renderizarGrupos() {
+            const container = document.getElementById('aba-grupos');
+            container.innerHTML = Object.keys(rankings).map(fase => `
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                    <h2 class="text-blue-500 font-black mb-4 uppercase text-sm">${fase}</h2>
+                    <div class="space-y-3 mb-4">
+                        ${todosJogos.filter(j => j.fase === fase).map(j => `
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 text-right text-[10px] font-bold truncate">${j.time_a}</div>
+                                <div class="flex gap-1">
+                                    <input type="number" id="g-a-${j.id}" value="${j.gols_a_oficial ?? ''}" class="w-8 h-8 bg-slate-800 border border-slate-700 text-center rounded text-blue-400 font-bold">
+                                    <input type="number" id="g-b-${j.id}" value="${j.gols_b_oficial ?? ''}" class="w-8 h-8 bg-slate-800 border border-slate-700 text-center rounded text-blue-400 font-bold">
+                                </div>
+                                <div class="flex-1 text-left text-[10px] font-bold truncate">${j.time_b}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <table class="w-full text-[10px] border-t border-slate-800 pt-2">
+                        ${rankings[fase].map((t, i) => `<tr class="${i<2?'text-green-400':''}"><td>${i+1}º ${t.nome}</td><td class="text-right">${t.pts}p</td></tr>`).join('')}
+                    </table>
+                </div>
+            `).join('');
+        }
 
-            return `
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow flex flex-col justify-between">
-                    <div class="flex justify-between items-center text-[9px] font-black uppercase text-slate-500 tracking-wider mb-3 border-b border-slate-800/60 pb-1">
-                        <span>📅 ${dtStr}</span>
-                        <span>${j.fase ? j.fase : 'Mata-Mata'}</span>
-                    </div>
-                    <div class="grid grid-cols-7 items-center gap-2">
-                        <div class="col-span-2 text-right font-black text-xs text-slate-200 uppercase tracking-tight truncate">${j.time_a}</div>
-                        <div class="col-span-3 flex items-center justify-center gap-1.5 bg-slate-950 p-2 rounded-lg border border-slate-800 shadow-inner">
-                            <input type="number" id="g-a-${j.id}" value="${valA}" placeholder="-" class="w-10 h-10 bg-slate-900 border border-slate-800 text-center font-black text-sm text-white rounded-md outline-none focus:ring-2 ring-blue-500">
-                            <span class="text-[10px] font-black text-slate-600 uppercase">X</span>
-                            <input type="number" id="g-b-${j.id}" value="${valB}" placeholder="-" class="w-10 h-10 bg-slate-900 border border-slate-800 text-center font-black text-sm text-white rounded-md outline-none focus:ring-2 ring-blue-500">
+        function renderizarMataMata(aba) {
+            const container = document.getElementById('aba-'+aba);
+            const configuracoes = MAPA_MATA_MATA[aba];
+            container.innerHTML = `<h2 class="text-xl font-black italic mb-6 text-center uppercase text-slate-400">${aba.replace('segundas', '16-AVOS')}</h2>` + 
+            configuracoes.map(conf => {
+                const jogoExistente = todosJogos.find(j => j.fase.includes(conf.id));
+                let sugA = resolverTime(conf.timeA);
+                let sugB = resolverTime(conf.timeB);
+                return `
+                    <div class="bg-slate-900 p-4 rounded-xl border ${jogoExistente ? 'border-slate-800' : 'border-blue-500/30 bg-blue-900/10'} flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="text-center md:text-left min-w-[100px]">
+                            <span class="text-blue-500 font-black text-lg">#${conf.id}</span>
+                            <p class="text-[9px] text-slate-500 font-bold">${conf.data}</p>
                         </div>
-                        <div class="col-span-2 text-left font-black text-xs text-slate-200 uppercase tracking-tight truncate">${j.time_b}</div>
-                    </div>
-                </div>`;
+                        <div class="flex items-center gap-4 font-black flex-1 justify-center">
+                            <span class="text-right flex-1 text-sm ${sugA.length > 3 ? 'text-white' : 'text-slate-600'}">${sugA}</span>
+                            ${jogoExistente ? 
+                                `<input type="number" id="g-a-${jogoExistente.id}" value="${jogoExistente.gols_a_oficial ?? ''}" class="w-10 h-10 bg-slate-800 border-2 border-blue-500 rounded text-center text-blue-400">
+                                 <input type="number" id="g-b-${jogoExistente.id}" value="${jogoExistente.gols_b_oficial ?? ''}" class="w-10 h-10 bg-slate-800 border-2 border-blue-500 rounded text-center text-blue-400">` 
+                                : `<div class="flex gap-1"><div class="w-10 h-10 bg-slate-950 rounded border border-slate-800"></div><div class="w-10 h-10 bg-slate-950 rounded border border-slate-800"></div></div>`
+                            }
+                            <span class="text-left flex-1 text-sm ${sugB.length > 3 ? 'text-white' : 'text-slate-600'}">${sugB}</span>
+                        </div>
+                        <div class="min-w-[120px] text-right">
+                            ${!jogoExistente ? 
+                                `<button onclick="oficializar('${sugA}', '${sugB}', '${aba.toUpperCase()}: ${conf.id}', '${conf.data}')" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-black text-[10px]">CRIAR NO BANCO</button>` 
+                                : `<span class="text-green-500 text-[10px] font-black uppercase tracking-widest">OFICIAL</span>`
+                            }
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        function resolverTime(label) {
+            if(label.match(/^[12][A-L]$/)) {
+                const f = "Grupo " + label[1];
+                const pos = parseInt(label[0]) - 1;
+                return rankings[f] && rankings[f][pos] ? rankings[f][pos].nome : label;
+            }
+            if(label.startsWith("Venc J")) {
+                const cod = label.split(' ')[1];
+                const j = todosJogos.find(x => x.fase.includes(cod));
+                if(j && j.gols_a_oficial !== null) return j.gols_a_oficial > j.gols_b_oficial ? j.time_a : j.time_b;
+                return label;
+            }
+            if(label.startsWith("Perd J")) {
+                const cod = label.split(' ')[1];
+                const j = todosJogos.find(x => x.fase.includes(cod));
+                if(j && j.gols_a_oficial !== null) return j.gols_a_oficial < j.gols_b_oficial ? j.time_a : j.time_b;
+                return label;
+            }
+            return label;
+        }
+
+        async function oficializar(ta, tb, fase, data) {
+            if(ta.length <= 3 || tb.length <= 3) return alert("Times ainda não definidos!");
+            const { error } = await _supabase.from('jogos').insert([{ 
+                time_a: ta, time_b: tb, fase: fase, 
+                data_hora: new Date(data.replace(' ', 'T') + ':00Z').toISOString() 
+            }]);
+            if(!error) { alert("Jogo oficializado!"); carregarDados(); }
         }
 
         async function processarAtualizacao() {
@@ -186,48 +293,39 @@
             
             try {
                 const inputsA = document.querySelectorAll('input[id^="g-a-"]');
-                const promessasDeAtualizacao = [];
-
                 for (let inputA of inputsA) {
+                    if (inputA.id.includes('fake')) continue;
+                    
                     const idJogo = inputA.id.replace('g-a-', '');
                     const gaValue = inputA.value;
                     const elB = document.getElementById(`g-b-${idJogo}`);
                     if (!elB) continue;
                     const gbValue = elB.value;
 
+                    // Caso 1: Ambos os campos preenchidos -> Atualiza o placar
                     if (gaValue !== "" && gbValue !== "") {
-                        promessasDeAtualizacao.push(
-                            _supabase.from('jogos').update({ gols_a_oficial: parseInt(gaValue), gols_b_oficial: parseInt(gbValue) }).eq('id', idJogo)
-                        );
-                    } else if (gaValue === "" && gbValue === "") {
-                        promessasDeAtualizacao.push(
-                            _supabase.from('jogos').update({ gols_a_oficial: null, gols_b_oficial: null }).eq('id', idJogo)
-                        );
+                        await _supabase.rpc('admin_atualizar_placar', { 
+                            id_jogo: idJogo, 
+                            g_a: parseInt(gaValue), 
+                            g_b: parseInt(gbValue) 
+                        });
+                    } 
+                    // Caso 2: Ambos os campos limpos -> Reseta o jogo no banco para NULL
+                    else if (gaValue === "" && gbValue === "") {
+                        await _supabase
+                            .from('jogos')
+                            .update({ gols_a_oficial: null, gols_b_oficial: null })
+                            .eq('id', idJogo);
                     }
                 }
                 
-                if (promessasDeAtualizacao.length > 0) await Promise.all(promessasDeAtualizacao);
-                
-                const { error: rpcError } = await _supabase.rpc('admin_recalcular_tudo');
-                if (rpcError) throw rpcError;
-
-                alert("✅ Resultados oficiais salvos e ranking atualizado com sucesso!"); 
+                await _supabase.rpc('admin_recalcular_tudo');
+                alert("Ranking e placares atualizados com sucesso!"); 
                 await carregarDados();
             } catch (e) { 
-                alert("Erro crítico ao consolidar ranking: " + e.message); 
+                alert("Erro ao salvar placares: " + e.message); 
             }
             btn.innerText = "SALVAR TUDO"; btn.disabled = false;
-        }
-
-        async function cadastrarPerfil() {
-            const input = document.getElementById('novo-perfil-nome');
-            const nome = input.value.trim();
-            if(!nome) return alert('Por favor, digite o nome.');
-
-            // CORREÇÃO DE SCHEMA: Alterado de 'nome' para 'nome_completo' para bater com o banco
-            const { error } = await _supabase.from('perfis').insert([{ nome_completo: nome, pontos_total: 0 }]);
-            if(error) alert('Erro ao inserir participante: ' + error.message);
-            else { alert(`✅ "${nome}" cadastrado com sucesso!`); input.value = ''; await carregarDados(); }
         }
 
         function mudarAba(id) {
@@ -237,10 +335,7 @@
             document.getElementById('tab-'+id).classList.add('tab-active');
         }
 
-        window.onload = function() {
-            mudarAba('grupos');
-            carregarDados();
-        };
+        carregarDados();
     </script>
 </body>
 </html>

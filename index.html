@@ -18,59 +18,32 @@
         const SUPABASE_URL = 'https://auwzjdjyaqvqvznpfvif.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        const MAPA_MATA_MATA = {
-            segundas: Array.from({length: 16}, (_, i) => ({ id: `M${i+1}`, tA: `16A_${i+1}`, tB: `16B_${i+1}`, d: 'A definir' })),
-            oitavas: Array.from({length: 8}, (_, i) => ({ id: `O${i+1}`, tA: `Oitavas A_${i+1}`, tB: `Oitavas B_${i+1}`, d: 'A definir' })),
-            quartas: Array.from({length: 4}, (_, i) => ({ id: `Q${i+1}`, tA: `Quartas A_${i+1}`, tB: `Quartas B_${i+1}`, d: 'A definir' })),
-            semis: Array.from({length: 2}, (_, i) => ({ id: `S${i+1}`, tA: `Semi A_${i+1}`, tB: `Semi B_${i+1}`, d: 'A definir' })),
-            finais: [
-                { id: 'F2', tA: 'Perdedor Semi 1', tB: 'Perdedor Semi 2', d: '3º Lugar' },
-                { id: 'F1', tA: 'Vencedor Semi 1', tB: 'Vencedor Semi 2', d: 'Grande Final' }
-            ]
-        };
-
-        let currentUser = null;
-        let todosJogos = [];
-        let meusPalpites = [];
-        let todosPerfis = [];
-        let todosPalpitesBanco = [];
-
-        let abaAtual = 'grupos'; 
-        let modoVisaoGrupo = 'grupo'; 
-        let filtroGrupoAtivo = 'A'; 
-        let filtroDiaAtivo = ''; 
-        let subFaseAtiva = 'segundas'; 
     </script>
 
-    <header class="bg-blue-900 text-white p-4 sticky top-0 z-50 shadow-md">
-        <div class="max-w-md mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-black italic tracking-wider">BOLÃO74</h1>
-                <p class="text-[9px] text-blue-300 font-bold uppercase tracking-widest">🏆 Edição Especial 2026</p>
-            </div>
-            <div id="user-info" class="text-right text-xs font-bold bg-blue-950/40 px-3 py-1.5 rounded-lg border border-blue-800/60">
-                <span class="text-gray-300 block text-[9px] uppercase font-black">Participante</span>
-                <span id="txt-user-name" class="text-blue-200">Carregando...</span>
-            </div>
+    <header class="bg-blue-700 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center flex-wrap gap-2">
+            <h1 class="text-xl font-black italic">BOLÃO74</h1>
+            <div id="auth-header" class="text-[10px] font-bold uppercase tracking-widest flex items-center gap-3"></div>
         </div>
     </header>
 
-    <main class="max-w-md mx-auto p-3">
-        <nav class="flex gap-1 bg-white p-1 rounded-xl shadow-sm border mb-3 sticky top-20 z-40 justify-between select-none">
+    <div id="login-screen" class="container mx-auto px-4 mt-10 max-w-sm">
+        <div class="bg-white p-8 rounded-2xl shadow-xl border">
+            <h2 class="text-xl font-black mb-6 text-center italic text-gray-800">ENTRAR NO BOLÃO</h2>
+            <input type="text" id="usuario" placeholder="Nome de Usuário" onkeydown="verificarEnterLogin(event)" class="w-full p-4 border rounded-xl mb-4 outline-none focus:ring-2 ring-blue-500 font-bold text-center">
+            <input type="password" id="password" placeholder="Sua Senha" onkeydown="verificarEnterLogin(event)" class="w-full p-4 border rounded-xl mb-6 outline-none focus:ring-2 ring-blue-500 font-bold text-center">
+            <button onclick="handleAuthSimplificado()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-blue-700">ENTRAR</button>
+        </div>
+    </div>
+
+    <div id="main-content" class="hidden container mx-auto px-2 mt-4 max-w-2xl">
+        
+        <nav class="flex gap-1 bg-white p-1 rounded-xl shadow-sm border mb-3 sticky top-20 z-40 justify-between">
             <button onclick="mudarAba('grupos')" class="aba-btn flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all" id="tab-grupos">GRUPOS</button>
             <button onclick="mudarAba('matamata')" class="aba-btn flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all" id="tab-matamata">MATA-MATA</button>
             <button onclick="mudarAba('ranking')" class="aba-btn flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all" id="tab-ranking">RANKING</button>
             <button onclick="mudarAba('regras')" class="aba-btn flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all" id="tab-regras">REGRAS</button>
         </nav>
-
-        <div id="controles-grupos" class="bg-white p-2 rounded-xl border mb-3 flex flex-col gap-2 shadow-sm">
-            <div class="flex gap-1 w-full">
-                <button onclick="mudarModoVisao('grupo')" id="btn-visao-grupo" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-blue-600 text-white shadow-sm transition-all">Visão Grupo</button>
-                <button onclick="mudarModoVisao('dia')" id="btn-visao-dia" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-gray-100 text-gray-500 transition-all">Visão por Data</button>
-            </div>
-            <div id="wrapper-seletor-grupo" class="overflow-x-auto no-scrollbar whitespace-nowrap py-1 gap-1 flex"></div>
-        </div>
 
         <div id="controles-matamata" class="hidden bg-white p-1.5 rounded-xl border mb-4 shadow-sm w-full flex flex-row gap-1 justify-between md:justify-center md:gap-3 select-none overflow-hidden">
             <button onclick="selecionarSubFaseMataMata('segundas')" id="btn-sub-segundas" class="sub-fase-btn inline-block py-2 px-2 md:px-5 text-[10px] md:text-xs font-black uppercase tracking-tight transition-all rounded-lg border">16-Avos</button>
@@ -80,399 +53,533 @@
             <button onclick="selecionarSubFaseMataMata('finais')" id="btn-sub-finais" class="sub-fase-btn inline-block py-2 px-2 md:px-5 text-[10px] md:text-xs font-black uppercase tracking-tight transition-all rounded-lg border">Finais</button>
         </div>
 
-        <div id="view-conteudo" class="space-y-3"></div>
-    </main>
-
-    <div class="fixed bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-gray-100 via-gray-100 to-transparent z-40">
-        <div class="max-w-md mx-auto">
-            <button id="btn-salvar" onclick="salvarAlteracoes()" class="w-full bg-green-600 text-white font-black text-sm p-4 rounded-xl shadow-lg border border-green-700 uppercase tracking-wider hover:bg-green-700 active:scale-[0.98] transition-all">
-                💾 SALVAR MEUS PALPITES
-            </button>
+        <div id="controles-grupos" class="flex gap-2 mb-4">
+            <button onclick="setVisaoGrupo('grupo')" id="btn-visao-grupo" class="flex-1 bg-blue-600 text-white text-[9px] font-bold py-2 rounded-lg">VISÃO GRUPOS</button>
+            <button onclick="setVisaoGrupo('dia')" id="btn-visao-dia" class="flex-1 bg-gray-200 text-gray-500 text-[9px] font-bold py-2 rounded-lg">VISÃO POR DIA</button>
         </div>
-    </div>
 
-    <div id="modal-auditoria" class="fixed inset-0 bg-slate-950/60 z-50 hidden flex items-center justify-center p-3">
-        <div class="bg-gray-100 w-full max-w-md h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border">
-            <div class="bg-blue-900 p-4 text-white flex justify-between items-center shadow">
-                <div>
-                    <h2 id="auditoria-titulo" class="font-black italic text-sm uppercase tracking-wide">Auditoria de Palpites</h2>
-                    <p id="auditoria-sub" class="text-[9px] text-blue-200 font-bold uppercase tracking-wider"></p>
-                </div>
-                <button onclick="fecharAuditoria()" class="bg-blue-950/50 hover:bg-red-600 w-8 h-8 flex items-center justify-center rounded-full font-black text-xs transition-colors border border-blue-800/40">✕</button>
-            </div>
-            <div id="auditoria-corpo" class="flex-1 overflow-y-auto p-3 space-y-2.5"></div>
-        </div>
+        <div id="view-conteudo" class="space-y-4"></div>
+
+        <button onclick="salvarTodosPalpites()" id="btn-salvar" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-green-500 text-white font-black py-4 rounded-2xl shadow-2xl z-50">SALVAR PALPITES</button>
     </div>
 
     <script>
-        async function obterUsuarioLogado() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const userParam = urlParams.get('user');
-            
-            if (!userParam) {
-                document.body.innerHTML = `<div class="p-8 text-center text-red-600 font-bold">Erro de Autenticação: Parâmetro ?user=Nome não encontrado na URL.</div>`;
-                return;
+        let currentUser = null;
+        let todosJogos = [];
+        let meusPalpites = [];
+        let abaAtual = 'grupos';
+        let visaoGrupo = 'grupo';
+        let subFaseAtiva = 'segundas'; // Controla qual fase do mata-mata está selecionada internamente
+
+        const MAPA_MATA_MATA = {
+            "segundas": [{id:"J73",tA:"2A",tB:"2B",d:"28/06 16:00"},{id:"J74",tA:"1E",tB:"3ABCD",d:"29/06 17:30"},{id:"J75",tA:"1F",tB:"2C",d:"29/06 22:00"},{id:"J76",tA:"1C",tB:"2F",d:"29/06 14:00"},{id:"J77",tA:"1I",tB:"3CDFGH",d:"30/06 18:00"},{id:"J78",tA:"2E",tB:"2I",d:"30/06 14:00"},{id:"J79",tA:"1A",tB:"3CEFHI",d:"30/06 22:00"},{id:"J80",tA:"1L",tB:"3EHIJK",d:"01/07 13:00"},{id:"J81",tA:"1D",tB:"3BEFIJ",d:"01/07 21:00"},{id:"J82",tA:"1G",tB:"3AEHIJ",d:"01/07 17:00"},{id:"J83",tA:"2K",tB:"2L",d:"02/07 20:00"},{id:"J84",tA:"1H",tB:"2J",d:"02/07 16:00"},{id:"J85",tA:"1B",tB:"3EFGIJ",d:"03/07 00:00"},{id:"J86",tA:"1J",tB:"2H",d:"03/07 19:00"},{id:"J87",tA:"1K",tB:"3DEIJL",d:"03/07 22:30"},{id:"J88",tA:"2D",tB:"2G",d:"03/07 15:00"}],
+            "oitavas": [{id:"J89",tA:"Venc J74",tB:"Venc J77",d:"04/07 18:00"},{id:"J90",tA:"Venc J73",tB:"Venc J75",d:"04/07 14:00"},{id:"J91",tA:"Venc J76",tB:"Venc J78",d:"05/07 17:00"},{id:"J92",tA:"Venc J79",tB:"Venc J80",d:"05/07 21:00"},{id:"J93",tA:"Venc J83",tB:"Venc J84",d:"06/07 16:00"},{id:"J94",tA:"Venc J81",tB:"Venc J82",d:"06/07 21:00"},{id:"J95",tA:"Venc J86",tB:"Venc J88",d:"07/07 13:00"},{id:"J96",tA:"Venc J85",tB:"Venc J87",d:"07/07 17:00"}],
+            "quartas": [{id:"J97",tA:"Venc J89",tB:"Venc J90",d:"09/07 17:00"},{id:"J98",tA:"Venc J93",tB:"Venc J94",d:"10/07 16:00"},{id:"J99",tA:"Venc J91",tB:"Venc J92",d:"11/07 18:00"},{id:"J100",tA:"Venc J95",tB:"Venc J96",d:"11/07 22:00"}],
+            "semis": [{id:"J101",tA:"Venc J97",tB:"Venc J98",d:"14/07 16:00"},{id:"J102",tA:"Venc J99",tB:"Venc J100",d:"15/07 16:00"}],
+            "finais": [{id:"J103",tA:"Perd J101",tB:"Perd J102",d:"18/07 18:00"},{id:"J104",tA:"Venc J101",tB:"Venc J102",d:"19/07 16:00"}]
+        };
+
+        // Atalho para enviar o formulário ao pressionar Enter
+        function verificarEnterLogin(event) {
+            if (event.key === 'Enter') {
+                handleAuthSimplificado();
+            }
+        }
+
+        async function abrirAuditoriaUsuario(userId, nomeCompleto) {
+            document.getElementById('auditoria-titulo').innerText = `Palpites de ${nomeCompleto}`;
+            const conteudo = document.getElementById('auditoria-conteudo');
+            conteudo.innerHTML = '<p class="text-center text-gray-500 font-bold py-4">🔄 Carregando histórico...</p>';
+            document.getElementById('modal-auditoria').classList.remove('hidden');
+
+            // Busca os palpites do usuário alvo
+            const { data: palpitesAlvo, error } = await _supabase.from('palpites').select('*').eq('user_id', userId);
+            if (error) return conteudo.innerHTML = '<p class="text-center text-red-500">Erro ao carregar auditoria.</p>';
+
+            const agora = new Date();
+
+            // Renderiza linha por linha dos palpites calculando a pontuação transparente
+            const listaHtml = todosJogos.map(j => {
+                const palp = palpitesAlvo.find(p => p.jogo_id === j.id);
+                const dataJogo = new Date(j.data_hora);
+                
+                // Regra de segurança: bloqueia visualização se faltar mais de 5 minutos para o jogo iniciar
+                const minutosRestantes = (dataJogo - agora) / 60000;
+                const palpiteBloqueadoParaPublico = minutosRestantes > 5 && userId !== currentUser.id;
+
+                let textoPalpite = '<span class="text-gray-400">Não palpitou</span>';
+                let pontosGerados = 0;
+                let badgeCor = 'bg-gray-100 text-gray-400';
+
+                if (palp) {
+                    if (palpiteBloqueadoParaPublico) {
+                        textoPalpite = '<span class="text-amber-600 font-bold italic">🔒 Oculto até o jogo iniciar</span>';
+                    } else {
+                        textoPalpite = `<span class="font-black text-gray-800">${palp.palpite_a} × ${palp.palpite_b}</span>`;
+                        
+                        // Bloco interno de cálculo de pontos com multiplicadores para o front-end
+                        if (j.gols_a_oficial !== null && j.gols_b_oficial !== null) {
+                            let pontosBase = 0;
+                            if (palp.palpite_a === j.gols_a_oficial && palp.palpite_b === j.gols_b_oficial) {
+                                pontosBase = 25; badgeCor = 'bg-green-600 text-white';
+                            } else if (j.gols_a_oficial !== j.gols_b_oficial && Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial) && (palp.palpite_a - palp.palpite_b) === (j.gols_a_oficial - j.gols_b_oficial)) {
+                                pontosBase = 18; badgeCor = 'bg-blue-600 text-white';
+                            } else if (Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial)) {
+                                pontosBase = 15; badgeCor = 'bg-indigo-600 text-white';
+                            } else if (palp.palpite_a === j.gols_a_oficial || palp.palpite_b === j.gols_b_oficial) {
+                                pontosBase = 3; badgeCor = 'bg-gray-500 text-white';
+                            }
+
+                            // Define o fator de multiplicação visual idêntico ao banco de dados
+                            let peso = 1.0;
+                            if (j.fase.includes('segundas')) peso = 1.2;
+                            else if (j.fase.includes('oitavas')) peso = 1.5;
+                            else if (j.fase.includes('quartas')) peso = 2.0;
+                            else if (j.fase.includes('semis')) peso = 2.5;
+                            else if (j.fase.includes('finais')) peso = 3.0;
+
+                            pontosGerados = Math.round(pontosBase * peso);
+                        }
+                    }
+                }
+
+                const placarOficial = (j.gols_a_oficial !== null) ? `${j.gols_a_oficial}×${j.gols_b_oficial}` : '---';
+
+                return `
+                    <div class="bg-white p-3 rounded-xl border flex justify-between items-center gap-2 shadow-sm">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[8px] font-bold text-gray-400 uppercase">${j.fase} | Oficial: <span class="text-gray-700">${placarOficial}</span></p>
+                            <p class="font-bold text-gray-700 truncate text-[11px] mt-0.5">${j.time_a} x ${j.time_b}</p>
+                        </div>
+                        <div class="text-center px-2 border-l border-r border-gray-100 min-w-[100px]">
+                            <p class="text-[7px] text-gray-400 font-bold uppercase tracking-wider">Palpite</p>
+                            <p class="text-[10px] mt-0.5">${textoPalpite}</p>
+                        </div>
+                        <div class="text-right min-w-[50px]">
+                            <span class="px-2 py-1 rounded font-black text-[10px] ${badgeCor}">
+                                +${pontosGerados} Pts
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            conteudo.innerHTML = listaHtml || '<p class="text-center text-gray-400 py-4">Nenhum palpite computado.</p>';
+        }
+
+        function fecharModalAuditoria() {
+            document.getElementById('modal-auditoria').classList.add('hidden');
+        }
+
+        async function handleAuthSimplificado() {
+            const userLogin = document.getElementById('usuario').value.trim().toLowerCase();
+            const pass = document.getElementById('password').value;
+
+            if(!userLogin || !pass) return alert("Preencha o Usuário e a Senha.");
+
+            const { data: perfis, error } = await _supabase
+                .from('perfis')
+                .select('*')
+                .eq('usuario_login', userLogin)
+                .eq('senha_plana', pass);
+
+            if(error || !perfis || perfis.length === 0) {
+                return alert("Usuário ou senha incorretos!");
             }
 
-            // AJUSTE DE SCHEMA: Alterado de 'nome' para 'nome_completo' conforme o banco real
-            const { data, error } = await _supabase.from('perfis').select('*').ilike('nome_completo', userParam.trim());
-            if (error || !data || data.length === 0) {
-                document.body.innerHTML = `<div class="p-8 text-center text-red-600 font-bold">Erro: Participante "${userParam}" não localizado no sistema.</div>`;
-                return;
-            }
+            currentUser = perfis[0];
+            initAppSimplificado();
+        }
+
+        function renderizarRegras() {
+            document.getElementById('view-conteudo').innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-white rounded-xl shadow-sm border p-5">
+                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">🎯 Pontuação Base (Fase de Grupos)</h3>
+                        <p class="text-slate-500 text-[11px] mb-4 font-medium leading-relaxed">Os pontos abaixo servem como base para o campeonato. Eles são calculados considerando apenas o tempo normal e prorrogação (disputa de pênaltis não conta).</p>
+                        
+                        <div class="space-y-2 text-xs font-bold">
+                            <div class="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-100">
+                                <span class="text-green-800">Placar Exato (Acertou em cheio)</span>
+                                <span class="bg-green-600 text-white px-2 py-0.5 rounded text-[11px]">25 Pts</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <span class="text-blue-800">Acertou o Vencedor e o Saldo de Gols</span>
+                                <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[11px]">18 Pts</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                                <span class="text-indigo-800">Acertou Vencedor/Empate (Errou o saldo)</span>
+                                <span class="bg-indigo-600 text-white px-2 py-0.5 rounded text-[11px]">15 Pts</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <span class="text-gray-700">Errou a tendência, mas acertou os gols de 1 dos times</span>
+                                <span class="bg-gray-500 text-white px-2 py-0.5 rounded text-[11px]">3 Pts</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-blue-600">
+                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">📈 Multiplicadores do Mata-Mata</h3>
+                        <p class="text-slate-500 text-[11px] mb-3 font-medium leading-relaxed">Para manter a disputa acirrada até o fim, a pontuação base ganha peso progressivo à medida que o torneio afunila:</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-[11px] font-bold text-gray-700">
+                                <thead class="bg-gray-50 text-[9px] uppercase border-b text-gray-400">
+                                    <tr>
+                                        <th class="py-2 text-left">Fase</th>
+                                        <th class="py-2 text-center">Peso</th>
+                                        <th class="py-2 text-center text-green-600">Placar Exato</th>
+                                        <th class="py-2 text-center text-blue-600">Venc+Saldo</th>
+                                        <th class="py-2 text-center text-indigo-600">Vencedor</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <tr><td class="py-2 text-gray-500">Grupos</td><td class="text-center text-gray-500">x1.0</td><td class="text-center font-black">25</td><td class="text-center font-black">18</td><td class="text-center font-black">15</td></tr>
+                                    <tr><td class="py-2">16-Avos</td><td class="text-center text-blue-600">x1.2</td><td class="text-center font-black text-green-600">30</td><td class="text-center font-black text-blue-600">21</td><td class="text-center font-black text-indigo-600">18</td></tr>
+                                    <tr><td class="py-2">Oitavas</td><td class="text-center text-blue-600">x1.5</td><td class="text-center font-black text-green-600">37</td><td class="text-center font-black text-blue-600">27</td><td class="text-center font-black text-indigo-600">22</td></tr>
+                                    <tr><td class="py-2">Quartas</td><td class="text-center text-blue-600">x2.0</td><td class="text-center font-black text-green-600">50</td><td class="text-center font-black text-blue-600">36</td><td class="text-center font-black text-indigo-600">30</td></tr>
+                                    <tr><td class="py-2">Semifinais</td><td class="text-center text-blue-600">x2.5</td><td class="text-center font-black text-green-600">62</td><td class="text-center font-black text-blue-600">45</td><td class="text-center font-black text-indigo-600">37</td></tr>
+                                    <tr class="bg-blue-50/40"><td class="py-2 text-blue-700">Finais</td><td class="text-center text-blue-700">x3.0</td><td class="text-center font-black text-green-600">75</td><td class="text-center font-black text-blue-600">54</td><td class="text-center font-black text-indigo-600">45</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-amber-500">
+                        <h3 class="text-amber-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">⏳ Limite de Prazos</h3>
+                        <ul class="space-y-2 text-xs text-gray-600 font-bold leading-relaxed">
+                            <li class="flex items-start gap-2">
+                                <span>🔒</span>
+                                <span>O bloqueio de cada partida ocorre de forma automática <span class="text-amber-600 font-black">5 minutos antes</span> do horário de início oficial marcado na tabela.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span>🔄</span>
+                                <span>Dentro desse prazo, você tem total liberdade para alterar, revisar e salvar as suas apostas <span class="text-green-600 font-black">quantas vezes quiser</span>.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-emerald-500">
+                        <h3 class="text-emerald-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">💰 Valores e Premiações</h3>
+                        <div class="bg-emerald-50 text-emerald-800 font-black text-center p-3 rounded-xl border border-emerald-100 text-sm mb-4">
+                            Taxa de Inscrição: R$ 10,00 por participante
+                        </div>
+                        <p class="text-slate-500 text-[11px] mb-3 font-medium leading-relaxed">O montante total arrecadado com as inscrições do bolão será convertido integralmente em premiação, sendo distribuído ao final do torneio na seguinte proporção:</p>
+                        
+                        <table class="w-full text-xs font-bold text-gray-700">
+                            <tbody>
+                                <tr class="border-b"><td class="py-2 flex items-center gap-2">🥇 1º Lugar (Campeão)</td><td class="text-right text-emerald-600 font-black text-sm">60% do total</td></tr>
+                                <tr class="border-b"><td class="py-2 flex items-center gap-2">🥈 2º Lugar</td><td class="text-right text-slate-600 font-black text-sm">30% do total</td></tr>
+                                <tr><td class="py-2 flex items-center gap-2">🥉 3º Lugar</td><td class="text-right text-amber-700 font-black text-sm">10% do total</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+        function initAppSimplificado() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
             
-            currentUser = data[0];
-            document.getElementById('txt-user-name').innerText = currentUser.nome_completo;
+            // Adicionado botão para o próprio usuário alterar a senha dele
+            document.getElementById('auth-header').innerHTML = `
+                <span>${currentUser.nome_completo}</span>
+                <button onclick="alterarMinhaSenha()" class="bg-blue-800 hover:bg-blue-900 text-white text-[9px] px-2 py-1 rounded font-black transition-colors">TROCAR SENHA</button>
+                <button onclick="location.reload()" class="underline text-red-300 font-black">SAIR</button>
+            `;
+            carregarDados();
+        }
+
+        // Função para o próprio participante atualizar suas credenciais
+        async function alterarMinhaSenha() {
+            const novaSenha = prompt("Digite a sua nova senha de acesso:");
+            if (novaSenha === null) return;
+            if (novaSenha.trim() === "") return alert("A senha não pode ser vazia!");
+
+            const { error } = await _supabase
+                .from('perfis')
+                .update({ senha_plana: novaSenha.trim() })
+                .eq('id', currentUser.id);
+
+            if (error) {
+                alert("Erro ao atualizar senha: " + error.message);
+            } else {
+                alert("✅ Sua senha foi alterada com sucesso! Use a nova senha no próximo login.");
+                currentUser.senha_plana = novaSenha.trim();
+            }
         }
 
         async function carregarDados() {
-            if(!currentUser) await obterUsuarioLogado();
-
-            const [jRes, pRes, rRes, allPalpRes] = await Promise.all([
-                _supabase.from('jogos').select('*').order('data_hora', { ascending: true }),
-                _supabase.from('palpites').select('*').eq('user_id', currentUser.id),
-                _supabase.from('perfis').select('*').order('pontos_total', { ascending: false }),
-                _supabase.from('palpites').select('*')
-            ]);
-
-            todosJogos = jRes.data || [];
-            meusPalpites = pRes.data || [];
-            todosPerfis = rRes.data || [];
-            todosPalpitesBanco = allPalpRes.data || [];
-
-            configurarFiltrosDias();
-            renderizarFiltrosGruposEAlvos();
-            renderizarConteudo();
-        }
-
-        function configurarFiltrosDias() {
-            const diasUnicos = [...new Set(todosJogos.filter(j => j.fase && j.fase.includes('Grupo')).map(j => j.data_hora.split('T')[0]))];
-            if (diasUnicos.length > 0 && !filtroDiaAtivo) {
-                filtroDiaAtivo = diasUnicos[0];
-            }
-        }
-
-        function renderizarFiltrosGruposEAlvos() {
-            const wrapper = document.getElementById('wrapper-seletor-grupo');
-            if(!wrapper) return;
-            wrapper.innerHTML = '';
-
-            if (modoVisaoGrupo === 'grupo') {
-                ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'].forEach(g => {
-                    const ativo = filtroGrupoAtivo === g;
-                    wrapper.innerHTML += `
-                        <button onclick="definirSubFiltroGrupo('${g}')" class="px-4 py-2 rounded-lg text-xs font-black transition-all ${ativo ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-500'}">
-                            GRP ${g}
-                        </button>`;
-                });
-            } else {
-                const diasUnicos = [...new Set(todosJogos.filter(j => j.fase && j.fase.includes('Grupo')).map(j => j.data_hora.split('T')[0]))];
-                diasUnicos.forEach(d => {
-                    const ativo = filtroDiaAtivo === d;
-                    const dataFormatada = d.split('-')[2] + '/' + d.split('-')[1];
-                    wrapper.innerHTML += `
-                        <button onclick="definirSubFiltroDia('${d}')" class="px-3 py-2 rounded-lg text-xs font-black transition-all ${ativo ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-500'}">
-                            📅 ${dataFormatada}
-                        </button>`;
-                });
-            }
-        }
-
-        function definirSubFiltroGrupo(g) { filtroGrupoAtivo = g; renderizarFiltrosGruposEAlvos(); renderizarConteudo(); }
-        function definirSubFiltroDia(d) { filtroDiaAtivo = d; renderizarFiltrosGruposEAlvos(); renderizarConteudo(); }
-
-        function mudarModoVisao(modo) {
-            modoVisaoGrupo = modo;
-            document.getElementById('btn-visao-grupo').className = modo === 'grupo' ? 'flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-blue-600 text-white shadow-sm' : 'flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-gray-100 text-gray-500';
-            document.getElementById('btn-visao-dia').className = modo === 'dia' ? 'flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-blue-600 text-white shadow-sm' : 'flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-gray-100 text-gray-500';
-            renderizarFiltrosGruposEAlvos();
-            renderizarConteudo();
+            const { data: j } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
+            const { data: p } = await _supabase.from('palpites').select('*').eq('user_id', currentUser.id);
+            todosJogos = j || []; meusPalpites = p || [];
+            mudarAba(abaAtual); 
         }
 
         function mudarAba(nome) {
             abaAtual = nome;
+            
+            // Controle dos botões do menu principal
             document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
             document.getElementById(`tab-${nome}`).classList.add('tab-active');
             
+            // Exibe ou oculta os filtros de Grupo
             document.getElementById('controles-grupos').style.display = nome === 'grupos' ? 'flex' : 'none';
             
+            // Gerenciamento do painel Mata-Mata com transição inline-flex
             const painelMataMata = document.getElementById('controles-matamata');
             if (nome === 'matamata') {
                 painelMataMata.classList.remove('hidden');
-                painelMataMata.classList.add('flex');
+                painelMataMata.classList.add('flex'); // Mantém o alinhamento flexível em linha única
                 selecionarSubFaseMataMata(subFaseAtiva);
             } else {
                 painelMataMata.classList.remove('flex');
                 painelMataMata.classList.add('hidden');
             }
             
+            // Controle do botão flutuante de salvar
             document.getElementById('btn-salvar').style.display = (nome === 'ranking' || nome === 'regras') ? 'none' : 'block';
+            
             renderizarConteudo();
         }
 
         function selecionarSubFaseMataMata(faseSelecionada) {
             subFaseAtiva = faseSelecionada;
+            
+            // Estado Inativo: Aplica classes compactas para celular (text-[10px]) e normais no PC (md:text-xs)
             document.querySelectorAll('.sub-fase-btn').forEach(btn => {
                 btn.className = "sub-fase-btn inline-block py-2 px-2 md:px-5 text-[10px] md:text-xs font-black uppercase tracking-tight transition-all bg-gray-100 border-gray-200 text-gray-600 rounded-lg";
             });
             
+            // Estado Ativo: Azul destacado mantendo a responsividade do bloco
             const btnAtivo = document.getElementById(`btn-sub-${faseSelecionada}`);
             if (btnAtivo) {
                 btnAtivo.className = "sub-fase-btn inline-block py-2 px-2 md:px-5 text-[10px] md:text-xs font-black uppercase tracking-tight transition-all bg-blue-600 border-blue-700 text-white rounded-lg shadow-sm";
             }
+            
+            renderizarConteudo();
+        }
+        
+        function setVisaoGrupo(v) {
+            visaoGrupo = v;
+            document.getElementById('btn-visao-grupo').className = v === 'grupo' ? 'flex-1 bg-blue-600 text-white text-[9px] font-bold py-2 rounded-lg' : 'flex-1 bg-gray-200 text-gray-500 text-[9px] font-bold py-2 rounded-lg';
+            document.getElementById('btn-visao-dia').className = v === 'dia' ? 'flex-1 bg-blue-600 text-white text-[9px] font-bold py-2 rounded-lg' : 'flex-1 bg-gray-200 text-gray-500 text-[9px] font-bold py-2 rounded-lg';
             renderizarConteudo();
         }
 
         function renderizarConteudo() {
             const container = document.getElementById('view-conteudo');
-            if(!container) return;
             container.innerHTML = '';
             
+            // Direcionamentos das Abas Secas
             if (abaAtual === 'ranking') return renderizarRanking();
             if (abaAtual === 'regras') return renderizarRegras();
+            if (abaAtual === 'grupos') return renderizarGrupos();
             
-            let jogosFiltrados = [];
-            if (abaAtual === 'grupos') {
-                if (modoVisaoGrupo === 'grupo') {
-                    jogosFiltrados = todosJogos.filter(j => j.fase === `Grupo ${filtroGrupoAtivo}`);
-                } else {
-                    jogosFiltrados = todosJogos.filter(j => j.fase && j.fase.includes('Grupo') && j.data_hora.startsWith(filtroDiaAtivo));
-                }
-                container.innerHTML = jogosFiltrados.map(j => cardJogo(j, j.time_a, j.time_b, formatarDataHora(j.data_hora), j.id)).join('');
-            } else {
-                const config = MAPA_MATA_MATA[subFaseAtiva] || [];
-                container.innerHTML = config.map(c => {
-                    const jogo = todosJogos.find(j => j.fase && j.fase.includes(c.id));
-                    return cardJogo(jogo, c.tA, c.tB, c.d, c.id);
-                }).join('');
-            }
+            // Se chegou aqui, a aba atual é 'matamata' -> Renderiza com base no subFaseAtiva
+            const config = MAPA_MATA_MATA[subFaseAtiva] || [];
+            container.innerHTML = config.map(c => {
+                const jogo = todosJogos.find(j => j.fase.includes(c.id));
+                return cardJogo(jogo, c.tA, c.tB, c.d, c.id);
+            }).join('');
         }
 
-        function cardJogo(jogo, timeA, timeB, infoData, idFalso) {
-            const idReal = jogo ? jogo.id : null;
-            const idMapeamento = idReal || `fake-${idFalso}`;
+        function renderizarGrupos() {
+            const container = document.getElementById('view-conteudo');
+            const jogosGrupos = todosJogos.filter(j => j.fase.includes('Grupo'));
+            if (visaoGrupo === 'dia') {
+                const dias = [...new Set(jogosGrupos.map(j => new Date(j.data_hora).toLocaleDateString()))];
+                dias.forEach(d => {
+                    container.innerHTML += `<h3 class="text-[10px] font-black text-gray-400 uppercase mt-4 mb-2 ml-1">📅 JOGOS DE ${d}</h3>`;
+                    jogosGrupos.filter(j => new Date(j.data_hora).toLocaleDateString() === d).forEach(j => container.innerHTML += cardJogo(j));
+                });
+            } else {
+                const nomesGrupos = [...new Set(jogosGrupos.map(j => j.fase))].sort();
+                nomesGrupos.forEach(f => {
+                    const games = jogosGrupos.filter(j => j.fase === f);
+                    const rank = calcularRank(games);
+                    container.innerHTML += `
+                        <div class="bg-white rounded-xl shadow-sm border p-4 mb-4">
+                            <h3 class="text-blue-600 font-black italic text-xs mb-3 border-b pb-1 uppercase">${f}</h3>
+                            <div class="space-y-2 mb-4">${games.map(j => cardJogo(j)).join('')}</div>
+                            <table class="w-full text-[9px] uppercase font-bold text-gray-500">
+                                <thead class="border-b"><tr class="text-[7px]">
+                                    <th class="text-left py-1">Time</th><th class="text-center">P</th><th class="text-center">SG</th><th class="text-center">GP</th><th class="text-center">GC</th>
+                                </tr></thead>
+                                <tbody>${rank.map((t, i) => `
+                                    <tr class="${i<2?'text-green-600 bg-green-50/50':''}">
+                                        <td class="py-1.5">${i+1}º ${t.nome}</td>
+                                        <td class="text-center text-gray-900">${t.pts}</td>
+                                        <td class="text-center">${t.sg}</td>
+                                        <td class="text-center text-blue-500">${t.gp}</td>
+                                        <td class="text-center text-red-400">${t.gc}</td>
+                                    </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>`;
+                });
+            }
+        }
+        
+        function cardJogo(j, sA="", sB="", dS="", idS="") {
+            const existe = !!j;
+            const bloqueado = existe ? (new Date(j.data_hora) - new Date()) / 60000 < 5 : true;
+            const p = existe ? (meusPalpites.find(x => x.jogo_id === j.id) || {palpite_a:'', palpite_b:''}) : {palpite_a:'', palpite_b:''};
+            const inputId = existe ? j.id : 'fake-' + idS;
             
-            const palp = idReal ? meusPalpites.find(p => p.jogo_id === idReal) : null;
-            const valA = palp ? palindrome_a = palp.palpite_a : '';
-            const valB = palp ? palp.palpite_b : '';
-            
-            const oficialA = jogo && jogo.gols_a_oficial !== null ? jogo.gols_a_oficial : '-';
-            const oficialB = jogo && jogo.gols_b_oficial !== null ? SolidB = jogo.gols_b_oficial : '-';
-            
-            const estaBloqueado = jogo ? verificarJogoBloqueado(jogo.data_hora) : true;
-            
-            let pontosGerados = 0;
-            let badgeCor = 'bg-gray-100 text-gray-400';
-            
-            if (jogo && jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null && palp) {
-                let pontosBase = 0;
-                if (palp.palpite_a === jogo.gols_a_oficial && palp.palpite_b === jogo.gols_b_oficial) {
-                    pontosBase = 25; badgeCor = 'bg-green-600 text-white';
-                } else if (jogo.gols_a_oficial !== jogo.gols_b_oficial && Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(jogo.gols_a_oficial - jogo.gols_b_oficial) && (palp.palpite_a - palp.palpite_b) === (jogo.gols_a_oficial - jogo.gols_b_oficial)) {
-                    pontosBase = 18; badgeCor = 'bg-blue-600 text-white';
-                } else if (Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(jogo.gols_a_oficial - jogo.gols_b_oficial)) {
-                    pontosBase = 15; badgeCor = 'bg-indigo-600 text-white';
-                } else if (palp.palpite_a === jogo.gols_a_oficial || palp.palpite_b === jogo.gols_b_oficial) {
-                    pontosBase = 3; badgeCor = 'bg-gray-500 text-white';
-                }
-
-                let peso = 1.0;
-                if (jogo.fase && jogo.fase.includes('segundas')) peso = 1.2;
-                else if (jogo.fase && jogo.fase.includes('oitavas')) peso = 1.5;
-                else if (jogo.fase && jogo.fase.includes('quartas')) peso = 2.0;
-                else if (jogo.fase && jogo.fase.includes('semis')) peso = 2.5;
-                else if (jogo.fase && jogo.fase.includes('finais')) peso = 3.0;
-
-                pontosGerados = Math.round(pontosBase * peso);
+            let dataFormatada = dS + ' (AGUARDANDO)';
+            if (existe) {
+                const dt = new Date(j.data_hora);
+                dataFormatada = dt.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'}) + ' - ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
             }
 
+            // Exibição condicional da Tag de Grupo (só aparece se a aba não for a de grupos ou se a visão for por dia)
+            const exibirTagGrupo = (abaAtual === 'grupos' && visaoGrupo === 'dia') || (abaAtual !== 'grupos');
+            const tagGrupoHtml = (exibirTagGrupo && existe) ? `
+                <span class="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase ml-auto">
+                    ${j.fase}
+                </span>
+            ` : '';
+
             return `
-                <div class="bg-white rounded-xl shadow-sm border p-3 flex flex-col relative overflow-hidden">
-                    <div class="flex justify-between items-center text-[9px] font-black uppercase text-gray-400 tracking-wider mb-2 border-b pb-1">
-                        <span>${infoData}</span>
-                        <span>${jogo && jogo.fase ? jogo.fase : 'Mata-Mata'}</span>
+                <div class="bg-white p-4 rounded-xl border ${bloqueado && existe ? 'opacity-60 grayscale' : 'border-l-4 border-l-blue-500'} mb-3 shadow-sm">
+                    <div class="flex items-center justify-between border-b pb-2 mb-3 w-full">
+                        <span class="text-[11px] font-black text-gray-700 uppercase tracking-wide bg-gray-100 px-2 py-1 rounded">
+                            📅 ${dataFormatada}
+                        </span>
+                        ${tagGrupoHtml}
                     </div>
-                    <div class="grid grid-cols-7 items-center justify-center gap-1">
-                        <div class="col-span-2 text-right font-black text-xs text-slate-800 uppercase tracking-tight truncate">${timeA}</div>
-                        <div class="col-span-3 flex items-center justify-center gap-1 bg-gray-50 p-1.5 rounded-lg border">
-                            <input type="number" id="g-a-${idMapeamento}" value="${palp ? palp.palpite_a : ''}" ${estaBloqueado ? 'disabled' : ''} class="w-8 h-8 bg-white border text-center font-black text-xs rounded-md shadow-inner outline-none focus:ring-2 ring-blue-500 text-slate-800">
-                            <span class="text-[9px] font-black text-gray-400 uppercase">x</span>
-                            <input type="number" id="g-b-${idMapeamento}" value="${valB}" ${estaBloqueado ? 'disabled' : ''} class="w-8 h-8 bg-white border text-center font-black text-xs rounded-md shadow-inner outline-none focus:ring-2 ring-blue-500 text-slate-800">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="flex-1 text-right font-black text-[13px] text-gray-800 truncate ${!existe?'text-gray-300':''}">${existe?j.time_a:sA}</span>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="p-a-${inputId}" value="${p.palpite_a}" ${bloqueado?'readonly':''} class="w-11 h-11 border rounded-xl text-center font-black text-xl ${bloqueado?'bg-gray-100 text-gray-400':'border-blue-200 text-blue-600 focus:ring-2 ring-blue-500 outline-none'}">
+                            <span class="text-gray-200 font-bold">×</span>
+                            <input type="number" id="p-b-${inputId}" value="${p.palpite_b}" ${bloqueado?'readonly':''} class="w-11 h-11 border rounded-xl text-center font-black text-xl ${bloqueado?'bg-gray-100 text-gray-400':'border-blue-200 text-blue-600 focus:ring-2 ring-blue-500 outline-none'}">
                         </div>
-                        <div class="col-span-2 text-left font-black text-xs text-slate-800 uppercase tracking-tight truncate">${timeB}</div>
-                    </div>
-                    <div class="flex justify-between items-center mt-2 pt-1 border-t border-dashed">
-                        <div class="text-[9px] font-bold text-gray-400 flex items-center gap-1">
-                            Placar Oficial: <span class="bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-black text-xs">${oficialA} x ${jogo && jogo.gols_b_oficial !== null ? jogo.gols_b_oficial : '-'}</span>
-                        </div>
-                        ${jogo && jogo.gols_a_oficial !== null ? `<div class="${badgeCor} text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-sm">+${pontosGerados} Pts</div>` : ''}
+                        <span class="flex-1 text-left font-black text-[13px] text-gray-800 truncate ${!existe?'text-gray-300':''}">${existe?j.time_b:sB}</span>
                     </div>
                 </div>`;
         }
 
-        function verificarJogoBloqueado(dataHoraIso) {
-            if(!dataHoraIso) return true;
-            const agora = new Date();
-            const limite = new Date(new Date(dataHoraIso).getTime() - (5 * 60 * 1000));
-            return agora >= limite;
+        async function renderizarRanking() {
+            const { data, error } = await _supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
+            
+            if (error) console.error("Erro ao buscar ranking:", error.message);
+
+            document.getElementById('view-conteudo').innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden border">
+                    <div class="bg-blue-50 p-3 text-center border-b">
+                        <p class="text-[10px] font-bold text-blue-800 uppercase tracking-wide">💡 Clique em cima do nome de qualquer participante para auditar os palpites e pontos dele!</p>
+                    </div>
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b">
+                            <tr class="text-[9px] uppercase text-gray-400 font-bold">
+                                <th class="p-4">Pos</th>
+                                <th class="p-4">Nome</th>
+                                <th class="p-4 text-right">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody>${(data||[]).map((p, i) => `
+                            <tr onclick="abrirAuditoriaUsuario('${p.id}', '${p.nome_completo}')" class="border-b hover:bg-gray-50 cursor-pointer transition-colors ${currentUser && p.id === currentUser.id ? 'bg-blue-50/40 font-semibold border-l-4 border-l-blue-600' : ''}">
+                                <td class="p-4 text-xs font-bold ${i===0?'text-amber-500':i===1?'text-gray-400':i===2?'text-amber-700':'text-gray-400'}">
+                                    ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1)}
+                                </td>
+                                <td class="p-4 text-gray-800 text-xs flex items-center justify-between">
+                                    <span>${p.nome_completo} ${currentUser && p.id === currentUser.id ? ' <span class="text-blue-600 font-bold">(Você)</span>' : ''}</span>
+                                    <span class="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-normal">🔍 Ver</span>
+                                </td>
+                                <td class="p-4 text-right font-black text-blue-600 text-sm">${p.pontos_total || 0}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="modal-auditoria" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+                        <div class="bg-blue-700 text-white p-4 flex justify-between items-center">
+                            <div>
+                                <h4 id="auditoria-titulo" class="font-black text-sm uppercase">Auditoria de Palpites</h4>
+                                <p class="text-[9px] text-blue-200 font-bold uppercase tracking-wider">Transparência Bolão74</p>
+                            </div>
+                            <button onclick="fecharModalAuditoria()" class="text-white hover:text-gray-200 font-black text-sm bg-blue-800 px-3 py-1 rounded-lg">FECHAR</button>
+                        </div>
+                        <div id="auditoria-conteudo" class="p-4 overflow-y-auto space-y-2 bg-gray-50 flex-1 no-scrollbar text-xs">
+                            </div>
+                    </div>
+                </div>
+            `;
         }
 
-        function formatarDataHora(iso) {
-            if(!iso) return '';
-            const d = new Date(iso);
-            return d.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'}) + ' - ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        function calcularRank(jogos) {
+            const t = {};
+            jogos.forEach(j => {
+                [j.time_a, j.time_b].forEach(tm => { if(!t[tm]) t[tm] = {pts:0, v:0, sg:0, gp:0, gc:0, nome:tm}; });
+                if(j.gols_a_oficial !== null) {
+                    const ga = j.gols_a_oficial; const gb = j.gols_b_oficial;
+                    t[j.time_a].gp += ga; t[j.time_a].gc += gb; t[j.time_a].sg += (ga-gb);
+                    t[j.time_b].gp += gb; t[j.time_b].gc += ga; t[j.time_b].sg += (gb-ga);
+                    if(ga>gb) { t[j.time_a].pts+=3; t[j.time_a].v++; }
+                    else if(gb>ga) { t[j.time_b].pts+=3; t[j.time_b].v++; }
+                    else { t[j.time_a].pts++; t[j.time_b].pts++; }
+                }
+            });
+            return Object.values(t).sort((a,b) => b.pts - a.pts || b.sg - a.sg || b.gp - a.gp);
         }
 
-        async function salvarAlteracoes() {
+        async function salvarTodosPalpites() {
+            const inputs = document.querySelectorAll('input[id^="p-a-"]');
             const upserts = [];
             const idsParaDeletar = [];
-            const inputsA = document.querySelectorAll('input[id^="g-a-"]');
             
-            inputsA.forEach(inputA => {
-                if(inputA.id.includes('fake') || inputA.disabled) return;
-                const idJ = inputA.id.replace('g-a-', '');
-                const vA = inputA.value;
-                const vB = document.getElementById(`g-b-${idJ}`).value;
-
+            inputs.forEach(iA => {
+                if(iA.id.includes('fake') || iA.readOnly) return;
+                
+                const idJ = iA.id.replace('p-a-', '');
+                const vA = iA.value;
+                const elB = document.getElementById(`p-b-${idJ}`);
+                
+                if (!elB) return;
+                const vB = elB.value;
+                
+                // Se ambos os campos forem limpos, adiciona na lista para deletar do banco
                 if (vA === '' && vB === '') {
                     idsParaDeletar.push(idJ);
-                } else if (vA !== '' && vB !== '') {
-                    upserts.push({ user_id: currentUser.id, jogo_id: idJ, palpite_a: parseInt(vA), palpite_b: parseInt(vB) });
+                } 
+                // Se ambos estiverem preenchidos, joga no lote de salvar/atualizar
+                else if (vA !== '' && vB !== '') {
+                    upserts.push({
+                        user_id: currentUser.id, 
+                        jogo_id: idJ, 
+                        palpite_a: parseInt(vA), 
+                        palpite_b: parseInt(vB)
+                    });
                 }
             });
 
             try {
+                // 1. Processa as exclusões de palpites que foram deixados em branco
                 if (idsParaDeletar.length > 0) {
-                    await _supabase.from('palpites').delete().eq('user_id', currentUser.id).in('jogo_id', idsParaDeletar);
+                    await _supabase
+                        .from('palpites')
+                        .delete()
+                        .eq('user_id', currentUser.id)
+                        .in('jogo_id', idsParaDeletar);
                 }
+
+                // 2. Processa os salvamentos e atualizações
                 if (upserts.length > 0) {
                     const { error } = await _supabase.from('palpites').upsert(upserts, { onConflict: 'user_id,jogo_id' });
                     if (error) throw error;
                 }
+
                 alert("✅ Seus palpites foram atualizados com sucesso!");
                 await carregarDados();
             } catch (e) {
-                alert("Erro ao processar: " + e.message);
+                alert("Erro ao processar alterações: " + e.message);
+                console.error(e);
             }
         }
-
-        function renderizarRanking() {
-            const container = document.getElementById('view-conteudo');
-            let html = `<div class="bg-white rounded-xl shadow-sm border overflow-hidden"><div class="bg-slate-900 p-3 text-white text-[10px] font-black uppercase tracking-wider flex justify-between"><span>Posição / Participante</span><span>Pontos</span></div><div class="divide-y">`;
-
-            todosPerfis.forEach((p, index) => {
-                const medalha = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
-                const eVoce = p.id === currentUser.id;
-                html += `
-                    <div onclick="abrirAuditoriaUsuario('${p.id}', '${p.nome_completo}')" class="p-3 flex justify-between items-center hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer ${eVoce ? 'bg-blue-50/60 font-black' : ''}">
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-black text-slate-400 w-6">${medalha}</span>
-                            <span class="text-xs font-bold text-slate-800 uppercase tracking-tight">${p.nome_completo} ${eVoce ? '<span class="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded ml-1 font-black uppercase">Você</span>' : ''}</span>
-                        </div>
-                        <span class="text-sm font-black text-slate-900">${p.pontos_total || 0}</span>
-                    </div>`;
-            });
-            container.innerHTML = html + `</div></div>`;
-        }
-
-        function abrirAuditoriaUsuario(userId, userName) {
-            document.getElementById('auditoria-titulo').innerText = `Palpites de ${userName}`;
-            document.getElementById('auditoria-sub').innerText = `Auditoria Transparente Ativa`;
-            const corpo = document.getElementById('auditoria-corpo');
-            if(!corpo) return;
-            corpo.innerHTML = '';
-            
-            const jogosComResultado = todosJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
-            if(jogosComResultado.length === 0) {
-                corpo.innerHTML = `<div class="p-6 text-center text-xs font-bold text-gray-400 uppercase">Nenhum resultado oficial lançado.</div>`;
-                document.getElementById('modal-auditoria').classList.remove('hidden');
-                return;
-            }
-
-            jogosComResultado.forEach(j => {
-                const palp = todosPalpitesBanco.find(p => p.jogo_id === j.id && p.user_id === userId);
-                const txtPalpA = palp ? palp.palpite_a : '-';
-                const txtPalpB = palp ? palp.palpite_b : '-';
-                
-                let pontosGerados = 0;
-                let badgeCor = 'bg-gray-200 text-gray-400';
-                let rotuloResultado = 'Nenhum Palpite';
-
-                if (palp) {
-                    let pontosBase = 0;
-                    if (palp.palpite_a === j.gols_a_oficial && palp.palpite_b === j.gols_b_oficial) {
-                        pontosBase = 25; badgeCor = 'bg-green-600 text-white'; rotuloResultado = 'Placar Exato';
-                    } else if (j.gols_a_oficial !== j.gols_b_oficial && Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial) && (palp.palpite_a - palp.palpite_b) === (j.gols_a_oficial - j.gols_b_oficial)) {
-                        pontosBase = 18; badgeCor = 'bg-blue-600 text-white'; rotuloResultado = 'Saldo';
-                    } else if (Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial)) {
-                        pontosBase = 15; badgeCor = 'bg-indigo-600 text-white'; rotuloResultado = 'Tendência';
-                    } else if (palp.palpite_a === j.gols_a_oficial || palp.palpite_b === j.gols_b_oficial) {
-                        pontosBase = 3; badgeCor = 'bg-gray-500 text-white'; rotuloResultado = 'Gol Isolado';
-                    } else { rotuloResultado = 'Errou Tudo'; }
-
-                    let peso = 1.0;
-                    if (j.fase && j.fase.includes('segundas')) peso = 1.2;
-                    else if (j.fase && j.fase.includes('oitavas')) peso = 1.5;
-                    else if (j.fase && j.fase.includes('quartas')) peso = 2.0;
-                    else if (j.fase && j.fase.includes('semis')) peso = 2.5;
-                    else if (j.fase && j.fase.includes('finais')) peso = 3.0;
-
-                    pontosGerados = Math.round(pontosBase * peso);
-                }
-
-                corpo.innerHTML += `
-                    <div class="bg-white p-3 rounded-xl border shadow-sm flex flex-col mb-2">
-                        <div class="flex justify-between items-center text-[8px] font-black uppercase text-gray-400 mb-1">
-                            <span>${j.fase}</span>
-                            <span class="text-slate-600 font-bold bg-slate-100 px-1 rounded">Oficial: ${j.gols_a_oficial} x ${j.gols_b_oficial}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="text-xs font-bold text-slate-800 uppercase tracking-tight truncate">
-                                ${j.time_a} <span class="bg-slate-900 text-white px-1.5 py-0.5 rounded font-black">${txtPalpA}</span> x <span class="bg-slate-900 text-white px-1.5 py-0.5 rounded font-black">${txtPalpB}</span> ${j.time_b}
-                            </div>
-                            <div class="${badgeCor} text-[8px] font-black uppercase px-2 py-0.5 rounded">+${pontosGerados} Pts</div>
-                        </div>
-                    </div>`;
-            });
-            document.getElementById('modal-auditoria').classList.remove('hidden');
-        }
-
-        function fecharAuditoria() { document.getElementById('modal-auditoria').classList.add('hidden'); }
-
-        function renderizarRegras() {
-            document.getElementById('view-conteudo').innerHTML = `
-                <div class="space-y-4">
-                    <div class="bg-white rounded-xl shadow-sm border p-5">
-                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase">🎯 Pontuação Base (Fase de Grupos)</h3>
-                        <div class="space-y-2 text-xs font-bold">
-                            <div class="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-100"><span class="text-green-800">Placar Exato</span><span class="bg-green-600 text-white px-2 py-0.5 rounded">25 Pts</span></div>
-                            <div class="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100"><span class="text-blue-800">Vencedor e Saldo</span><span class="bg-blue-600 text-white px-2 py-0.5 rounded">18 Pts</span></div>
-                            <div class="flex justify-between items-center bg-indigo-50 p-3 rounded-lg border border-indigo-100"><span class="text-indigo-800">Vencedor/Empate (Seco)</span><span class="bg-indigo-600 text-white px-2 py-0.5 rounded">15 Pts</span></div>
-                            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="text-gray-700">Gols de 1 time</span><span class="bg-gray-500 text-white px-2 py-0.5 rounded">3 Pts</span></div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-blue-600">
-                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase">📈 Multiplicadores do Mata-Mata</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-[11px] font-bold text-gray-700">
-                                <thead class="bg-gray-50 text-[9px] uppercase border-b text-gray-400">
-                                    <tr><th class="py-2 text-left">Fase</th><th class="py-2 text-center">Peso</th><th class="py-2 text-center text-green-600">Exato</th><th class="py-2 text-center text-blue-600">Saldo</th><th class="py-2 text-center text-indigo-600">Venc</th></tr>
-                                </thead>
-                                <tbody class="divide-y text-center">
-                                    <tr><td class="py-2 text-left text-gray-500">Grupos</td><td>x1.0</td><td class="font-black">25</td><td class="font-black">18</td><td class="font-black">15</td></tr>
-                                    <tr><td class="py-2 text-left">16-Avos</td><td class="text-blue-600">x1.2</td><td class="font-black text-green-600">30</td><td class="font-black text-blue-600">21</td><td class="font-black text-indigo-600">18</td></tr>
-                                    <tr><td class="py-2 text-left">Oitavas</td><td class="text-blue-600">x1.5</td><td class="font-black text-green-600">37</td><td class="font-black text-blue-600">27</td><td class="font-black text-indigo-600">22</td></tr>
-                                    <tr><td class="py-2 text-left">Quartas</td><td class="text-blue-600">x2.0</td><td class="font-black text-green-600">50</td><td class="font-black text-blue-600">36</td><td class="font-black text-indigo-600">30</td></tr>
-                                    <tr><td class="py-2 text-left">Semifinais</td><td class="text-blue-600">x2.5</td><td class="font-black text-green-600">62</td><td class="font-black text-blue-600">45</td><td class="font-black text-indigo-600">37</td></tr>
-                                    <tr class="bg-blue-50/40"><td class="py-2 text-left text-blue-700">Finais</td><td class="text-blue-700">x3.0</td><td class="font-black text-green-600">75</td><td class="font-black text-blue-600">54</td><td class="font-black text-indigo-600">45</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>`;
-        }
-
-        carregarDados();
-    </script>
+        
+        </script>
 </body>
 </html>
