@@ -101,6 +101,66 @@
             initAppSimplificado();
         }
 
+        function renderizarRegras() {
+            document.getElementById('view-conteudo').innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-white rounded-xl shadow-sm border p-5">
+                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">🎯 Critérios de Pontuação</h3>
+                        <p class="text-slate-500 text-[11px] mb-4 font-medium leading-relaxed">Os pontos são calculados automaticamente jogo por jogo, baseados estritamente no placar oficial do tempo normal/prorrogação (não inclui disputa por pênaltis).</p>
+                        
+                        <div class="space-y-2 text-xs font-bold">
+                            <div class="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-100">
+                                <span class="text-green-800">Placar Exato (Acertou em cheio)</span>
+                                <span class="bg-green-600 text-white px-2 py-0.5 rounded text-[11px]">25 Pts</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <span class="text-blue-800">Acertou o Vencedor e o Saldo de Gols</span>
+                                <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[11px]">18 Pts</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                                <span class="text-indigo-800">Acertou Vencedor/Empate (Errou o saldo)</span>
+                                <span class="bg-indigo-600 text-white px-2 py-0.5 rounded text-[11px]">15 Pts</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <span class="text-gray-700">Acertou os gols de apenas 1 dos times</span>
+                                <span class="bg-gray-500 text-white px-2 py-0.5 rounded text-[11px]">3 Pts</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-amber-500">
+                        <h3 class="text-amber-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">⏳ Limite de Prazos</h3>
+                        <ul class="space-y-2 text-xs text-gray-600 font-bold leading-relaxed">
+                            <li class="flex items-start gap-2">
+                                <span>🔒</span>
+                                <span>O palpite de cada jogo fecha automaticamente <span class="text-amber-600 font-black">5 minutos antes</span> do horário de início da partida marcada na tabela.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span>🔄</span>
+                                <span>Você pode alterar e modificar os palpites que já salvou <span class="text-green-600 font-black">quantas vezes quiser</span>, desde que o cronômetro do jogo ainda não tenha atingido o limite de 5 minutos.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-emerald-500">
+                        <h3 class="text-emerald-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">💰 Valores e Premiações</h3>
+                        <div class="bg-emerald-50 text-emerald-800 font-black text-center p-3 rounded-xl border border-emerald-100 text-sm mb-4">
+                            Inscrição: R$ 10,00 por participante
+                        </div>
+                        <p class="text-slate-500 text-[11px] mb-3 font-medium leading-relaxed">Todo o valor total arrecadado com as inscrições do bolão será distribuído integralmente entre os 3 primeiros colocados do ranking ao final do torneio, seguindo as proporções:</p>
+                        
+                        <table class="w-full text-xs font-bold text-gray-700">
+                            <tbody>
+                                <tr class="border-b"><td class="py-2 flex items-center gap-2">🥇 1º Lugar (Campeão)</td><td class="text-right text-emerald-600 font-black text-sm">60% do total</td></tr>
+                                <tr class="border-b"><td class="py-2 flex items-center gap-2">🥈 2º Lugar</td><td class="text-right text-slate-600 font-black text-sm">30% do total</td></tr>
+                                <tr><td class="py-2 flex items-center gap-2">🥉 3º Lugar</td><td class="text-right text-amber-700 font-black text-sm">10% do total</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
         function initAppSimplificado() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
