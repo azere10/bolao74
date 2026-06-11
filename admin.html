@@ -89,13 +89,34 @@
         }
 
         async function carregarUsuariosAdmin() {
-            const { data: users } = await _supabase.from('perfis').select('*').order('nome_completo');
+            // Busca os perfis ordenados por maior pontuação (Ranking)
+            const { data: users } = await _supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
             const tbody = document.getElementById('lista-usuarios-tabela');
-            tbody.innerHTML = (users || []).map(u => `
-                <tr class="hover:bg-slate-900/30">
-                    <td class="p-4 font-bold text-white text-sm">${u.nome_completo}</td>
-                    <td class="p-4 text-slate-400 font-mono">${u.usuario_login || '---'}</td>
-                    <td class="p-4 text-slate-400 font-mono">${u.senha_plana || '---'}</td>
+            
+            // Atualiza o cabeçalho da tabela para incluir a coluna de Pontos
+            const thead = document.querySelector('#aba-usuarios table thead tr');
+            if (thead) {
+                thead.innerHTML = `
+                    <th class="p-4">Pos</th>
+                    <th class="p-4">Participante</th>
+                    <th class="p-4 text-center">Pontos</th>
+                    <th class="p-4">Login</th>
+                    <th class="p-4">Senha</th>
+                    <th class="p-4 text-center">Ações</th>
+                `;
+            }
+
+            tbody.innerHTML = (users || []).map((u, i) => `
+                <tr class="hover:bg-slate-900/30 ${i === 0 ? 'bg-amber-500/5' : ''}">
+                    <td class="p-4 font-bold text-slate-500 text-xs">#${i + 1}</td>
+                    <td class="p-4 font-bold text-white text-sm">
+                        ${u.nome_completo} ${i === 0 ? '👑' : ''}
+                    </td>
+                    <td class="p-4 text-center font-black text-blue-400 text-sm bg-slate-900/40">
+                        ${u.pontos_total || 0}
+                    </td>
+                    <td class="p-4 text-slate-400 font-mono text-xs">${u.usuario_login || '---'}</td>
+                    <td class="p-4 text-slate-500 font-mono text-xs select-none">••••••</td>
                     <td class="p-4 text-center">
                         <button onclick="deletarUsuarioSistema('${u.id}')" class="bg-red-950/50 hover:bg-red-900 text-red-400 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">Excluir</button>
                     </td>
