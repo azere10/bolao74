@@ -214,6 +214,7 @@
         async function salvarTodosPalpites() {
             const inputs = document.querySelectorAll('input[id^="p-a-"]');
             const upserts = [];
+            const idsParaDeletar = [];
             
             inputs.forEach(iA => {
                 if(iA.id.includes('fake') || iA.readOnly) return;
@@ -225,7 +226,12 @@
                 if (!elB) return;
                 const vB = elB.value;
                 
-                if(vA !== '' && vB !== '') {
+                // Se ambos os campos forem limpos, adiciona na lista para deletar do banco
+                if (vA === '' && vB === '') {
+                    idsParaDeletar.push(idJ);
+                } 
+                // Se ambos estiverem preenchidos, joga no lote de salvar/atualizar
+                else if (vA !== '' && vB !== '') {
                     upserts.push({
                         user_id: currentUser.id, 
                         jogo_id: idJ, 
@@ -235,18 +241,30 @@
                 }
             });
 
-            if(upserts.length === 0) return alert("Nenhum palpite preenchido para salvar.");
+            try {
+                // 1. Processa as exclusões de palpites que foram deixados em branco
+                if (idsParaDeletar.length > 0) {
+                    await _supabase
+                        .from('palpites')
+                        .delete()
+                        .eq('user_id', currentUser.id)
+                        .in('jogo_id', idsParaDeletar);
+                }
 
-            const { error } = await _supabase.from('palpites').upsert(upserts, { onConflict: 'user_id,jogo_id' });
-            
-            if (error) {
-                alert("Erro ao salvar palpites: " + error.message);
-            } else {
-                alert("✅ Seus palpites foram salvos com sucesso!");
-                carregarDados();
+                // 2. Processa os salvamentos e atualizações
+                if (upserts.length > 0) {
+                    const { error } = await _supabase.from('palpites').upsert(upserts, { onConflict: 'user_id,jogo_id' });
+                    if (error) throw error;
+                }
+
+                alert("✅ Seus palpites foram atualizados com sucesso!");
+                await carregarDados();
+            } catch (e) {
+                alert("Erro ao processar alterações: " + e.message);
+                console.error(e);
             }
         }
-
+        
         async function renderizarRanking() {
             const { data } = await _supabase.from('perfis').select('*').order('points_total', { ascending: false });
             document.getElementById('view-conteudo').innerHTML = `
