@@ -162,6 +162,7 @@
             const container = document.getElementById('view-conteudo');
             container.innerHTML = '';
             if (abaAtual === 'ranking') return renderizarRanking();
+            if (abaAtual === 'regras') return renderizarRegras(); // Direcionamento para a nova função
             if (abaAtual === 'grupos') return renderizarGrupos();
             const config = MAPA_MATA_MATA[abaAtual] || [];
             container.innerHTML = config.map(c => {
