@@ -141,7 +141,7 @@
             if (visaoGrupo === 'dia') {
                 const dias = [...new Set(jogosGrupos.map(j => new Date(j.data_hora).toLocaleDateString()))];
                 dias.forEach(d => {
-                    container.innerHTML += `<h3 class="text-[10px] font-black text-gray-400 uppercase mt-4 mb-2 ml-1">${d}</h3>`;
+                    container.innerHTML += `<h3 class="text-[10px] font-black text-gray-400 uppercase mt-4 mb-2 ml-1">📅 JOGOS DE ${d}</h3>`;
                     jogosGrupos.filter(j => new Date(j.data_hora).toLocaleDateString() === d).forEach(j => container.innerHTML += cardJogo(j));
                 });
             } else {
@@ -171,35 +171,40 @@
                 });
             }
         }
-
+        
         function cardJogo(j, sA="", sB="", dS="", idS="") {
             const existe = !!j;
             const bloqueado = existe ? (new Date(j.data_hora) - new Date()) / 60000 < 5 : true;
             const p = existe ? (meusPalpites.find(x => x.jogo_id === j.id) || {palpite_a:'', palpite_b:''}) : {palpite_a:'', palpite_b:''};
             const inputId = existe ? j.id : 'fake-' + idS;
             
-            // Tratamento detalhado e ampliado para Data e Hora
-            let dataFormatada = dS + ' (AGUARDANDO DEFINIÇÃO)';
+            let dataFormatada = dS + ' (AGUARDANDO)';
             if (existe) {
                 const dt = new Date(j.data_hora);
                 dataFormatada = dt.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric'}) + ' - ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
             }
 
+            // Exibição condicional da Tag de Grupo (só aparece se a aba não for a de grupos ou se a visão for por dia)
+            const exibirTagGrupo = (abaAtual === 'grupos' && visaoGrupo === 'dia') || (abaAtual !== 'grupos');
+            const tagGrupoHtml = (exibirTagGrupo && existe) ? `
+                <span class="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase ml-auto">
+                    ${j.fase}
+                </span>
+            ` : '';
+
             return `
                 <div class="bg-white p-4 rounded-xl border ${bloqueado && existe ? 'opacity-60 grayscale' : 'border-l-4 border-l-blue-500'} mb-3 shadow-sm">
-                    <div class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-1 border-b pb-2 mb-3">
+                    <div class="flex items-center justify-between border-b pb-2 mb-3 w-full">
                         <span class="text-[11px] font-black text-gray-700 uppercase tracking-wide bg-gray-100 px-2 py-1 rounded">
                             📅 ${dataFormatada}
                         </span>
-                        <span class="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase">
-                            ${existe ? j.fase : 'JOGO ' + idS}
-                        </span>
+                        ${tagGrupoHtml}
                     </div>
                     <div class="flex items-center justify-between gap-2">
                         <span class="flex-1 text-right font-black text-[13px] text-gray-800 truncate ${!existe?'text-gray-300':''}">${existe?j.time_a:sA}</span>
                         <div class="flex items-center gap-2">
                             <input type="number" id="p-a-${inputId}" value="${p.palpite_a}" ${bloqueado?'readonly':''} class="w-11 h-11 border rounded-xl text-center font-black text-xl ${bloqueado?'bg-gray-100 text-gray-400':'border-blue-200 text-blue-600 focus:ring-2 ring-blue-500 outline-none'}">
-                            <span class="text-gray-300 font-bold">×</span>
+                            <span class="text-gray-200 font-bold">×</span>
                             <input type="number" id="p-b-${inputId}" value="${p.palpite_b}" ${bloqueado?'readonly':''} class="w-11 h-11 border rounded-xl text-center font-black text-xl ${bloqueado?'bg-gray-100 text-gray-400':'border-blue-200 text-blue-600 focus:ring-2 ring-blue-500 outline-none'}">
                         </div>
                         <span class="flex-1 text-left font-black text-[13px] text-gray-800 truncate ${!existe?'text-gray-300':''}">${existe?j.time_b:sB}</span>
