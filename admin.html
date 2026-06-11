@@ -262,21 +262,45 @@
         }
 
         async function processarAtualizacao() {
-            const btn = document.getElementById('btn-main'); btn.innerText = "🔄 SALVANDO...";
+            const btn = document.getElementById('btn-main'); 
+            btn.innerText = "🔄 SALVANDO...";
             btn.disabled = true;
+            
             try {
-                for (let j of todosJogos) {
-                    const elA = document.getElementById(`g-a-${j.id}`);
-                    const elB = document.getElementById(`g-b-${j.id}`);
-                    if(elA && elB && elA.value !== "" && elB.value !== "") {
-                        await _supabase.rpc('admin_atualizar_placar', { id_jogo: j.id, g_a: parseInt(elA.value), g_b: parseInt(elB.value) });
+                // Seleciona todos os inputs de gols do Time A na tela do admin
+                const inputsA = document.querySelectorAll('input[id^="g-a-"]');
+                
+                for (let inputA of inputsA) {
+                    // CORREÇÃO: Se o ID do input contiver a marcação temporária, ignora e passa para o próximo
+                    if (inputA.id.includes('fake')) continue;
+                    
+                    const idJogo = inputA.id.replace('g-a-', '');
+                    const gaValue = inputA.value;
+                    
+                    const elB = document.getElementById(`g-b-${idJogo}`);
+                    if (!elB) continue;
+                    const gbValue = elB.value;
+
+                    // Só envia para o banco se ambos os campos estiverem preenchidos
+                    if (gaValue !== "" && gbValue !== "") {
+                        await _supabase.rpc('admin_atualizar_placar', { 
+                            id_jogo: idJogo, 
+                            g_a: parseInt(gaValue), 
+                            g_b: parseInt(gbValue) 
+                        });
                     }
                 }
+                
                 await _supabase.rpc('admin_recalcular_tudo');
-                alert("Salvo e rankings atualizados com sucesso!"); 
+                alert("Rankings e placares atualizados com sucesso!"); 
                 await carregarDados();
-            } catch (e) { alert("Erro ao salvar placares."); }
-            btn.innerText = "SALVAR TUDO"; btn.disabled = false;
+            } catch (e) { 
+                alert("Erro ao salvar placares: " + e.message); 
+                console.error(e);
+            }
+            
+            btn.innerText = "SALVAR TUDO"; 
+            btn.disabled = false;
         }
 
         function mudarAba(id) {
