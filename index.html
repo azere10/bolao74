@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bolão74 - Copa 2026</title>
-    <script src="https://cdn.tailwindcss.com\"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2\"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .tab-active { border-bottom: 4px solid #3b82f6; color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -18,6 +18,30 @@
         const SUPABASE_URL = 'https://auwzjdjyaqvqvznpfvif.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ESTADO GLOBAL DO SISTEMA (Declarado logo no topo para evitar ReferenceError)
+        const MAPA_MATA_MATA = {
+            segundas: Array.from({length: 16}, (_, i) => ({ id: `M${i+1}`, tA: `16A_${i+1}`, tB: `16B_${i+1}`, d: 'A definir' })),
+            oitavas: Array.from({length: 8}, (_, i) => ({ id: `O${i+1}`, tA: `Oitavas A_${i+1}`, tB: `Oitavas B_${i+1}`, d: 'A definir' })),
+            quartas: Array.from({length: 4}, (_, i) => ({ id: `Q${i+1}`, tA: `Quartas A_${i+1}`, tB: `Quartas B_${i+1}`, d: 'A definir' })),
+            semis: Array.from({length: 2}, (_, i) => ({ id: `S${i+1}`, tA: `Semi A_${i+1}`, tB: `Semi B_${i+1}`, d: 'A definir' })),
+            finais: [
+                { id: 'F2', tA: 'Perdedor Semi 1', tB: 'Perdedor Semi 2', d: '3º Lugar' },
+                { id: 'F1', tA: 'Vencedor Semi 1', tB: 'Vencedor Semi 2', d: 'Grande Final' }
+            ]
+        };
+
+        let currentUser = null;
+        let todosJogos = [];
+        let meusPalpites = [];
+        let todosPerfis = [];
+        let todosPalpitesBanco = [];
+
+        let abaAtual = 'grupos'; 
+        let modoVisaoGrupo = 'grupo'; 
+        let filtroGrupoAtivo = 'A'; 
+        let filtroDiaAtivo = ''; 
+        let subFaseAtiva = 'segundas';
     </script>
 
     <header class="bg-blue-900 text-white p-4 sticky top-0 z-50 shadow-md">
@@ -46,8 +70,7 @@
                 <button onclick="mudarModoVisao('grupo')" id="btn-visao-grupo" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-blue-600 text-white shadow-sm transition-all">Visão Grupo</button>
                 <button onclick="mudarModoVisao('dia')" id="btn-visao-dia" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-gray-100 text-gray-500 transition-all">Visão por Data</button>
             </div>
-            <div id="wrapper-seletor-grupo" class="overflow-x-auto no-scrollbar whitespace-nowrap py-1 gap-1 flex">
-                </div>
+            <div id="wrapper-seletor-grupo" class="overflow-x-auto no-scrollbar whitespace-nowrap py-1 gap-1 flex"></div>
         </div>
 
         <div id="controles-matamata" class="hidden bg-white p-1.5 rounded-xl border mb-4 shadow-sm w-full flex flex-row gap-1 justify-between md:justify-center md:gap-3 select-none overflow-hidden">
@@ -69,45 +92,20 @@
         </div>
     </div>
 
-    <div id="modal-auditoria" class="fixed inset-0 bg-slate-950/60 z-50 hidden flex items-center justify-center p-3 animate-fade-in">
+    <div id="modal-auditoria" class="fixed inset-0 bg-slate-950/60 z-50 hidden flex items-center justify-center p-3">
         <div class="bg-gray-100 w-full max-w-md h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border">
-            <div class="bg-blue-900 p-4 text-white flex justify-between items-center shadow">
+            <div class="bg-blue-900 p-4 text-white flex justify-between items-center">
                 <div>
                     <h2 id="auditoria-titulo" class="font-black italic text-sm uppercase tracking-wide">Auditoria de Palpites</h2>
                     <p id="auditoria-sub" class="text-[9px] text-blue-200 font-bold uppercase tracking-wider"></p>
                 </div>
-                <button onclick="fecharAuditoria()" class="bg-blue-950/50 hover:bg-red-600 w-8 h-8 flex items-center justify-center rounded-full font-black text-xs transition-colors border border-blue-800/40">✕</button>
+                <button onclick="fecharAuditoria()" class="bg-blue-950/50 hover:bg-red-600 w-8 h-8 flex items-center justify-center rounded-full font-black text-xs transition-colors">✕</button>
             </div>
-            <div id="auditoria-corpo" class="flex-1 overflow-y-auto p-3 space-y-2.5">
-                </div>
+            <div id="auditoria-corpo" class="flex-1 overflow-y-auto p-3 space-y-2.5"></div>
         </div>
     </div>
 
     <script>
-        // Mapeamento estático dos IDs de jogos do Mata-Mata para renderização sequencial
-        const MAPA_MATA_MATA = {
-            segundas: Array.from({length: 16}, (_, i) => ({ id: `M${i+1}`, tA: `16A_${i+1}`, tB: `16B_${i+1}`, d: 'A definir' })),
-            oitavas: Array.from({length: 8}, (_, i) => ({ id: `O${i+1}`, tA: `Oitavas A_${i+1}`, tB: `Oitavas B_${i+1}`, d: 'A definir' })),
-            quartas: Array.from({length: 4}, (_, i) => ({ id: `Q${i+1}`, tA: `Quartas A_${i+1}`, tB: `Quartas B_${i+1}`, d: 'A definir' })),
-            semis: Array.from({length: 2}, (_, i) => ({ id: `S${i+1}`, tA: `Semi A_${i+1}`, tB: `Semi B_${i+1}`, d: 'A definir' })),
-            finais: [
-                { id: 'F2', tA: 'Perdedor Semi 1', tB: 'Perdedor Semi 2', d: '3º Lugar' },
-                { id: 'F1', tA: 'Vencedor Semi 1', tB: 'Vencedor Semi 2', d: 'Grande Final' }
-            ]
-        };
-
-        let currentUser = null;
-        let todosJogos = [];
-        let meusPalpites = [];
-        let todosPerfis = [];
-        let todosPalpitesBanco = []; // Cache global de auditoria cruzada bloqueada por criptografia
-
-        let abaAtual = 'grupos'; 
-        let modoVisaoGrupo = 'grupo'; 
-        let filtroGrupoAtivo = 'A'; 
-        let filtroDiaAtivo = ''; 
-        let subFaseAtiva = 'segundas'; 
-
         async function obterUsuarioLogado() {
             const urlParams = new URLSearchParams(window.location.search);
             const userParam = urlParams.get('user');
@@ -192,7 +190,6 @@
 
         function mudarAba(nome) {
             abaAtual = nome;
-            
             document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
             document.getElementById(`tab-${nome}`).classList.add('tab-active');
             
@@ -209,13 +206,11 @@
             }
             
             document.getElementById('btn-salvar').style.display = (nome === 'ranking' || nome === 'regras') ? 'none' : 'block';
-            
             renderizarConteudo();
         }
 
         function selecionarSubFaseMataMata(faseSelecionada) {
             subFaseAtiva = faseSelecionada;
-            
             document.querySelectorAll('.sub-fase-btn').forEach(btn => {
                 btn.className = "sub-fase-btn inline-block py-2 px-2 md:px-5 text-[10px] md:text-xs font-black uppercase tracking-tight transition-all bg-gray-100 border-gray-200 text-gray-600 rounded-lg";
             });
@@ -224,7 +219,6 @@
             if (btnAtivo) {
                 btnAtivo.className = "sub-fase-btn inline-block py-2 px-2 md:px-5 text-[10px] md:text-xs font-black uppercase tracking-tight transition-all bg-blue-600 border-blue-700 text-white rounded-lg shadow-sm";
             }
-            
             renderizarConteudo();
         }
 
@@ -243,9 +237,7 @@
                     jogosFiltrados = todosJogos.filter(j => j.fase.includes('Grupo') && j.data_hora.startsWith(filtroDiaAtivo));
                 }
                 
-                container.innerHTML = jogosFiltrados.map(j => {
-                    return cardJogo(j, j.time_a, j.time_b, formatarDataHora(j.data_hora), j.id);
-                }).join('');
+                container.innerHTML = jogosFiltrados.map(j => cardJogo(j, j.time_a, j.time_b, formatarDataHora(j.data_hora), j.id)).join('');
             } else {
                 const config = MAPA_MATA_MATA[subFaseAtiva] || [];
                 container.innerHTML = config.map(c => {
@@ -299,19 +291,15 @@
                         <span>${infoData}</span>
                         <span>${jogo ? jogo.fase : 'Mata-Mata'}</span>
                     </div>
-                    
                     <div class="grid grid-cols-7 items-center justify-center gap-1">
                         <div class="col-span-2 text-right font-black text-xs text-slate-800 uppercase tracking-tight truncate">${timeA}</div>
-                        
-                        <div class="col-span-3 flex items-center justify-center gap-1 bg-gray-50 p-1.5 rounded-lg border">
+                        <div class="col-span-3 flex items-center justify-center gap-1.5 bg-gray-50 p-1.5 rounded-lg border">
                             <input type="number" id="g-a-${idMapeamento}" value="${valA}" ${estaBloqueado ? 'disabled' : ''} class="w-8 h-8 bg-white border text-center font-black text-xs rounded-md shadow-inner outline-none focus:ring-2 ring-blue-500 text-slate-800">
-                            <span class="text-[9px] font-black text-gray-400 uppercase">x</span>
+                            <span class="text-[9px] font-black text-gray-400">x</span>
                             <input type="number" id="g-b-${idMapeamento}" value="${valB}" ${estaBloqueado ? 'disabled' : ''} class="w-8 h-8 bg-white border text-center font-black text-xs rounded-md shadow-inner outline-none focus:ring-2 ring-blue-500 text-slate-800">
                         </div>
-                        
                         <div class="col-span-2 text-left font-black text-xs text-slate-800 uppercase tracking-tight truncate">${timeB}</div>
                     </div>
-
                     <div class="flex justify-between items-center mt-2 pt-1 border-t border-dashed">
                         <div class="text-[9px] font-bold text-gray-400 flex items-center gap-1">
                             Placar Oficial: <span class="bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-black text-xs">${oficialA} x ${oficialB}</span>
@@ -325,8 +313,7 @@
         function verificarJogoBloqueado(dataHoraIso) {
             if(!dataHoraIso) return true;
             const agora = new Date();
-            const jogoTime = new Date(dataHoraIso);
-            const limite = new Date(jogoTime.getTime() - (5 * 60 * 1000)); // Trava automática 5 min antes
+            const limite = new Date(new Date(dataHoraIso).getTime() - (5 * 60 * 1000));
             return agora >= limite;
         }
 
@@ -339,12 +326,10 @@
         async function salvarAlteracoes() {
             const upserts = [];
             const idsParaDeletar = [];
-
             const inputsA = document.querySelectorAll('input[id^="g-a-"]');
             
             inputsA.forEach(inputA => {
                 if(inputA.id.includes('fake') || inputA.disabled) return;
-                
                 const idJ = inputA.id.replace('g-a-', '');
                 const vA = inputA.value;
                 const vB = document.getElementById(`g-b-${idJ}`).value;
@@ -352,12 +337,7 @@
                 if (vA === '' && vB === '') {
                     idsParaDeletar.push(idJ);
                 } else if (vA !== '' && vB !== '') {
-                    upserts.push({
-                        user_id: currentUser.id, 
-                        jogo_id: idJ, 
-                        palpite_a: parseInt(vA), 
-                        palpite_b: parseInt(vB)
-                    });
+                    upserts.push({ user_id: currentUser.id, jogo_id: idJ, palpite_a: parseInt(vA), palpite_b: parseInt(vB) });
                 }
             });
 
@@ -365,36 +345,24 @@
                 if (idsParaDeletar.length > 0) {
                     await _supabase.from('palpites').delete().eq('user_id', currentUser.id).in('jogo_id', idsParaDeletar);
                 }
-
                 if (upserts.length > 0) {
                     const { error } = await _supabase.from('palpites').upsert(upserts, { onConflict: 'user_id,jogo_id' });
                     if (error) throw error;
                 }
-
                 alert("✅ Seus palpites foram atualizados com sucesso!");
                 await carregarDados();
             } catch (e) {
-                alert("Erro ao processar alterações: " + e.message);
-                console.error(e);
+                alert("Erro ao processar: " + e.message);
             }
         }
 
         function renderizarRanking() {
             const container = document.getElementById('view-conteudo');
-            
-            let html = `
-                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                    <div class="bg-slate-900 p-3 text-white text-[10px] font-black uppercase tracking-wider flex justify-between">
-                        <span>Posição / Participante</span>
-                        <span>Pontos</span>
-                    </div>
-                    <div class="divide-y">
-            `;
+            let html = `<div class="bg-white rounded-xl shadow-sm border overflow-hidden"><div class="bg-slate-900 p-3 text-white text-[10px] font-black uppercase tracking-wider flex justify-between"><span>Posição / Participante</span><span>Pontos</span></div><div class="divide-y">`;
 
             todosPerfis.forEach((p, index) => {
                 const medalha = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
                 const eVoce = p.id === currentUser.id;
-                
                 html += `
                     <div onclick="abrirAuditoriaUsuario('${p.id}', '${p.nome}')" class="p-3 flex justify-between items-center hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer ${eVoce ? 'bg-blue-50/60 font-black' : ''}">
                         <div class="flex items-center gap-3">
@@ -405,30 +373,24 @@
                     </div>
                 `;
             });
-
-            html += `</div></div>`;
-            container.innerHTML = html;
+            container.innerHTML = html + `</div></div>`;
         }
 
         function abrirAuditoriaUsuario(userId, userName) {
             document.getElementById('auditoria-titulo').innerText = `Palpites de ${userName}`;
-            document.getElementById('auditoria-sub').innerText = `Criptografia de Auditoria Ponta-a-Ponta Ativa`;
-            
+            document.getElementById('auditoria-sub').innerText = `Auditoria Transparente Ativa`;
             const corpo = document.getElementById('auditoria-corpo');
             corpo.innerHTML = '';
             
-            // Filtra e organiza todos os jogos que possuem resultado oficial lançado
             const jogosComResultado = todosJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
-            
             if(jogosComResultado.length === 0) {
-                corpo.innerHTML = `<div class="p-6 text-center text-xs font-bold text-gray-400 uppercase">Nenhum resultado oficial lançado até o momento.</div>`;
+                corpo.innerHTML = `<div class="p-6 text-center text-xs font-bold text-gray-400 uppercase">Nenhum resultado oficial lançado.</div>`;
                 document.getElementById('modal-auditoria').classList.remove('hidden');
                 return;
             }
 
             jogosComResultado.forEach(j => {
                 const palp = todosPalpitesBanco.find(p => p.jogo_id === j.id && p.user_id === userId);
-                
                 const txtPalpA = palp ? palp.palpite_a : '-';
                 const txtPalpB = palp ? palp.palpite_b : '-';
                 
@@ -441,14 +403,12 @@
                     if (palp.palpite_a === j.gols_a_oficial && palp.palpite_b === j.gols_b_oficial) {
                         pontosBase = 25; badgeCor = 'bg-green-600 text-white'; rotuloResultado = 'Placar Exato';
                     } else if (j.gols_a_oficial !== j.gols_b_oficial && Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial) && (palp.palpite_a - palp.palpite_b) === (j.gols_a_oficial - j.gols_b_oficial)) {
-                        pontosBase = 18; badgeCor = 'bg-blue-600 text-white'; rotuloResultado = 'Vendedor + Saldo';
+                        pontosBase = 18; badgeCor = 'bg-blue-600 text-white'; rotuloResultado = 'Saldo';
                     } else if (Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial)) {
-                        pontosBase = 15; badgeCor = 'bg-indigo-600 text-white'; rotuloResultado = 'Vencedor / Empate';
+                        pontosBase = 15; badgeCor = 'bg-indigo-600 text-white'; rotuloResultado = 'Tendência';
                     } else if (palp.palpite_a === j.gols_a_oficial || palp.palpite_b === j.gols_b_oficial) {
                         pontosBase = 3; badgeCor = 'bg-gray-500 text-white'; rotuloResultado = 'Gol Isolado';
-                    } else {
-                        rotuloResultado = 'Errou Tudo';
-                    }
+                    } else { rotuloResultado = 'Errou Tudo'; }
 
                     let peso = 1.0;
                     if (j.fase.includes('segundas')) peso = 1.2;
@@ -461,23 +421,19 @@
                 }
 
                 corpo.innerHTML += `
-                    <div class="bg-white p-3 rounded-xl border shadow-sm flex flex-col">
-                        <div class="flex justify-between items-center text-[8px] font-black uppercase text-gray-400 mb-1.5 border-b pb-1">
+                    <div class="bg-white p-3 rounded-xl border shadow-sm flex flex-col mb-2">
+                        <div class="flex justify-between items-center text-[8px] font-black uppercase text-gray-400 mb-1">
                             <span>${j.fase}</span>
                             <span class="text-slate-600 font-bold bg-slate-100 px-1 rounded">Oficial: ${j.gols_a_oficial} x ${j.gols_b_oficial}</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <div class="text-xs font-bold text-slate-800 uppercase tracking-tight">
-                                ${j.time_a} <span class="bg-slate-900 text-white px-1.5 py-0.5 rounded font-black text-xs mx-1">${txtPalpA}</span> x <span class="bg-slate-900 text-white px-1.5 py-0.5 rounded font-black text-xs mx-1">${txtPalpB}</span> ${j.time_b}
+                            <div class="text-xs font-bold text-slate-800 uppercase truncate">
+                                ${j.time_a} <span class="bg-slate-900 text-white px-1.5 py-0.5 rounded font-black">${txtPalpA}</span> x <span class="bg-slate-900 text-white px-1.5 py-0.5 rounded font-black">${txtPalpB}</span> ${j.time_b}
                             </div>
-                            <div class="${badgeCor} text-[8px] font-black uppercase px-2 py-1 rounded-md shadow-sm">
-                                ${rotuloResultado} (+${pontosGerados} Pts)
-                            </div>
+                            <div class="${badgeCor} text-[8px] font-black uppercase px-2 py-0.5 rounded">+${pontosGerados} Pts</div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
-
             document.getElementById('modal-auditoria').classList.remove('hidden');
         }
 
@@ -487,90 +443,36 @@
             document.getElementById('view-conteudo').innerHTML = `
                 <div class="space-y-4">
                     <div class="bg-white rounded-xl shadow-sm border p-5">
-                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">🎯 Pontuação Base (Fase de Grupos)</h3>
-                        <p class="text-slate-500 text-[11px] mb-4 font-medium leading-relaxed">Os pontos abaixo servem como base para o campeonato. Eles são calculados considerando apenas o tempo normal e prorrogação (disputa de pênaltis não conta).</p>
-                        
+                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase">🎯 Pontuação Base (Fase de Grupos)</h3>
                         <div class="space-y-2 text-xs font-bold">
-                            <div class="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-100">
-                                <span class="text-green-800">Placar Exato (Acertou em cheio)</span>
-                                <span class="bg-green-600 text-white px-2 py-0.5 rounded text-[11px]">25 Pts</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                <span class="text-blue-800">Acertou o Vencedor e o Saldo de Gols</span>
-                                <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[11px]">18 Pts</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                                <span class="text-indigo-800">Acertou Vencedor/Empate (Errou o saldo)</span>
-                                <span class="bg-indigo-600 text-white px-2 py-0.5 rounded text-[11px]">15 Pts</span>
-                            </div>
-                            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                <span class="text-gray-700">Errou a tendência, mas acertou os gols de 1 dos times</span>
-                                <span class="bg-gray-500 text-white px-2 py-0.5 rounded text-[11px]">3 Pts</span>
-                            </div>
+                            <div class="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-100"><span class="text-green-800">Placar Exato</span><span class="bg-green-600 text-white px-2 py-0.5 rounded">25 Pts</span></div>
+                            <div class="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100"><span class="text-blue-800">Vencedor e Saldo</span><span class="bg-blue-600 text-white px-2 py-0.5 rounded">18 Pts</span></div>
+                            <div class="flex justify-between items-center bg-indigo-50 p-3 rounded-lg border border-indigo-100"><span class="text-indigo-800">Vencedor/Empate (Seco)</span><span class="bg-indigo-600 text-white px-2 py-0.5 rounded">15 Pts</span></div>
+                            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200"><span class="text-gray-700">Gols de 1 time</span><span class="bg-gray-500 text-white px-2 py-0.5 rounded">3 Pts</span></div>
                         </div>
                     </div>
-
                     <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-blue-600">
-                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">📈 Multiplicadores do Mata-Mata</h3>
-                        <p class="text-slate-500 text-[11px] mb-3 font-medium leading-relaxed">Para manter a disputa acirrada até o fim, a pontuação base ganha peso progressivo à medida que o torneio afunila:</p>
-                        
+                        <h3 class="text-blue-700 font-black italic text-sm mb-3 border-b pb-1 uppercase">📈 Multiplicadores do Mata-Mata</h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-[11px] font-bold text-gray-700">
                                 <thead class="bg-gray-50 text-[9px] uppercase border-b text-gray-400">
-                                    <tr>
-                                        <th class="py-2 text-left">Fase</th>
-                                        <th class="py-2 text-center">Peso</th>
-                                        <th class="py-2 text-center text-green-600">Placar Exato</th>
-                                        <th class="py-2 text-center text-blue-600">Venc+Saldo</th>
-                                        <th class="py-2 text-center text-indigo-600">Vencedor</th>
-                                    </tr>
+                                    <tr><th class="py-2 text-left">Fase</th><th class="py-2 text-center">Peso</th><th class="py-2 text-center text-green-600">Exato</th><th class="py-2 text-center text-blue-600">Saldo</th><th class="py-2 text-center text-indigo-600">Venc</th></tr>
                                 </thead>
-                                <tbody class="divide-y">
-                                    <tr><td class="py-2 text-gray-500">Grupos</td><td class="text-center text-gray-500">x1.0</td><td class="text-center font-black">25</td><td class="text-center font-black">18</td><td class="text-center font-black">15</td></tr>
-                                    <tr><td class="py-2">16-Avos</td><td class="text-center text-blue-600">x1.2</td><td class="text-center font-black text-green-600">30</td><td class="text-center font-black text-blue-600">21</td><td class="text-center font-black text-indigo-600">18</td></tr>
-                                    <tr><td class="py-2">Oitavas</td><td class="text-center text-blue-600">x1.5</td><td class="text-center font-black text-green-600">37</td><td class="text-center font-black text-blue-600">27</td><td class="text-center font-black text-indigo-600">22</td></tr>
-                                    <tr><td class="py-2">Quartas</td><td class="text-center text-blue-600">x2.0</td><td class="text-center font-black text-green-600">50</td><td class="text-center font-black text-blue-600">36</td><td class="text-center font-black text-indigo-600">30</td></tr>
-                                    <tr><td class="py-2">Semifinais</td><td class="text-center text-blue-600">x2.5</td><td class="text-center font-black text-green-600">62</td><td class="text-center font-black text-blue-600">45</td><td class="text-center font-black text-indigo-600">37</td></tr>
-                                    <tr class="bg-blue-50/40"><td class="py-2 text-blue-700">Finais</td><td class="text-center text-blue-700">x3.0</td><td class="text-center font-black text-green-600">75</td><td class="text-center font-black text-blue-600">54</td><td class="text-center font-black text-indigo-600">45</td></tr>
+                                <tbody class="divide-y text-center">
+                                    <tr><td class="py-2 text-left text-gray-500">Grupos</td><td>x1.0</td><td class="font-black">25</td><td class="font-black">18</td><td class="font-black">15</td></tr>
+                                    <tr><td class="py-2 text-left">16-Avos</td><td class="text-blue-600">x1.2</td><td class="font-black text-green-600">30</td><td class="font-black text-blue-600">21</td><td class="font-black text-indigo-600">18</td></tr>
+                                    <tr><td class="py-2 text-left">Oitavas</td><td class="text-blue-600">x1.5</td><td class="font-black text-green-600">37</td><td class="font-black text-blue-600">27</td><td class="font-black text-indigo-600">22</td></tr>
+                                    <tr><td class="py-2 text-left">Quartas</td><td class="text-blue-600">x2.0</td><td class="font-black text-green-600">50</td><td class="font-black text-blue-600">36</td><td class="font-black text-indigo-600">30</td></tr>
+                                    <tr><td class="py-2 text-left">Semifinais</td><td class="text-blue-600">x2.5</td><td class="font-black text-green-600">62</td><td class="font-black text-blue-600">45</td><td class="font-black text-indigo-600">37</td></tr>
+                                    <tr class="bg-blue-50/40"><td class="py-2 text-left text-blue-700">Finais</td><td class="text-blue-700">x3.0</td><td class="font-black text-green-600">75</td><td class="font-black text-blue-600">54</td><td class="font-black text-indigo-600">45</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-
-                    <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-amber-500">
-                        <h3 class="text-amber-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">⏳ Limite de Prazos</h3>
-                        <ul class="space-y-2 text-xs text-gray-600 font-bold leading-relaxed">
-                            <li class="flex items-start gap-2">
-                                <span>🔒</span>
-                                <span>O bloqueio de cada partida ocorre de forma automática <span class="text-amber-600 font-black">5 minutos antes</span> do horário de início oficial marcado na tabela.</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span>🔄</span>
-                                <span>Dentro desse prazo, você tem total liberdade para alterar, revisar e salvar as suas apostas <span class="text-green-600 font-black">quantas vezes quiser</span>.</span>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-white rounded-xl shadow-sm border p-5 border-l-4 border-l-emerald-500">
-                        <h3 class="text-emerald-700 font-black italic text-sm mb-3 border-b pb-1 uppercase flex items-center gap-1">💰 Valores e Premiações</h3>
-                        <div class="bg-emerald-50 text-emerald-800 font-black text-center p-3 rounded-xl border border-emerald-100 text-sm mb-4">
-                            Taxa de Inscrição: R$ 10,00 por participante
-                        </div>
-                        <p class="text-slate-500 text-[11px] mb-3 font-medium leading-relaxed">O montante total arrecadado com as inscrições do bolão será convertido integralmente em premiação, sendo distribuído ao final do torneio na seguinte proporção:</p>
-                        
-                        <table class="w-full text-xs font-bold text-gray-700">
-                            <tbody>
-                                <tr class="border-b"><td class="py-2 flex items-center gap-2">🥇 1º Lugar (Campeão)</td><td class="text-right text-emerald-600 font-black text-sm">60% do total</td></tr>
-                                <tr class="border-b"><td class="py-2 flex items-center gap-2">🥈 2º Lugar</td><td class="text-right text-slate-600 font-black text-sm">30% do total</td></tr>
-                                <tr><td class="py-2 flex items-center gap-2">🥉 3º Lugar</td><td class="text-right text-amber-700 font-black text-sm">10% do total</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
+                </div>`;
         }
 
-        carregarDados();
+        window.onload = carregarDados;
     </script>
 </body>
 </html>
