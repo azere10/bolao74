@@ -266,17 +266,29 @@
         }
         
         async function renderizarRanking() {
-            const { data } = await _supabase.from('perfis').select('*').order('points_total', { ascending: false });
+            // Correção da coluna de ordenação: de 'points_total' para 'pontos_total'
+            const { data } = await _supabase.from('perfis').select('*').order('pontos_total', { ascending: false });
             document.getElementById('view-conteudo').innerHTML = `
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden border">
                     <table class="w-full text-left">
-                        <thead class="bg-gray-50 border-b"><tr class="text-[9px] uppercase text-gray-400 font-bold"><th class="p-4">Pos</th><th class="p-4">Nome</th><th class="p-4 text-right">Pts</th></tr></thead>
+                        <thead class="bg-gray-50 border-b">
+                            <tr class="text-[9px] uppercase text-gray-400 font-bold">
+                                <th class="p-4">Pos</th>
+                                <th class="p-4">Nome</th>
+                                <th class="p-4 text-right">Pts</th>
+                            </tr>
+                        </thead>
                         <tbody>${(data||[]).map((p, i) => `
-                            <tr class="border-b ${currentUser && p.id===currentUser.id?'bg-blue-50':''}">
-                                <td class="p-4 text-xs font-bold text-gray-400">#${i+1}</td>
-                                <td class="p-4 font-black text-gray-800 text-xs">${p.nome_completo}</td>
-                                <td class="p-4 text-right font-black text-blue-600">${p.pontos_total||0}</td>
-                            </tr>`).join('')}</tbody>
+                            <tr class="border-b ${currentUser && p.id === currentUser.id ? 'bg-blue-50/70 font-semibold' : ''}">
+                                <td class="p-4 text-xs font-bold ${i===0?'text-amber-500':i===1?'text-gray-400':i===2?'text-amber-700':'text-gray-400'}">
+                                    ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1)}
+                                </td>
+                                <td class="p-4 text-gray-800 text-xs">
+                                    ${p.nome_completo} ${currentUser && p.id === currentUser.id ? ' (Você)' : ''}
+                                </td>
+                                <td class="p-4 text-right font-black text-blue-600 text-xs">${p.pontos_total || 0}</td>
+                            </tr>`).join('')}
+                        </tbody>
                     </table>
                 </div>`;
         }
