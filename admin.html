@@ -81,7 +81,7 @@
 
         async function carregarDados() {
             const { data } = await _supabase.from('jogos').select('*').order('data_hora', { ascending: true });
-            todosJogos = data;
+            todosJogos = data || [];
             calcularRankings();
             renderizarGrupos();
             ['segundas', 'oitavas', 'quartas', 'semis', 'finais'].forEach(renderizarMataMata);
@@ -94,7 +94,7 @@
             tbody.innerHTML = (users || []).map(u => `
                 <tr class="hover:bg-slate-900/30">
                     <td class="p-4 font-bold text-white text-sm">${u.nome_completo}</td>
-                    <td class="p-4 text-slate-400 font-mono">${u.usuario_login || '<span class="text-red-500 font-sans text-xs">E-mail Antigo</span>'}</td>
+                    <td class="p-4 text-slate-400 font-mono">${u.usuario_login || '<span class="text-red-500 font-sans text-xs">Sem Login Simplificado</span>'}</td>
                     <td class="p-4 text-slate-400 font-mono">${u.senha_plana || '---'}</td>
                     <td class="p-4 text-center">
                         <button onclick="deletarUsuarioSistema('${u.id}')" class="bg-red-950/50 hover:bg-red-900 text-red-400 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">Excluir</button>
@@ -110,10 +110,8 @@
 
             if(!nome || !login || !senha) return alert("Preencha todos os campos!");
 
-            // Geramos o ID único do usuário aqui no painel
             const novoUserId = crypto.randomUUID();
 
-            // 1. Criamos o Perfil do usuário
             const { error: errorPerfil } = await _supabase.from('perfis').insert([{
                 id: novoUserId,
                 nome_completo: nome,
@@ -123,13 +121,12 @@
             }]);
 
             if(errorPerfil) {
-                return alert("Erro ao criar perfil (Login já existe ou formato inválido): " + errorPerfil.message);
+                return alert("Erro ao criar perfil: " + errorPerfil.message);
             }
 
-            // 2. Criamos as linhas de palpites em branco para cada jogo existente na base
             if (todosJogos && todosJogos.length > 0) {
                 const palpitesEmBranco = todosJogos
-                    .filter(j => j.id) // Garante que o jogo possui um ID válido
+                    .filter(j => j.id)
                     .map(j => ({
                         user_id: novoUserId,
                         jogo_id: j.id,
@@ -138,20 +135,14 @@
                     }));
 
                 if (palpitesEmBranco.length > 0) {
-                    const { error: errorPalpites } = await _supabase.from('palpites').insert(palpitesEmBranco);
-                    if (errorPalpites) {
-                        console.error("Aviso: Falha ao gerar tabela inicial de palpites:", errorPalpites.message);
-                    }
+                    await _supabase.from('palpites').insert(palpitesEmBranco);
                 }
             }
 
-            alert("✨ Usuário '" + nome + "' criado e configurado com sucesso!");
-            
-            // Limpa o formulário
+            alert("Usuário criado com sucesso!");
             document.getElementById('add-nome').value = '';
             document.getElementById('add-login').value = '';
             document.getElementById('add-senha').value = '';
-            
             carregarDados();
         }
 
@@ -197,10 +188,6 @@
                                     <input type="number" id="g-b-${j.id}" value="${j.gols_b_oficial ?? ''}" class="w-8 h-8 bg-slate-800 border border-slate-700 text-center rounded text-blue-400 font-bold">
                                 </div>
                                 <div class="flex-1 text-left text-[10px] font-bold truncate">${j.time_b}</div>
-                                <div class="text-[8px] text-slate-500 leading-tight w-12 ml-1">
-                                    ${new Date(j.data_hora).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}<br>
-                                    ${new Date(j.data_hora).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}
-                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -279,16 +266,16 @@
             btn.disabled = true;
             try {
                 for (let j of todosJogos) {
-                    const ga = document.getElementById(`g-a-${j.id}`)?.value;
-                    const gb = document.getElementById(`g-b-${j.id}`)?.value;
-                    if(ga !== undefined && ga !== "" && gb !== "") {
-                        await _supabase.rpc('admin_atualizar_placar', { id_jogo: j.id, g_a: parseInt(ga), g_b: parseInt(gb) });
+                    const elA = document.getElementById(`g-a-${j.id}`);
+                    const elB = document.getElementById(`g-b-${j.id}`);
+                    if(elA && elB && elA.value !== "" && elB.value !== "") {
+                        await _supabase.rpc('admin_atualizar_placar', { id_jogo: j.id, g_a: parseInt(elA.value), g_b: parseInt(elB.value) });
                     }
                 }
                 await _supabase.rpc('admin_recalcular_tudo');
-                alert("Ranking recalculado!"); 
+                alert("Salvo e rankings atualizados com sucesso!"); 
                 await carregarDados();
-            } catch (e) { alert("Erro ao salvar!"); }
+            } catch (e) { alert("Erro ao salvar placares."); }
             btn.innerText = "SALVAR TUDO"; btn.disabled = false;
         }
 
