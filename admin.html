@@ -38,12 +38,12 @@
 
         <div id="aba-usuarios" class="secao hidden space-y-6">
             <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 max-w-md mx-auto">
-                <h3 class="text-md font-black uppercase text-blue-500 mb-4">Criar Usuário Simplificado (Para Idosos)</h3>
+                <h3 class="text-md font-black uppercase text-blue-500 mb-4">Criar Usuário Simplificado</h3>
                 <div class="space-y-3">
                     <input type="text" id="add-nome" placeholder="Nome Completo / Exibição" class="w-full bg-slate-950 p-3 rounded border border-slate-800 outline-none focus:border-blue-500 text-sm">
                     <input type="text" id="add-login" placeholder="Usuário para entrar (Ex: joao74)" class="w-full bg-slate-950 p-3 rounded border border-slate-800 outline-none focus:border-blue-500 text-sm">
                     <input type="text" id="add-senha" placeholder="Senha Acesso" class="w-full bg-slate-950 p-3 rounded border border-slate-800 outline-none focus:border-blue-500 text-sm">
-                    <button onclick="criarUsuarioSistema()" class="w-full bg-blue-600 py-3 rounded font-black text-sm hover:bg-blue-500">CRIAR E LIBERAR ACESSO</button>
+                    <button onclick="criarUsuarioSistema()" class="w-full bg-blue-600 py-3 rounded font-black text-sm hover:bg-blue-500">CRIAR PARTICIPANTE</button>
                 </div>
             </div>
 
@@ -94,7 +94,7 @@
             tbody.innerHTML = (users || []).map(u => `
                 <tr class="hover:bg-slate-900/30">
                     <td class="p-4 font-bold text-white text-sm">${u.nome_completo}</td>
-                    <td class="p-4 text-slate-400 font-mono">${u.usuario_login || '<span class="text-red-500 font-sans text-xs">Sem Login Simplificado</span>'}</td>
+                    <td class="p-4 text-slate-400 font-mono">${u.usuario_login || '---'}</td>
                     <td class="p-4 text-slate-400 font-mono">${u.senha_plana || '---'}</td>
                     <td class="p-4 text-center">
                         <button onclick="deletarUsuarioSistema('${u.id}')" class="bg-red-950/50 hover:bg-red-900 text-red-400 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">Excluir</button>
@@ -104,34 +104,33 @@
         }
 
         async function criarUsuarioSistema() {
-    const nome = document.getElementById('add-nome').value.trim();
-    const login = document.getElementById('add-login').value.trim().toLowerCase();
-    const senha = document.getElementById('add-senha').value;
+            const nome = document.getElementById('add-nome').value.trim();
+            const login = document.getElementById('add-login').value.trim().toLowerCase();
+            const senha = document.getElementById('add-senha').value;
 
-    if(!nome || !login || !senha) return alert("Preencha todos os campos!");
+            if(!nome || !login || !senha) return alert("Preencha todos os campos!");
 
-    // Gera um ID único para o novo participante
-    const novoUserId = crypto.randomUUID();
+            const novoUserId = crypto.randomUUID();
 
-    // Insere puramente o cadastro na tabela de perfis
-    const { error } = await _supabase.from('perfis').insert([{
-        id: novoUserId,
-        nome_completo: nome,
-        usuario_login: login,
-        senha_plana: senha,
-        pontos_total: 0
-    }]);
+            const { error } = await _supabase.from('perfis').insert([{
+                id: novoUserId,
+                nome_completo: nome,
+                usuario_login: login,
+                senha_plana: senha,
+                pontos_total: 0
+            }]);
 
-    if(error) {
-        alert("Erro ao criar usuário: " + error.message);
-    } else {
-        alert("✨ Usuário '" + nome + "' criado com sucesso!");
-        document.getElementById('add-nome').value = '';
-        document.getElementById('add-login').value = '';
-        document.getElementById('add-senha').value = '';
-        carregarDados();
-    }
-}
+            if(error) {
+                alert("Erro ao criar usuário: " + error.message);
+            } else {
+                alert("✨ Usuário criado com sucesso!");
+                document.getElementById('add-nome').value = '';
+                document.getElementById('add-login').value = '';
+                document.getElementById('add-senha').value = '';
+                carregarDados();
+            }
+        }
+
         async function deletarUsuarioSistema(id) {
             if(confirm("Tem certeza que deseja excluir este participante? Todos os palpites dele serão apagados permanentemente!")) {
                 const { error } = await _supabase.rpc('admin_excluir_usuario', { user_id_param: id });
@@ -251,23 +250,16 @@
             const btn = document.getElementById('btn-main'); 
             btn.innerText = "🔄 SALVANDO...";
             btn.disabled = true;
-            
             try {
-                // Seleciona todos os inputs de gols do Time A na tela do admin
                 const inputsA = document.querySelectorAll('input[id^="g-a-"]');
-                
                 for (let inputA of inputsA) {
-                    // CORREÇÃO CRÍTICA: Se o ID do input contiver a marcação temporária 'fake', pula para o próximo e ignora
                     if (inputA.id.includes('fake')) continue;
-                    
                     const idJogo = inputA.id.replace('g-a-', '');
                     const gaValue = inputA.value;
-                    
                     const elB = document.getElementById(`g-b-${idJogo}`);
                     if (!elB) continue;
                     const gbValue = elB.value;
 
-                    // Só envia para o banco se ambos os campos estiverem preenchidos
                     if (gaValue !== undefined && gaValue !== "" && gbValue !== "") {
                         await _supabase.rpc('admin_atualizar_placar', { 
                             id_jogo: idJogo, 
@@ -276,19 +268,13 @@
                         });
                     }
                 }
-                
                 await _supabase.rpc('admin_recalcular_tudo');
                 alert("Ranking e placares atualizados com sucesso!"); 
                 await carregarDados();
-            } catch (e) { 
-                alert("Erro ao salvar placares: " + e.message); 
-                console.error(e);
-            }
-            
-            btn.innerText = "SALVAR TUDO"; 
-            btn.disabled = false;
+            } catch (e) { alert("Erro ao salvar placares."); }
+            btn.innerText = "SALVAR TUDO"; btn.disabled = false;
         }
-        
+
         function mudarAba(id) {
             document.querySelectorAll('.secao').forEach(s => s.classList.add('hidden'));
             document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
