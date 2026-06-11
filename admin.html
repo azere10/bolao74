@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>FIFA Engine Master - Bolão74 Admin</title>
-    <script src="https://cdn.tailwindcss.com\"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2\"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .tab-active { border-bottom: 4px solid #3b82f6; color: white; background: rgba(59, 130, 246, 0.1); }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -24,15 +24,12 @@
     </header>
 
     <main class="container mx-auto p-4 max-w-4xl">
-        
         <section id="aba-grupos" class="secao space-y-6">
             <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-lg">
                 <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">Seletor de Grupo</h2>
-                <div class="flex flex-wrap gap-1.5" id="botoes-filtros-grupos">
-                    </div>
+                <div class="flex flex-wrap gap-1.5" id="botoes-filtros-grupos"></div>
             </div>
-            <div id="lista-jogos-grupos" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                </div>
+            <div id="lista-jogos-grupos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
         <section id="aba-matamata" class="secao hidden space-y-6">
@@ -46,15 +43,14 @@
                     <button onclick="filtrarMataMata('finais')" id="btn-fase-finais" class="fase-mm-btn px-4 py-2 bg-slate-800 text-slate-400 font-black text-xs rounded-lg transition-all">FINAIS</button>
                 </div>
             </div>
-            <div id="lista-jogos-matamata" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                </div>
+            <div id="lista-jogos-matamata" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
         <section id="aba-perfis" class="secao hidden max-w-md mx-auto">
             <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg space-y-4">
                 <div>
                     <h2 class="text-md font-black text-white italic uppercase tracking-wider">Novo Participante</h2>
-                    <p class="text-[10px] text-slate-500 font-medium">Cadastre o nome exato que o usuário usará para acessar via URL (?user=Nome)</p>
+                    <p class="text-[10px] text-slate-500 font-medium">Cadastre o nome exato para acesso via URL (?user=Nome)</p>
                 </div>
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Nome Completo</label>
@@ -65,13 +61,12 @@
                 </button>
             </div>
         </section>
-
     </main>
 
     <div class="fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur border-t border-slate-800 p-4 z-40">
         <div class="container mx-auto max-w-4xl flex justify-between items-center">
-            <p class="text-[10px] font-bold text-slate-500 uppercase max-w-xs hidden sm:block">Atenção: Ao clicar em salvar, todos os placares preenchidos serão consolidados e as pontuações recalculadas do zero absoluto.</p>
-            <button id="btn-main" onclick="processarAtualizacao()" class="w-full sm:w-auto bg-green-600 text-white font-black text-xs px-8 py-3.5 rounded-lg shadow-xl hover:bg-green-700 active:scale-95 transition-all uppercase tracking-wider border border-green-700">
+            <p class="text-[10px] font-bold text-slate-500 uppercase max-w-xs hidden sm:block">Os placares preenchidos serão consolidados e as pontuações recalculadas do zero absoluto.</p>
+            <button id="btn-main" onclick="processarAtualizacao()" class="w-full sm:w-auto bg-green-600 text-white font-black text-xs px-8 py-3.5 rounded-lg shadow-xl hover:bg-green-700 transition-all uppercase tracking-wider border border-green-700">
                 SALVAR TUDO
             </button>
         </div>
@@ -98,14 +93,14 @@
 
         function renderizarFiltrosGrupos() {
             const box = document.getElementById('botoes-filtros-grupos');
+            if(!box) return;
             box.innerHTML = '';
             ['A','B','C','D','E','F','G','H','I','J','K','L'].forEach(g => {
                 const act = filtroGrupoAtual === g;
                 box.innerHTML += `
                     <button onclick="definirGrupoFiltro('${g}')" class="px-3.5 py-2 font-black text-xs rounded-lg transition-all ${act ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-800 text-slate-400'}">
                         G-${g}
-                    </button>
-                `;
+                    </button>`;
             });
         }
 
@@ -117,8 +112,8 @@
 
         function renderizarPainelGrupos() {
             const container = document.getElementById('lista-jogos-grupos');
+            if(!container) return;
             container.innerHTML = '';
-            
             const list = dadosJogos.filter(j => j.fase === `Grupo ${filtroGrupoAtual}`);
             container.innerHTML = list.map(j => cardAdminJogo(j)).join('');
         }
@@ -134,22 +129,15 @@
 
         function renderizarPainelMataMata() {
             const container = document.getElementById('lista-jogos-matamata');
+            if(!container) return;
             container.innerHTML = '';
-
-            let termo = 'segundas';
-            if (filtroMataMataAtual === 'oitavas') termo = 'oitavas';
-            if (filtroMataMataAtual === 'quartas') termo = 'quartas';
-            if (filtroMataMataAtual === 'semis') termo = 'semis';
-            if (filtroMataMataAtual === 'finais') termo = 'finais';
-
-            const list = dadosJogos.filter(j => j.fase.includes(termo));
+            const list = dadosJogos.filter(j => j.fase.toLowerCase().includes(filtroMataMataAtual.toLowerCase()));
             container.innerHTML = list.map(j => cardAdminJogo(j)).join('');
         }
 
         function cardAdminJogo(j) {
             const valA = j.gols_a_oficial !== null ? j.gols_a_oficial : '';
             const valB = j.gols_b_oficial !== null ? j.gols_b_oficial : '';
-            
             const date = new Date(j.data_hora);
             const dtStr = date.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) + ' ' + date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
 
@@ -168,8 +156,7 @@
                         </div>
                         <div class="col-span-2 text-left font-black text-xs text-slate-200 uppercase tracking-tight truncate">${j.time_b}</div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
         async function processarAtualizacao() {
@@ -182,48 +169,32 @@
                 const promessasDeAtualizacao = [];
 
                 for (let inputA of inputsA) {
-                    if (inputA.id.includes('fake')) continue;
-                    
                     const idJogo = inputA.id.replace('g-a-', '');
                     const gaValue = inputA.value;
                     const elB = document.getElementById(`g-b-${idJogo}`);
                     if (!elB) continue;
                     const gbValue = elB.value;
 
-                    // Caso 1: Ambos os campos preenchidos -> Prepara atualização limpa na tabela de jogos
                     if (gaValue !== "" && gbValue !== "") {
                         promessasDeAtualizacao.push(
-                            _supabase
-                                .from('jogos')
-                                .update({ gols_a_oficial: parseInt(gaValue), gols_b_oficial: parseInt(gbValue) })
-                                .eq('id', idJogo)
+                            _supabase.from('jogos').update({ gols_a_oficial: parseInt(gaValue), gols_b_oficial: parseInt(gbValue) }).eq('id', idJogo)
                         );
-                    } 
-                    // Caso 2: Ambos os campos vazios -> Prepara o reset do placar para NULL
-                    else if (gaValue === "" && gbValue === "") {
+                    } else if (gaValue === "" && gbValue === "") {
                         promessasDeAtualizacao.push(
-                            _supabase
-                                .from('jogos')
-                                .update({ gols_a_oficial: null, gols_b_oficial: null })
-                                .eq('id', idJogo)
+                            _supabase.from('jogos').update({ gols_a_oficial: null, gols_b_oficial: null }).eq('id', idJogo)
                         );
                     }
                 }
                 
-                // Dispara todas as alterações em lote paralelo para a tabela jogos
-                if (promessasDeAtualizacao.length > 0) {
-                    await Promise.all(promessasDeAtualizacao);
-                }
+                if (promessasDeAtualizacao.length > 0) await Promise.all(promessasDeAtualizacao);
                 
-                // EXECUÇÃO ÚNICA: Dispara o recálculo via RPC unificado aplicando pesos progressivos
                 const { error: rpcError } = await _supabase.rpc('admin_recalcular_tudo');
                 if (rpcError) throw rpcError;
 
-                alert("✅ Resultados oficiais salvos e ranking atualizado do zero com sucesso!"); 
+                alert("✅ Resultados oficiais salvos e ranking atualizado com sucesso!"); 
                 await carregarDados();
             } catch (e) { 
-                alert("Erro crítico ao salvar dados: " + e.message); 
-                console.error(e);
+                alert("Erro crítico: " + e.message); 
             }
             btn.innerText = "SALVAR TUDO"; btn.disabled = false;
         }
@@ -231,17 +202,11 @@
         async function cadastrarPerfil() {
             const input = document.getElementById('novo-perfil-nome');
             const nome = input.value.trim();
-            
-            if(!nome) return alert('Por favor, digite o nome completo.');
+            if(!nome) return alert('Por favor, digite o nome.');
 
             const { error } = await _supabase.from('perfis').insert([{ nome: nome, pontos_total: 0 }]);
-            if(error) {
-                alert('Erro ao inserir perfil: ' + error.message);
-            } else {
-                alert(`✅ Participante "${nome}" cadastrado com sucesso!`);
-                input.value = '';
-                await carregarDados();
-            }
+            if(error) alert('Erro: ' + error.message);
+            else { alert(`✅ "${nome}" cadastrado!`); input.value = ''; await carregarDados(); }
         }
 
         function mudarAba(id) {
@@ -251,7 +216,10 @@
             document.getElementById('tab-'+id).classList.add('tab-active');
         }
 
-        carregarDados();
+        window.onload = function() {
+            mudarAba('grupos');
+            carregarDados();
+        };
     </script>
 </body>
 </html>
