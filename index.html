@@ -117,17 +117,28 @@
                     } else {
                         textoPalpite = `<span class="font-black text-gray-800">${palp.palpite_a} × ${palp.palpite_b}</span>`;
                         
-                        // CORREÇÃO CRÍTICA: Ajustado de 'p.palpite_b' para 'palp.palpite_b'
+                        // Bloco interno de cálculo de pontos com multiplicadores para o front-end
                         if (j.gols_a_oficial !== null && j.gols_b_oficial !== null) {
+                            let pontosBase = 0;
                             if (palp.palpite_a === j.gols_a_oficial && palp.palpite_b === j.gols_b_oficial) {
-                                pontosGerados = 25; badgeCor = 'bg-green-600 text-white';
+                                pontosBase = 25; badgeCor = 'bg-green-600 text-white';
                             } else if (j.gols_a_oficial !== j.gols_b_oficial && Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial) && (palp.palpite_a - palp.palpite_b) === (j.gols_a_oficial - j.gols_b_oficial)) {
-                                pontosGerados = 18; badgeCor = 'bg-blue-600 text-white';
+                                pontosBase = 18; badgeCor = 'bg-blue-600 text-white';
                             } else if (Math.sign(palp.palpite_a - palp.palpite_b) === Math.sign(j.gols_a_oficial - j.gols_b_oficial)) {
-                                pontosGerados = 15; badgeCor = 'bg-indigo-600 text-white';
+                                pontosBase = 15; badgeCor = 'bg-indigo-600 text-white';
                             } else if (palp.palpite_a === j.gols_a_oficial || palp.palpite_b === j.gols_b_oficial) {
-                                pontosGerados = 3; badgeCor = 'bg-gray-500 text-white';
+                                pontosBase = 3; badgeCor = 'bg-gray-500 text-white';
                             }
+
+                            // Define o fator de multiplicação visual idêntico ao banco de dados
+                            let peso = 1.0;
+                            if (j.fase.includes('segundas')) peso = 1.2;
+                            else if (j.fase.includes('oitavas')) peso = 1.5;
+                            else if (j.fase.includes('quartas')) peso = 2.0;
+                            else if (j.fase.includes('semis')) peso = 2.5;
+                            else if (j.fase.includes('finais')) peso = 3.0;
+
+                            pontosGerados = Math.round(pontosBase * peso);
                         }
                     }
                 }
