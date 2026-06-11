@@ -40,19 +40,17 @@
         
         <nav class="flex gap-1 bg-white p-1 rounded-xl shadow-sm border mb-3 sticky top-20 z-40 justify-between">
             <button onclick="mudarAba('grupos')" class="aba-btn flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all" id="tab-grupos">GRUPOS</button>
-            <button onclick="mudarAba('matamata')" class="aba-btn flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all text-blue-600 bg-blue-50" id="tab-matamata">MATA-MATA</button>
+            <button onclick="mudarAba('matamata')" class="aba-btn flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all" id="tab-matamata">MATA-MATA</button>
             <button onclick="mudarAba('ranking')" class="aba-btn flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all" id="tab-ranking">RANKING</button>
             <button onclick="mudarAba('regras')" class="aba-btn flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all" id="tab-regras">REGRAS</button>
         </nav>
 
-        <div id="controles-matamata" class="hidden bg-white p-2 rounded-xl border mb-4 flex-col gap-2 shadow-sm">
-            <div class="grid grid-cols-3 gap-1.5 w-full">
-                <button onclick="selecionarSubFaseMataMata('segundas')" id="btn-sub-segundas" class="sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-blue-600 text-white">16-Avos</button>
-                <button onclick="selecionarSubFaseMataMata('oitavas')" id="btn-sub-oitavas" class="sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500">Oitavas</button>
-                <button onclick="selecionarSubFaseMataMata('quartas')" id="btn-sub-quartas" class="sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500">Quartas</button>
-                <button onclick="selecionarSubFaseMataMata('semis')" id="btn-sub-semis" class="sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500 col-span-1">Semis</button>
-                <button onclick="selecionarSubFaseMataMata('finais')" id="btn-sub-finais" class="sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500 col-span-2">Finais</button>
-            </div>
+        <div id="controles-matamata" class="hidden bg-white p-1.5 rounded-xl border mb-4 shadow-sm overflow-x-auto no-scrollbar whitespace-nowrap gap-1">
+            <button onclick="selecionarSubFaseMataMata('segundas')" id="btn-sub-segundas" class="sub-fase-btn inline-block py-2 px-3.5 rounded-lg text-[9px] font-black uppercase transition-all bg-blue-600 text-white">16-Avos</button>
+            <button onclick="selecionarSubFaseMataMata('oitavas')" id="btn-sub-oitavas" class="sub-fase-btn inline-block py-2 px-3.5 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500">Oitavas</button>
+            <button onclick="selecionarSubFaseMataMata('quartas')" id="btn-sub-quartas" class="sub-fase-btn inline-block py-2 px-3.5 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500">Quartas</button>
+            <button onclick="selecionarSubFaseMataMata('semis')" id="btn-sub-semis" class="sub-fase-btn inline-block py-2 px-3.5 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500">Semis</button>
+            <button onclick="selecionarSubFaseMataMata('finais')" id="btn-sub-finais" class="sub-fase-btn inline-block py-2 px-3.5 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500">Finais</button>
         </div>
 
         <div id="controles-grupos" class="flex gap-2 mb-4">
