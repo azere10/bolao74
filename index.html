@@ -289,12 +289,11 @@
             // Exibe ou oculta os filtros de Grupo
             document.getElementById('controles-grupos').style.display = nome === 'grupos' ? 'flex' : 'none';
             
-            // Gerenciamento do painel Mata-Mata com transição flex
+            // Gerenciamento do painel Mata-Mata com transição inline-flex
             const painelMataMata = document.getElementById('controles-matamata');
             if (nome === 'matamata') {
                 painelMataMata.classList.remove('hidden');
-                painelMataMata.classList.add('flex');
-                // Força a atualização das cores dos botões ao entrar na aba
+                painelMataMata.classList.add('flex'); // Mantém o alinhamento flexível em linha única
                 selecionarSubFaseMataMata(subFaseAtiva);
             } else {
                 painelMataMata.classList.remove('flex');
