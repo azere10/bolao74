@@ -292,19 +292,29 @@
             btn.disabled = true;
             
             try {
+                // Captura todos os inputs do time A
                 const inputsA = document.querySelectorAll('input[id^="g-a-"]');
                 const promessas = [];
 
                 for (let inputA of inputsA) {
-                    if (inputA.id.includes('fake')) continue;
+                    // Ignora IDs falsos ou gerados incorretamente
+                    if (!inputA.id || inputA.id.includes('fake')) continue;
                     
-                    const idJogo = inputA.id.replace('g-a-', '');
-                    const gaValue = inputA.value;
+                    // Extrai e limpa o ID do jogo
+                    const idJogo = inputA.id.replace('g-a-', '').trim();
+                    
+                    // Validação de segurança: se o ID for vazio, pula para o próximo para não travar o banco
+                    if (!idJogo) {
+                        console.warn("Aviso: ID do jogo ignorado por estar vazio.", inputA.id);
+                        continue;
+                    }
+
+                    const gaValue = inputA.value.trim();
                     const elB = document.getElementById(`g-b-${idJogo}`);
                     if (!elB) continue;
-                    const gbValue = elB.value;
+                    const gbValue = elB.value.trim();
 
-                    // Caso 1: Ambos preenchidos -> Atualiza DIRETAMENTE na tabela jogos (Evita falha de RPC)
+                    // Caso 1: Ambos preenchidos -> Atualiza direto na tabela jogos
                     if (gaValue !== "" && gbValue !== "") {
                         promessas.push(
                             _supabase
@@ -313,10 +323,10 @@
                                     gols_a_oficial: parseInt(gaValue), 
                                     gols_b_oficial: parseInt(gbValue) 
                                 })
-                                .eq('id', idJogo)
+                                .eq('id', idJogo) // Onde o ID é igual ao do jogo atual
                         );
                     } 
-                    // Caso 2: Ambos limpos -> Reseta os gols oficiais para NULL
+                    // Caso 2: Ambos os campos limpos -> Reseta os placares para NULL
                     else if (gaValue === "" && gbValue === "") {
                         promessas.push(
                             _supabase
@@ -330,12 +340,12 @@
                     }
                 }
                 
-                // Executa em paralelo todas as gravações diretas de placares
+                // Executa todas as atualizações no banco em paralelo
                 if (promessas.length > 0) {
                     await Promise.all(promessas);
                 }
                 
-                // Agora que os dados estão fisicamente na tabela, força o recálculo limpo do zero
+                // Ativa o motor para recalcular a tabela de pontos do zero absoluto
                 const { error: rpcError } = await _supabase.rpc('admin_recalcular_tudo');
                 if (rpcError) throw rpcError;
                 
