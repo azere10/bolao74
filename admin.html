@@ -293,6 +293,7 @@
             
             try {
                 const inputsA = document.querySelectorAll('input[id^="g-a-"]');
+
                 for (let inputA of inputsA) {
                     if (inputA.id.includes('fake')) continue;
                     
@@ -302,7 +303,7 @@
                     if (!elB) continue;
                     const gbValue = elB.value;
 
-                    // Caso 1: Ambos os campos preenchidos -> Atualiza o placar
+                    // Caso 1: Ambos preenchidos -> Atualiza o placar seco na tabela jogos através da rpc limpa
                     if (gaValue !== "" && gbValue !== "") {
                         await _supabase.rpc('admin_atualizar_placar', { 
                             id_jogo: idJogo, 
@@ -319,15 +320,16 @@
                     }
                 }
                 
+                // EXECUÇÃO ISOLADA: Zera tudo e calcula do zero absoluto com os novos pesos
                 await _supabase.rpc('admin_recalcular_tudo');
-                alert("Ranking e placares atualizados com sucesso!"); 
+                
+                alert("✅ Ranking e placares atualizados com sucesso!"); 
                 await carregarDados();
             } catch (e) { 
                 alert("Erro ao salvar placares: " + e.message); 
             }
             btn.innerText = "SALVAR TUDO"; btn.disabled = false;
         }
-
         function mudarAba(id) {
             document.querySelectorAll('.secao').forEach(s => s.classList.add('hidden'));
             document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
