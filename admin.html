@@ -257,7 +257,7 @@
                 const inputsA = document.querySelectorAll('input[id^="g-a-"]');
                 
                 for (let inputA of inputsA) {
-                    // CORREÇÃO: Se o ID do input contiver a marcação temporária, ignora e passa para o próximo
+                    // CORREÇÃO CRÍTICA: Se o ID do input contiver a marcação temporária 'fake', pula para o próximo e ignora
                     if (inputA.id.includes('fake')) continue;
                     
                     const idJogo = inputA.id.replace('g-a-', '');
@@ -268,7 +268,7 @@
                     const gbValue = elB.value;
 
                     // Só envia para o banco se ambos os campos estiverem preenchidos
-                    if (gaValue !== "" && gbValue !== "") {
+                    if (gaValue !== undefined && gaValue !== "" && gbValue !== "") {
                         await _supabase.rpc('admin_atualizar_placar', { 
                             id_jogo: idJogo, 
                             g_a: parseInt(gaValue), 
@@ -278,7 +278,7 @@
                 }
                 
                 await _supabase.rpc('admin_recalcular_tudo');
-                alert("Rankings e placares atualizados com sucesso!"); 
+                alert("Ranking e placares atualizados com sucesso!"); 
                 await carregarDados();
             } catch (e) { 
                 alert("Erro ao salvar placares: " + e.message); 
@@ -288,7 +288,7 @@
             btn.innerText = "SALVAR TUDO"; 
             btn.disabled = false;
         }
-
+        
         function mudarAba(id) {
             document.querySelectorAll('.secao').forEach(s => s.classList.add('hidden'));
             document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
