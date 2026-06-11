@@ -14,7 +14,7 @@
             background-color: #0b132b;
             color: #f8fafc;
         }
-        .card-jogo {
+        .card-grupo {
             background-color: #1c2541;
             border: 1px solid #2a3759;
         }
@@ -38,7 +38,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen font-sans antialiased pb-24">
+<body class="min-h-screen font-sans antialiased pb-28">
 
     <!-- CONTAINER DE FEEDBACK / NOTIFICAÇÕES -->
     <div id="feedback-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4"></div>
@@ -51,7 +51,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
             </div>
-            <h2 class="text-2xl font-extrabold text-blue-400 mb-1 tracking-wide">BOLÃO DO MAURINHO</h2>
+            <h2 class="text-2xl font-extrabold text-blue-400 mb-1 tracking-wide text-center">BOLÃO DO MAURINHO</h2>
             <p class="text-xs text-slate-400 mb-8 uppercase tracking-widest font-semibold">Login de Acesso</p>
             
             <div class="w-full space-y-4">
@@ -79,16 +79,16 @@
 
         <!-- Abas responsivas -->
         <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-800 overflow-x-auto no-scrollbar max-w-full">
-            <button id="tab-palpites" onclick="mudarAba('palpites')" class="px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all tab-active">
+            <button id="tab-palpites" onclick="mudarAba('palpites')" class="px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all tab-active whitespace-nowrap">
                 MEUS PALPITES
             </button>
-            <button id="tab-ranking" onclick="mudarAba('ranking')" class="px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all text-slate-400 hover:text-white">
+            <button id="tab-ranking" onclick="mudarAba('ranking')" class="px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all text-slate-400 hover:text-white whitespace-nowrap">
                 RANKING GERAL
             </button>
-            <button id="tab-regras" onclick="mudarAba('regras')" class="px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all text-slate-400 hover:text-white">
+            <button id="tab-regras" onclick="mudarAba('regras')" class="px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all text-slate-400 hover:text-white whitespace-nowrap">
                 REGULAMENTO
             </button>
-            <button id="tab-conta" onclick="mudarAba('conta')" class="px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all text-slate-400 hover:text-white">
+            <button id="tab-conta" onclick="mudarAba('conta')" class="px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all text-slate-400 hover:text-white whitespace-nowrap">
                 A MINHA CONTA
             </button>
         </div>
@@ -101,26 +101,31 @@
     </div>
 
     <!-- CONTEÚDO DA APLICAÇÃO (Mostrado após login) -->
-    <main id="app-content" class="max-w-7xl mx-auto px-4 mt-8 hidden">
+    <main id="app-content" class="max-w-7xl mx-auto px-4 mt-6 hidden">
 
         <!-- ========================================== -->
         <!-- SEÇÃO: MEUS PALPITES -->
         <!-- ========================================== -->
         <section id="aba-palpites" class="block">
-            <div class="flex justify-between items-center mb-6">
+            <!-- Controle e Filtros de Visualização -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <h2 class="text-xl font-extrabold text-white">Preencha os Seus Palpites</h2>
-                    <p class="text-xs text-slate-400">Jogos com menos de 5 minutos para iniciar são bloqueados para edição.</p>
+                    <p class="text-xs text-slate-400">Edição encerrada 5 minutos antes de cada jogo.</p>
                 </div>
-                <button onclick="guardarMeusPalpites()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-lg shadow-lg hover:shadow-emerald-900/30 transition-all transform active:scale-95 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                    </svg>
-                    SALVAR MEUS PALPITES
-                </button>
+                
+                <!-- Botão Alternador de Visualização (Grupo vs Dia) -->
+                <div class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full sm:w-auto">
+                    <button id="btn-view-grupos" onclick="mudarModoExibicao('grupo')" class="flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md">
+                        POR GRUPOS
+                    </button>
+                    <button id="btn-view-dias" onclick="mudarModoExibicao('dia')" class="flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white">
+                        POR CRONOGRAMA
+                    </button>
+                </div>
             </div>
 
-            <!-- Grelha de fases e grupos -->
+            <!-- Grelha Dinâmica de Palpites (Grupos ou Cronograma) -->
             <div id="grid-jogos-palpites" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Preenchido dinamicamente com os jogos e palpites do usuário -->
             </div>
@@ -130,10 +135,10 @@
         <!-- SEÇÃO: RANKING GERAL -->
         <!-- ========================================== -->
         <section id="aba-ranking" class="hidden">
-            <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-6 shadow-2xl">
+            <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-4 sm:p-6 shadow-2xl">
                 <div class="mb-6">
                     <h2 class="text-xl font-bold text-white">Ranking Geral de Participantes</h2>
-                    <p class="text-xs text-slate-400">Clique sobre qualquer participante para conferir e auditar os seus palpites de partidas já iniciadas.</p>
+                    <p class="text-xs text-slate-400 mt-1">Confronte os palpites de outros participantes para os jogos que já iniciaram.</p>
                 </div>
 
                 <!-- Tabela de Classificação -->
@@ -141,10 +146,10 @@
                     <table class="w-full text-left border-collapse bg-[#121b36]">
                         <thead>
                             <tr class="border-b border-slate-800 text-slate-400 text-xs font-bold uppercase tracking-wider bg-slate-900/80">
-                                <th class="p-4 text-center w-20">Posição</th>
-                                <th class="p-4">Nome do Participante</th>
-                                <th class="p-4 text-center">Pontos Totais</th>
-                                <th class="p-4 text-center w-40">Auditoria</th>
+                                <th class="p-3 sm:p-4 text-center w-16">Posição</th>
+                                <th class="p-3 sm:p-4">Nome do Participante</th>
+                                <th class="p-3 sm:p-4 text-center">Pontos Totais</th>
+                                <th class="p-3 sm:p-4 text-center w-36">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tabela-ranking-corpo" class="text-sm text-slate-300 divide-y divide-slate-800/50">
@@ -159,7 +164,7 @@
         <!-- SEÇÃO: REGULAMENTO -->
         <!-- ========================================== -->
         <section id="aba-regras" class="hidden">
-            <div class="max-w-4xl mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-8 shadow-2xl space-y-6">
+            <div class="max-w-4xl mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-2xl space-y-6">
                 <div class="border-b border-slate-800 pb-4">
                     <h2 class="text-2xl font-black text-blue-400">REGULAMENTO DO BOLÃO DO MAURINHO</h2>
                     <p class="text-xs text-slate-400 mt-1">Conheça os critérios de pontuação oficiais e garanta a sua classificação!</p>
@@ -252,7 +257,7 @@
         <section id="aba-conta" class="hidden">
             <div class="max-w-md mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-8 shadow-2xl">
                 <div class="border-b border-slate-800 pb-4 mb-6 flex flex-col items-center">
-                    <div class="h-14 w-14 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-full flex items-center justify-center font-bold text-xl mb-3">
+                    <div class="h-14 w-14 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-full flex items-center justify-center font-bold text-xl mb-3 font-mono">
                         M
                     </div>
                     <h2 id="conta-user-nome" class="text-lg font-black text-white">Nome do Utilizador</h2>
@@ -280,6 +285,16 @@
             </div>
         </section>
     </main>
+
+    <!-- ========================================== -->
+    <!-- BOTÃO FLUTUANTE DE SALVAR PALPITES (MOBILE) -->
+    <!-- ========================================== -->
+    <button id="btn-salvar-flutuante" onclick="guardarMeusPalpites()" class="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-6 py-4 rounded-full shadow-2xl hover:shadow-emerald-900/40 transition-all transform active:scale-95 flex items-center gap-2 border border-emerald-500/30 hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+        </svg>
+        <span class="text-xs sm:text-sm tracking-wide">SALVAR MEUS PALPITES</span>
+    </button>
 
     <!-- ========================================== -->
     <!-- MODAL: AUDITORIA DE PALPITES (RANKING) -->
@@ -343,6 +358,7 @@
             erro: 0
         };
         let abaAtiva = 'palpites';
+        let modoExibicaoPalpites = 'grupo'; // 'grupo' ou 'dia'
 
         // Executado ao carregar a página
         window.addEventListener('DOMContentLoaded', async () => {
@@ -357,7 +373,6 @@
             if (userGuardado) {
                 try {
                     const parsedUser = JSON.parse(userGuardado);
-                    // Revalida se o utilizador e a senha ainda existem e correspondem no banco de dados
                     const { data, error } = await supabaseClient
                         .from('perfis')
                         .select('*')
@@ -371,11 +386,11 @@
                         document.getElementById('app-header').classList.remove('hidden');
                         document.getElementById('app-content').classList.remove('hidden');
                         
-                        // Atualiza as informações do Header
+                        // Exibe o botão flutuante se estiver na aba de palpites
+                        document.getElementById('btn-salvar-flutuante').classList.remove('hidden');
+                        
                         document.getElementById('header-user-nome').textContent = currentUser.nome_completo;
                         document.getElementById('header-user-pontos').textContent = currentUser.pontos_total || 0;
-                        
-                        // Atualiza as informações da conta
                         document.getElementById('conta-user-nome').textContent = currentUser.nome_completo;
                         document.getElementById('conta-user-login').textContent = `@${currentUser.usuario_login}`;
 
@@ -386,7 +401,6 @@
                     console.error("Falha ao revalidar sessão ativa:", e);
                 }
             }
-            // Caso não tenha sessão válida, assegura que a tela de login esteja aberta
             document.getElementById('tela-login').classList.remove('hidden');
         }
 
@@ -404,7 +418,6 @@
 
             mostrarSpinner(true, "A autenticar...");
             try {
-                // Normaliza o login inserido para evitar diferenças de caixa alta
                 const loginNormalizado = userIn.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
 
                 const { data, error } = await supabaseClient
@@ -424,6 +437,8 @@
                 document.getElementById('tela-login').classList.add('hidden');
                 document.getElementById('app-header').classList.remove('hidden');
                 document.getElementById('app-content').classList.remove('hidden');
+                
+                document.getElementById('btn-salvar-flutuante').classList.remove('hidden');
 
                 document.getElementById('header-user-nome').textContent = currentUser.nome_completo;
                 document.getElementById('header-user-pontos').textContent = currentUser.pontos_total || 0;
@@ -450,6 +465,7 @@
             document.getElementById('tela-login').classList.remove('hidden');
             document.getElementById('app-header').classList.add('hidden');
             document.getElementById('app-content').classList.add('hidden');
+            document.getElementById('btn-salvar-flutuante').classList.add('hidden');
             document.getElementById('login-password').value = "";
             mostrarNotificacao("Sessão terminada com sucesso.", "info");
         }
@@ -460,19 +476,48 @@
         function mudarAba(aba) {
             abaAtiva = aba;
             const tabs = ['palpites', 'ranking', 'regras', 'conta'];
+            
+            // Gerencia visibilidade do botão flutuante de salvar
+            const btnFlutuante = document.getElementById('btn-salvar-flutuante');
+            if (aba === 'palpites') {
+                btnFlutuante.classList.remove('hidden');
+            } else {
+                btnFlutuante.classList.add('hidden');
+            }
+
             tabs.forEach(t => {
                 const button = document.getElementById(`tab-${t}`);
                 const section = document.getElementById(`aba-${t}`);
                 if (t === aba) {
-                    button.className = "px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all tab-active";
+                    button.className = "px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all tab-active whitespace-nowrap";
                     section.classList.remove('hidden');
                     section.classList.add('block');
                 } else {
-                    button.className = "px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all text-slate-400 hover:text-white";
+                    button.className = "px-4 py-2 rounded-lg font-bold text-xs sm:text-sm transition-all text-slate-400 hover:text-white whitespace-nowrap";
                     section.classList.add('hidden');
                     section.classList.remove('block');
                 }
             });
+        }
+
+        /**
+         * Altera o filtro de visualização entre Grupos e Dia (Cronograma)
+         */
+        function mudarModoExibicao(modo) {
+            modoExibicaoPalpites = modo;
+            
+            const btnG = document.getElementById('btn-view-grupos');
+            const btnD = document.getElementById('btn-view-dias');
+
+            if (modo === 'grupo') {
+                btnG.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md";
+                btnD.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white";
+            } else {
+                btnD.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md";
+                btnG.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white";
+            }
+
+            renderizarMeusPalpites();
         }
 
         /**
@@ -481,7 +526,6 @@
         async function carregarDadosDoBanco() {
             mostrarSpinner(true, "A atualizar dados do bolão...");
             try {
-                // 1. Carrega todos os jogos agendados ordenados cronologicamente
                 const { data: jogos, error: errJogos } = await supabaseClient
                     .from('jogos')
                     .select('*');
@@ -489,24 +533,20 @@
                 if (errJogos) throw errJogos;
                 listaJogos = (jogos || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
 
-                // 2. Carrega todos os palpites do sistema
                 const { data: palpites, error: errPalpites } = await supabaseClient.from('palpites').select('*');
                 if (errPalpites) throw errPalpites;
                 listaPalpites = palpites || [];
 
-                // 3. Carrega os perfis dos participantes
                 const { data: perfis, error: errPerfis } = await supabaseClient.from('perfis').select('*');
                 if (errPerfis) throw errPerfis;
                 listaPerfis = perfis || [];
 
-                // Atualiza pontuação do cabeçalho caso tenha mudado
                 const perfilAtualizado = listaPerfis.find(p => p.id === currentUser.id);
                 if (perfilAtualizado) {
                     currentUser.pontos_total = perfilAtualizado.pontos_total;
                     document.getElementById('header-user-pontos').textContent = currentUser.pontos_total || 0;
                 }
 
-                // Desenha os painéis principais
                 renderizarMeusPalpites();
                 renderizarRankingGeral();
 
@@ -524,126 +564,225 @@
         function isJogoBloqueado(dataHoraJogoStr) {
             const agora = new Date();
             const dataJogo = new Date(dataHoraJogoStr);
-            // Calcula limite de 5 minutos antes
             const diferencaMinutos = (dataJogo.getTime() - agora.getTime()) / (1000 * 60);
             return diferencaMinutos <= 5;
         }
 
         /**
-         * Desenha os cartões de palpites estruturados cronologicamente por Fases/Grupos
+         * Desenha as interfaces de palpites (Pode ser por Grupo ou por Dia Cronológico)
          */
         function renderizarMeusPalpites() {
             const container = document.getElementById('grid-jogos-palpites');
             container.innerHTML = "";
 
-            // Agrupa os jogos pela fase
-            const gruposMap = {};
-            listaJogos.forEach(jogo => {
-                const fase = (jogo.fase || "GERAL").toUpperCase();
-                if (!gruposMap[fase]) gruposMap[fase] = [];
-                gruposMap[fase].push(jogo);
-            });
-
-            // Mapeia os palpites atuais deste utilizador logado para indexação rápida
             const meusPalpitesMap = new Map(
                 listaPalpites.filter(p => p.user_id === currentUser.id).map(p => [p.jogo_id, p])
             );
 
-            Object.keys(gruposMap).sort().forEach(nomeGrupo => {
-                const jogosDoGrupo = gruposMap[nomeGrupo];
-                const card = document.createElement('div');
-                card.className = "card-grupo rounded-xl p-5 flex flex-col justify-between shadow-xl transition-all duration-300";
+            if (modoExibicaoPalpites === 'grupo') {
+                // ==========================================
+                // EXIBIÇÃO POR GRUPOS
+                // ==========================================
+                container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
 
-                let htmlJogos = "";
-                jogosDoGrupo.forEach(jogo => {
-                    const palpite = meusPalpitesMap.get(jogo.id);
-                    const valA = palpite && palpite.palpite_a !== null ? palpite.palpite_a : "";
-                    const valB = palpite && palpite.palpite_b !== null ? palpite.palpite_b : "";
-
-                    const golsOficiaisM = jogo.gols_a_oficial !== null && jogo.gols_a_oficial !== undefined ? jogo.gols_a_oficial : "";
-                    const golsOficiaisV = jogo.gols_b_oficial !== null && jogo.gols_b_oficial !== undefined ? jogo.gols_b_oficial : "";
-
-                    const isBloqueado = isJogoBloqueado(jogo.data_hora);
-                    const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
-
-                    // Formata a exibição de data e hora
-                    const dataObj = new Date(jogo.data_hora);
-                    const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
-                    const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-                    
-                    const multiplicador = obterMultiplicadorFase(jogo.fase);
-
-                    // Estilo de inputs bloqueados vs editáveis
-                    const inputDisabledAttr = isBloqueado ? "disabled" : "";
-                    const inputClass = isBloqueado 
-                        ? "w-10 h-8 text-center bg-slate-900 text-slate-500 font-bold rounded border border-slate-800 outline-none text-xs"
-                        : "w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs";
-
-                    htmlJogos += `
-                        <div class="linha-jogo flex flex-col py-2.5 border-b border-slate-800/80 last:border-b-0 gap-1.5" data-jogo-id="${jogo.id}">
-                            <!-- Data/Hora e Fator de Bloqueio -->
-                            <div class="flex items-center justify-between text-[10px] font-mono">
-                                <span class="text-slate-500">${dataFormatada} às ${horaFormatada}</span>
-                                ${isBloqueado 
-                                    ? `<span class="text-rose-400 font-bold flex items-center gap-0.5">🔒 Palpites Bloqueados</span>`
-                                    : `<span class="text-emerald-500 font-bold flex items-center gap-0.5">🔓 Aberto para palpites</span>`
-                                }
-                            </div>
-
-                            <!-- Layout dos times e inputs -->
-                            <div class="flex items-center justify-between gap-2">
-                                <!-- Equipa Mandante -->
-                                <span class="w-1/3 text-right text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_a}</span>
-                                
-                                <!-- Inputs do Palpite -->
-                                <div class="flex items-center gap-1 justify-center w-1/3">
-                                    <input type="number" 
-                                           placeholder="-" 
-                                           value="${valA}" 
-                                           ${inputDisabledAttr}
-                                           class="input-palpite-a ${inputClass} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                                    <span class="text-xs text-slate-500 font-bold px-0.5">x</span>
-                                    <input type="number" 
-                                           placeholder="-" 
-                                           value="${valB}" 
-                                           ${inputDisabledAttr}
-                                           class="input-palpite-b ${inputClass} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                                </div>
-                                
-                                <!-- Equipa Visitante -->
-                                <span class="w-1/3 text-left text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_b}</span>
-                            </div>
-
-                            <!-- Resultados Finais do Jogo Real e Pontos Conquistados -->
-                            ${isFinalizado || (palpite && palpite.pontos_obtidos !== null)
-                                ? `
-                                <div class="flex justify-between items-center bg-slate-900/30 p-1.5 rounded border border-slate-800/40 text-[10px] mt-1">
-                                    <span class="text-slate-500">Oficial: <strong class="text-slate-300 font-mono">${golsOficiaisM} x ${golsOficiaisV}</strong></span>
-                                    <span class="text-blue-400 font-bold">Ganhou: +${palpite && palpite.pontos_obtidos !== null ? palpite.pontos_obtidos : 0} pts</span>
-                                </div>
-                                ` 
-                                : ''
-                            }
-                        </div>
-                    `;
+                const gruposMap = {};
+                listaJogos.forEach(jogo => {
+                    const fase = (jogo.fase || "GERAL").toUpperCase();
+                    if (!gruposMap[fase]) gruposMap[fase] = [];
+                    gruposMap[fase].push(jogo);
                 });
 
-                card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-center mb-4 pb-1 border-b border-blue-500/20">
-                            <h2 class="text-lg font-extrabold text-blue-400 tracking-wide">${nomeGrupo.startsWith("GRUPO") ? nomeGrupo : "GRUPO " + nomeGrupo}</h2>
-                            ${obterMultiplicadorFase(nomeGrupo) > 1 
-                                ? `<span class="bg-purple-950/80 text-purple-400 px-2 py-0.5 rounded text-[10px] font-bold border border-purple-500/10">Fase x${obterMultiplicadorFase(nomeGrupo)}</span>`
-                                : ''
-                            }
+                Object.keys(gruposMap).sort().forEach(nomeGrupo => {
+                    const jogosDoGrupo = gruposMap[nomeGrupo];
+                    const card = document.createElement('div');
+                    card.className = "card-grupo rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-xl transition-all duration-300";
+
+                    let htmlJogos = "";
+                    jogosDoGrupo.forEach(jogo => {
+                        const palpite = meusPalpitesMap.get(jogo.id);
+                        const valA = palpite && palpite.palpite_a !== null ? palpite.palpite_a : "";
+                        const valB = palpite && palpite.palpite_b !== null ? palpite.palpite_b : "";
+
+                        const isBloqueado = isJogoBloqueado(jogo.data_hora);
+                        const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
+
+                        const dataObj = new Date(jogo.data_hora);
+                        const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+                        const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+                        // Inputs com opacidade e inabilitados por nuance de cor para segurança
+                        const inputDisabledAttr = isBloqueado ? "disabled" : "";
+                        const inputClass = isBloqueado 
+                            ? "w-9 h-8 text-center bg-slate-900/50 text-slate-500 font-bold rounded border border-slate-800/40 outline-none text-xs opacity-40 cursor-not-allowed"
+                            : "w-9 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs transition-all";
+
+                        htmlJogos += `
+                            <div class="linha-jogo flex flex-col py-2 border-b border-slate-800/60 last:border-b-0 gap-1" data-jogo-id="${jogo.id}">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[9px] text-slate-500 font-mono">${dataFormatada} às ${horaFormatada}</span>
+                                    ${isFinalizado ? `<span class="text-[9px] text-slate-400 font-bold">Oficial: ${jogo.gols_a_oficial} x ${jogo.gols_b_oficial}</span>` : ''}
+                                </div>
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="w-1/3 text-right text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate">${jogo.time_a}</span>
+                                    <div class="flex items-center gap-0.5 justify-center w-1/3">
+                                        <input type="number" placeholder="-" value="${valA}" ${inputDisabledAttr} class="input-palpite-a ${inputClass}" />
+                                        <span class="text-xs ${isBloqueado ? 'text-slate-700' : 'text-slate-500'} font-bold px-0.5">x</span>
+                                        <input type="number" placeholder="-" value="${valB}" ${inputDisabledAttr} class="input-palpite-b ${inputClass}" />
+                                    </div>
+                                    <span class="w-1/3 text-left text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate">${jogo.time_b}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    // Cálculo da Tabela de Classificação do Grupo integrada e compacta (Reduz poluição visual)
+                    const classificacaoHTML = calcularClassificacaoGrupo(jogosDoGrupo);
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-center mb-3 pb-1 border-b border-blue-500/20">
+                                <h2 class="text-md font-extrabold text-blue-400 tracking-wide">${nomeGrupo.startsWith("GRUPO") ? nomeGrupo : "GRUPO " + nomeGrupo}</h2>
+                                ${obterMultiplicadorFase(nomeGrupo) > 1 
+                                    ? `<span class="bg-purple-950/60 text-purple-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-purple-500/10">x${obterMultiplicadorFase(nomeGrupo)}</span>`
+                                    : ''
+                                }
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                ${htmlJogos}
+                            </div>
                         </div>
-                        <div class="flex flex-col gap-1.5">
-                            ${htmlJogos}
+                        
+                        <!-- Mini Classificação Compacta logo abaixo -->
+                        <div class="pt-3 border-t border-slate-800/80 mt-3">
+                            <div class="text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">Classificação</div>
+                            <div class="space-y-0.5 max-h-[100px] overflow-y-auto no-scrollbar">
+                                ${classificacaoHTML}
+                            </div>
                         </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } else {
+                // ==========================================
+                // EXIBIÇÃO POR CRONOGRAMA DE DIAS (Focado no Mobile)
+                // ==========================================
+                container.className = "flex flex-col gap-4 max-w-2xl mx-auto w-full";
+
+                // Agrupa os jogos pela Data Simples (AAAA-MM-DD)
+                const diasMap = {};
+                listaJogos.forEach(jogo => {
+                    const dataObj = new Date(jogo.data_hora);
+                    const dataChave = dataObj.toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long' });
+                    
+                    if (!diasMap[dataChave]) diasMap[dataChave] = [];
+                    diasMap[dataChave].push(jogo);
+                });
+
+                Object.keys(diasMap).forEach(diaNome => {
+                    const jogosDoDia = diasMap[diaNome];
+                    const cardDia = document.createElement('div');
+                    cardDia.className = "bg-[#1c2541] rounded-xl p-4 border border-slate-800 shadow-xl";
+
+                    let htmlJogosDia = "";
+                    jogosDoDia.forEach(jogo => {
+                        const palpite = meusPalpitesMap.get(jogo.id);
+                        const valA = palpite && palpite.palpite_a !== null ? palpite.palpite_a : "";
+                        const valB = palpite && palpite.palpite_b !== null ? palpite.palpite_b : "";
+
+                        const isBloqueado = isJogoBloqueado(jogo.data_hora);
+                        const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
+
+                        const dataObj = new Date(jogo.data_hora);
+                        const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+                        const inputDisabledAttr = isBloqueado ? "disabled" : "";
+                        const inputClass = isBloqueado 
+                            ? "w-9 h-8 text-center bg-slate-900/50 text-slate-500 font-bold rounded border border-slate-800/40 outline-none text-xs opacity-40 cursor-not-allowed"
+                            : "w-9 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs transition-all";
+
+                        htmlJogosDia += `
+                            <div class="linha-jogo flex items-center justify-between py-2 border-b border-slate-800/60 last:border-b-0 gap-1.5" data-jogo-id="${jogo.id}">
+                                <!-- Hora / Grupo -->
+                                <div class="w-1/4 flex flex-col items-start">
+                                    <span class="text-[10px] text-blue-400 font-bold font-mono">${horaFormatada}</span>
+                                    <span class="text-[9px] text-slate-500 uppercase tracking-wider font-semibold truncate max-w-[80px]">${jogo.fase || "Geral"}</span>
+                                </div>
+
+                                <!-- Times e Inputs (Centro) -->
+                                <div class="w-2/3 flex items-center justify-between gap-1">
+                                    <span class="w-2/5 text-right text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate">${jogo.time_a}</span>
+                                    
+                                    <div class="flex items-center gap-0.5 justify-center">
+                                        <input type="number" placeholder="-" value="${valA}" ${inputDisabledAttr} class="input-palpite-a ${inputClass}" />
+                                        <span class="text-xs ${isBloqueado ? 'text-slate-700' : 'text-slate-500'} font-bold px-0.5">x</span>
+                                        <input type="number" placeholder="-" value="${valB}" ${inputDisabledAttr} class="input-palpite-b ${inputClass}" />
+                                    </div>
+                                    
+                                    <span class="w-2/5 text-left text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate">${jogo.time_b}</span>
+                                </div>
+
+                                <!-- Resultado Oficial (Inline e sem poluição de pontos) -->
+                                <div class="w-1/12 text-right">
+                                    ${isFinalizado ? `<span class="text-[10px] text-slate-400 font-bold bg-slate-900/40 px-1 rounded font-mono">${jogo.gols_a_oficial}-${jogo.gols_b_oficial}</span>` : '—'}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    cardDia.innerHTML = `
+                        <h3 class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-3 pb-1 border-b border-slate-800">${diaNome}</h3>
+                        <div class="flex flex-col gap-1">
+                            ${htmlJogosDia}
+                        </div>
+                    `;
+                    container.appendChild(cardDia);
+                });
+            }
+        }
+
+        /**
+         * Calcula dinamicamente a tabela do grupo baseado nos golos introduzidos
+         */
+        function calcularClassificacaoGrupo(jogos) {
+            const tabela = {};
+
+            jogos.forEach(j => {
+                if (!tabela[j.time_a]) tabela[j.time_a] = { pontos: 0, time: j.time_a };
+                if (!tabela[j.time_b]) tabela[j.time_b] = { pontos: 0, time: j.time_b };
+
+                if (j.gols_a_oficial !== null && j.gols_b_oficial !== null && j.gols_a_oficial !== undefined && j.gols_b_oficial !== undefined) {
+                    const gM = parseInt(j.gols_a_oficial);
+                    const gV = parseInt(j.gols_b_oficial);
+                    
+                    if (gM > gV) {
+                        tabela[j.time_a].pontos += 3;
+                    } else if (gM < gV) {
+                        tabela[j.time_b].pontos += 3;
+                    } else {
+                        tabela[j.time_a].pontos += 1;
+                        tabela[j.time_b].pontos += 1;
+                    }
+                }
+            });
+
+            const ordenados = Object.values(tabela).sort((a, b) => b.pontos - a.pontos);
+
+            let htmlClassificacao = "";
+            ordenados.forEach((equipe, index) => {
+                let corColocacao = "text-slate-400";
+                if (index === 0) corColocacao = "text-emerald-400 font-bold";
+                if (index === 1) corColocacao = "text-blue-400 font-semibold";
+
+                htmlClassificacao += `
+                    <div class="flex justify-between items-center text-[10px] py-0.5 px-1 hover:bg-slate-800/30 rounded">
+                        <span class="${corColocacao}">${index + 1}º ${equipe.time}</span>
+                        <span class="font-mono font-bold text-slate-300">${equipe.pontos}pt</span>
                     </div>
                 `;
-                container.appendChild(card);
             });
+
+            return htmlClassificacao;
         }
 
         /**
@@ -656,20 +795,21 @@
             const upserts = [];
             const deletarIds = [];
 
-            // Carrega mapa de jogos para conferir horário local e prevenir hacks no DOM
             const mapaJogos = new Map(listaJogos.map(j => [j.id, j]));
 
             for (const linha of linhas) {
                 const jogoId = linha.getAttribute('data-jogo-id');
                 const inputA = linha.querySelector('.input-palpite-a');
-                const inputB = linha.querySelector('.input-palpite-b');
+                const inputB = inlineQuerySelectorSafe(linha, '.input-palpite-b');
 
                 if (!jogoId || !inputA || !inputB) continue;
 
-                const jogo = mapaJogos.get(isNaN(jogoId) ? jogoId : parseInt(jogoId));
+                // Encontra jogo correto em memória para segurança
+                const idJ = isNaN(jogoId) ? jogoId : parseInt(jogoId);
+                const jogo = mapaJogos.get(idJ);
                 if (!jogo) continue;
 
-                // Segurança: Se o jogo estiver a menos de 5 minutos, ignora qualquer envio
+                // Não salva palpites em jogos cujas edições estejam bloqueadas
                 if (isJogoBloqueado(jogo.data_hora)) {
                     continue; 
                 }
@@ -677,7 +817,6 @@
                 const vA = inputA.value.trim();
                 const vB = inputB.value.trim();
 
-                // Se o utilizador limpar os dois campos, entende-se que pretende remover a aposta
                 if (vA === '' && vB === '') {
                     deletarIds.push(jogo.id);
                 } else if (vA !== '' && vB !== '') {
@@ -696,7 +835,6 @@
             }
 
             try {
-                // 1. Processa remoções solicitadas
                 if (deletarIds.length > 0) {
                     await supabaseClient
                         .from('palpites')
@@ -705,7 +843,6 @@
                         .in('jogo_id', deletarIds);
                 }
 
-                // 2. Processa criações e atualizações em lote
                 if (upserts.length > 0) {
                     const { error } = await supabaseClient
                         .from('palpites')
@@ -732,7 +869,6 @@
             const tbody = document.getElementById('tabela-ranking-corpo');
             tbody.innerHTML = "";
 
-            // Ordena perfis por pontuação máxima decrescente, e alfabética como segundo critério
             const ordenados = [...listaPerfis].sort((a, b) => {
                 const diffPts = (b.pontos_total || 0) - (a.pontos_total || 0);
                 if (diffPts !== 0) return diffPts;
@@ -762,16 +898,16 @@
                     : "hover:bg-slate-800/20 transition-all";
 
                 tr.innerHTML = `
-                    <td class="p-4 text-center font-mono font-bold text-xs sm:text-sm text-slate-400">${medalhaPosicao}</td>
-                    <td class="p-4 ${corLinha}">${user.nome_completo} ${isCurrentUser ? '<span class="text-[9px] bg-blue-900/60 text-blue-300 px-1.5 py-0.5 rounded font-bold ml-1.5 border border-blue-500/20">TU</span>' : ''}</td>
-                    <td class="p-4 text-center">
-                        <span class="bg-[#1c2541] text-blue-400 px-3 py-1 rounded-full font-bold text-xs border border-blue-500/15">
+                    <td class="p-3 sm:p-4 text-center font-mono font-bold text-xs sm:text-sm text-slate-400">${medalhaPosicao}</td>
+                    <td class="p-3 sm:p-4 ${corLinha} text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">${user.nome_completo} ${isCurrentUser ? '<span class="text-[8px] bg-blue-900/60 text-blue-300 px-1 py-0.5 rounded font-bold ml-1 border border-blue-500/20">TU</span>' : ''}</td>
+                    <td class="p-3 sm:p-4 text-center">
+                        <span class="bg-[#1c2541] text-blue-400 px-2.5 py-1 rounded-full font-bold text-xs border border-blue-500/15">
                             ${user.pontos_total || 0} pts
                         </span>
                     </td>
-                    <td class="p-4 text-center">
-                        <button onclick="abrirAuditoriaDeUtilizador('${user.id}')" class="bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all">
-                            🔍 Auditoria
+                    <td class="p-3 sm:p-4 text-center">
+                        <button onclick="abrirAuditoriaDeUtilizador('${user.id}')" class="bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold px-2.5 py-1.5 rounded-lg text-xs transition-all flex items-center justify-center gap-1 mx-auto">
+                            🔍 Auditar
                         </button>
                     </td>
                 `;
@@ -790,13 +926,12 @@
             const user = listaPerfis.find(u => u.id === userId);
             if (!user) return;
 
-            document.getElementById('auditoria-titulo-user').textContent = `Conferir Palpites: ${user.nome_completo}`;
+            document.getElementById('auditoria-titulo-user').textContent = `Auditoria: ${user.nome_completo}`;
             document.getElementById('auditoria-resumo-pts').textContent = `Pontuação consolidada: ${user.pontos_total || 0} pts`;
 
             const tbody = document.getElementById('auditoria-tabela-corpo');
             tbody.innerHTML = "";
 
-            // Filtra os palpites pertencentes a este utilizador
             const palpitesUser = listaPalpites.filter(p => p.user_id === userId);
 
             if (palpitesUser.length === 0) {
@@ -809,7 +944,7 @@
 
             listaJogos.forEach(jogo => {
                 const palpite = mapaPalpites.get(jogo.id);
-                if (!palpite) return; // Não tem palpite para este jogo, ignora
+                if (!palpite) return; 
 
                 const isBloqueado = isJogoBloqueado(jogo.data_hora);
                 const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
@@ -873,7 +1008,6 @@
                         badgeNome = "Jogo em Aberto";
                     }
                 } else {
-                    // Jogo ainda não começou e não pertence ao próprio utilizador -> Fica mascarado!
                     palpiteTexto = "🔒 • x •";
                     badgeClass = "bg-slate-950 text-slate-600 border border-slate-900";
                     badgeNome = "Palpite Oculto";
@@ -930,7 +1064,6 @@
 
                 if (error) throw error;
 
-                // Atualiza o estado local
                 currentUser.senha_plana = novaSenha;
                 localStorage.setItem('bolao_user_session', JSON.stringify(currentUser));
 
@@ -1018,6 +1151,14 @@
                 return 3.0;
             }
             return 1.0; 
+        }
+
+        function inlineQuerySelectorSafe(parent, selector) {
+            try {
+                return parent.querySelector(selector);
+            } catch (e) {
+                return null;
+            }
         }
 
         /**
