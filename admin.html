@@ -250,28 +250,41 @@
             const btn = document.getElementById('btn-main'); 
             btn.innerText = "🔄 SALVANDO...";
             btn.disabled = true;
+            
             try {
                 const inputsA = document.querySelectorAll('input[id^="g-a-"]');
                 for (let inputA of inputsA) {
                     if (inputA.id.includes('fake')) continue;
+                    
                     const idJogo = inputA.id.replace('g-a-', '');
                     const gaValue = inputA.value;
                     const elB = document.getElementById(`g-b-${idJogo}`);
                     if (!elB) continue;
                     const gbValue = elB.value;
 
-                    if (gaValue !== undefined && gaValue !== "" && gbValue !== "") {
+                    // Caso 1: Ambos os campos preenchidos -> Atualiza o placar
+                    if (gaValue !== "" && gbValue !== "") {
                         await _supabase.rpc('admin_atualizar_placar', { 
                             id_jogo: idJogo, 
                             g_a: parseInt(gaValue), 
                             g_b: parseInt(gbValue) 
                         });
+                    } 
+                    // Caso 2: Ambos os campos limpos -> Reseta o jogo no banco para NULL
+                    else if (gaValue === "" && gbValue === "") {
+                        await _supabase
+                            .from('jogos')
+                            .update({ gols_a_oficial: null, gols_b_oficial: null })
+                            .eq('id', idJogo);
                     }
                 }
+                
                 await _supabase.rpc('admin_recalcular_tudo');
                 alert("Ranking e placares atualizados com sucesso!"); 
                 await carregarDados();
-            } catch (e) { alert("Erro ao salvar placares."); }
+            } catch (e) { 
+                alert("Erro ao salvar placares: " + e.message); 
+            }
             btn.innerText = "SALVAR TUDO"; btn.disabled = false;
         }
 
