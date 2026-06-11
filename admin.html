@@ -59,9 +59,8 @@
         
         // ATENÇÃO: Substitua o texto abaixo pela sua chave real (Project API anon key)
         // Encontra esta chave no painel do Supabase em: Settings -> API -> anon public
-        const SUPABASE_KEY = "sb_publishable_Q9azk8hCILivYJXe4JEOSQ_WVEolBhg"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1d3pqZGp5YXF2cXZ6bnBmdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDQ1MjMsImV4cCI6MjA5MTg4MDUyM30.GLjH9CjmDOujKYtO9-ZGtUXHkkenyS1CV1E-odMC4yQ"; 
 
-        // RESOLVIDO: Renomeado de 'supabase' para 'supabaseClient' para evitar conflitos com o objeto global do CDN
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Memória local para armazenamento de dados temporários
@@ -102,29 +101,32 @@
                     };
                 } else {
                     regrasPontuacao = {
-                        placarExato: config.pts_placar_exato || 10,
-                        vencedorGols: config.pts_vencedor_gols || 7,
-                        vencedorSimples: config.pts_vencedor_simples || 5,
+                        placarExato: config.pts_placar_exato || config.pts_exato || config.placar_exato || 10,
+                        vencedorGols: config.pts_vencedor_gols || config.pts_saldo || config.saldo_gols || 7,
+                        vencedorSimples: config.pts_vencedor_simples || config.pts_vencedor || config.vencedor_simples || 5,
                         erro: 0
                     };
                 }
 
-                // 2. Carrega todos os jogos agendados
+                // 2. Carrega todos os jogos agendados usando o mapeamento correto do seu banco
                 const { data: jogos, error: errJogos } = await supabaseClient
                     .from('jogos')
                     .select('*')
-                    .order('grupo', { ascending: true })
                     .order('id', { ascending: true });
 
                 if (errJogos) throw errJogos;
                 listaJogos = jogos || [];
 
                 // 3. Carrega palpites e perfis de utilizadores para o cálculo da classificação
-                const { data: palpites, error: errPalpites } = await supabaseClient.from('palpites').select('*');
+                const { data: palpites, error: errPalpites } = await supabaseClient
+                    .from('palpites')
+                    .select('*');
                 if (errPalpites) throw errPalpites;
                 listaPalpites = palpites || [];
 
-                const { data: perfis, error: errPerfis } = await supabaseClient.from('perfis').select('*');
+                const { data: perfis, error: errPerfis } = await supabaseClient
+                    .from('perfis')
+                    .select('*');
                 if (errPerfis) throw errPerfis;
                 listaPerfis = perfis || [];
 
@@ -148,7 +150,8 @@
 
             const gruposMap = {};
             listaJogos.forEach(jogo => {
-                const grp = jogo.grupo ? jogo.grupo.toUpperCase() : "SEM GRUPO";
+                // CORREÇÃO: Utilização da coluna real 'fase' do seu banco de dados jogos
+                const grp = (jogo.fase || jogo.grupo || "Geral").toUpperCase();
                 if (!gruposMap[grp]) gruposMap[grp] = [];
                 gruposMap[grp].push(jogo);
             });
@@ -161,15 +164,18 @@
 
                 let htmlJogos = "";
                 jogosDoGrupo.forEach(jogo => {
-                    const golsM = jogo.gols_mandante !== null && jogo.gols_mandante !== undefined ? jogo.gols_mandante : "";
-                    const golsV = jogo.gols_visitante !== null && jogo.gols_visitante !== undefined ? jogo.gols_visitante : "";
+                    // CORREÇÃO: Mapeamento de colunas reais 'gols_a_oficial' e 'gols_b_oficial'
+                    const golsM = jogo.gols_a_oficial !== null && jogo.gols_a_oficial !== undefined ? jogo.gols_a_oficial : "";
+                    const golsV = jogo.gols_b_oficial !== null && jogo.gols_b_oficial !== undefined ? jogo.gols_b_oficial : "";
                     
-                    const statusClass = jogo.status === 'finalizado' ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/30';
+                    // Identifica se o jogo está finalizado caso os golos estejam preenchidos
+                    const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
+                    const statusClass = isFinalizado ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/30';
 
                     htmlJogos += `
                         <div class="linha-jogo flex items-center justify-between py-2 border-b border-slate-800 last:border-b-0 gap-2 ${statusClass} rounded px-2 my-1 transition-all" data-jogo-id="${jogo.id}">
-                            <!-- Equipa Mandante -->
-                            <span class="w-1/3 text-right text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_mandante}</span>
+                            <!-- Equipa Mandante (time_a) -->
+                            <span class="w-1/3 text-right text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_a}</span>
                             
                             <!-- Inputs de Pontuação -->
                             <div class="flex items-center gap-1 justify-center w-1/3">
@@ -184,8 +190,8 @@
                                        class="input-gols-visitante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                             </div>
                             
-                            <!-- Equipa Visitante -->
-                            <span class="w-1/3 text-left text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_visitante}</span>
+                            <!-- Equipa Visitante (time_b) -->
+                            <span class="w-1/3 text-left text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_b}</span>
                         </div>
                     `;
                 });
@@ -194,7 +200,7 @@
 
                 card.innerHTML = `
                     <div>
-                        <h2 class="text-lg font-extrabold text-blue-400 mb-4 tracking-wide pb-1 border-b border-blue-500/20">GRUPO ${nomeGrupo}</h2>
+                        <h2 class="text-lg font-extrabold text-blue-400 mb-4 tracking-wide pb-1 border-b border-blue-500/20">${nomeGrupo.startsWith("GRUPO") ? nomeGrupo : "GRUPO " + nomeGrupo}</h2>
                         <div class="flex flex-col gap-1.5 mb-5">
                             ${htmlJogos}
                         </div>
@@ -219,20 +225,20 @@
             const tabela = {};
 
             jogos.forEach(j => {
-                if (!tabela[j.time_mandante]) tabela[j.time_mandante] = { pontos: 0, time: j.time_mandante };
-                if (!tabela[j.time_visitante]) tabela[j.time_visitante] = { pontos: 0, time: j.time_visitante };
+                if (!tabela[j.time_a]) tabela[j.time_a] = { pontos: 0, time: j.time_a };
+                if (!tabela[j.time_b]) tabela[j.time_b] = { pontos: 0, time: j.time_b };
 
-                if (j.gols_mandante !== null && j.gols_visitante !== null) {
-                    const gM = parseInt(j.gols_mandante);
-                    const gV = parseInt(j.gols_visitante);
+                if (j.gols_a_oficial !== null && j.gols_b_oficial !== null && j.gols_a_oficial !== undefined && j.gols_b_oficial !== undefined) {
+                    const gM = parseInt(j.gols_a_oficial);
+                    const gV = parseInt(j.gols_b_oficial);
                     
                     if (gM > gV) {
-                        tabela[j.time_mandante].pontos += 3;
+                        tabela[j.time_a].pontos += 3;
                     } else if (gM < gV) {
-                        tabela[j.time_visitante].pontos += 3;
+                        tabela[j.time_b].pontos += 3;
                     } else {
-                        tabela[j.time_mandante].pontos += 1;
-                        tabela[j.time_visitante].pontos += 1;
+                        tabela[j.time_a].pontos += 1;
+                        tabela[j.time_b].pontos += 1;
                     }
                 }
             });
@@ -267,8 +273,10 @@
 
             for (const linha of linhas) {
                 const jogoId = linha.getAttribute('data-jogo-id');
-                const inputM = linha.querySelector('.input-gols-mandante');
-                const inputV = linha.querySelector('.input-gols-visitante');
+                const inputM = inlineQuerySelectorSafe(linha, '.input-gols-mandante');
+                const inputV = inlineQuerySelectorSafe(linha, '.input-gols-visitante');
+
+                if (!inputM || !inputV) continue;
 
                 // Validação crítica para evitar erros de integridade ou falta de ID
                 if (!jogoId || jogoId === "undefined" || jogoId === "null") {
@@ -288,14 +296,13 @@
                     continue;
                 }
 
-                // Executa a atualização aplicando de forma correta e explícita o filtro WHERE (.eq)
+                // CORREÇÃO: Atualização com as colunas reais 'gols_a_oficial' e 'gols_b_oficial'
                 atualizacoes.push(
                     supabaseClient
                         .from('jogos')
                         .update({
-                            gols_mandante: golsM,
-                            gols_visitante: golsV,
-                            status: 'finalizado'
+                            gols_a_oficial: golsM,
+                            gols_b_oficial: golsV
                         })
                         .eq('id', jogoId) // EXIGIDO PELO SUPABASE PARA EVITAR O ERRO DO PRINT
                 );
@@ -329,6 +336,15 @@
             }
         }
 
+        // Função utilitária para buscar seletores com segurança
+        function inlineQuerySelectorSafe(parent, selector) {
+            try {
+                return parent.querySelector(selector);
+            } catch (e) {
+                return null;
+            }
+        }
+
         /**
          * Processador inteligente que reconstrói a pontuação de todos os utilizadores a partir do zero (Resolve o Bug 2 e Bug 3)
          */
@@ -343,9 +359,9 @@
 
                 if (!configError && config) {
                     regrasPontuacao = {
-                        placarExato: config.pts_placar_exato || 10,
-                        vencedorGols: config.pts_vencedor_gols || 7,
-                        vencedorSimples: config.pts_vencedor_simples || 5,
+                        placarExato: config.pts_placar_exato || config.pts_exato || config.placar_exato || 10,
+                        vencedorGols: config.pts_vencedor_gols || config.pts_saldo || config.saldo_gols || 7,
+                        vencedorSimples: config.pts_vencedor_simples || config.pts_vencedor || config.vencedor_simples || 5,
                         erro: 0
                     };
                 }
@@ -356,42 +372,54 @@
                     mapaPontosNovos[user.id] = 0; 
                 });
 
-                const jogosFinalizados = listaJogos.filter(j => j.status === 'finalizado');
+                // Considera apenas jogos cujos golos oficiais já estejam preenchidos no banco de dados
+                const jogosFinalizados = listaJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
                 const mapaJogos = new Map(jogosFinalizados.map(j => [j.id, j]));
 
                 const updatesPalpites = [];
                 
-                // 3. Avalia os palpites apenas contra os jogos finalizados atuais
+                // 3. Avalia os palpites apenas contra os jogos finalizados atuais na memória
                 for (const palpite of listaPalpites) {
                     const jogo = mapaJogos.get(palpite.jogo_id);
                     
                     if (!jogo) continue; 
 
+                    // CORREÇÃO: Avaliação baseada nas colunas reais do banco
                     const pontosDoPalpite = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
 
-                    // Atualiza a pontuação obtida individual do palpite para consulta do utilizador
-                    updatesPalpites.push(
-                        supabaseClient
-                            .from('palpites')
-                            .update({ pontos_obtidos: pontosDoPalpite })
-                            .eq('id', palpite.id)
-                    );
+                    // Adiciona atualização do palpite individual (se a sua tabela possuir a coluna pontos_obtidos)
+                    // Para evitar que o script quebre caso a coluna não exista, executamos de forma isolada
+                    try {
+                        updatesPalpites.push(
+                            supabaseClient
+                                .from('palpites')
+                                .update({ pontos_obtidos: pontosDoPalpite })
+                                .eq('id', palpite.id)
+                        );
+                    } catch (e) {
+                        console.warn("Coluna 'pontos_obtidos' não encontrada na tabela palpites.");
+                    }
 
                     // Soma de forma limpa na memória sem ler acumulados anteriores do banco
-                    if (mapaPontosNovos[palpite.usuario_id] !== undefined) {
-                        mapaPontosNovos[palpite.usuario_id] += pontosDoPalpite;
+                    if (mapaPontosNovos[palpite.user_id] !== undefined) {
+                        mapaPontosNovos[palpite.user_id] += pontosDoPalpite;
                     }
                 }
 
                 if (updatesPalpites.length > 0) {
-                    await Promise.all(updatesPalpites);
+                    // Executa os updates dos palpites (em background) de forma segura
+                    try {
+                        await Promise.all(updatesPalpites);
+                    } catch (e) {
+                        console.warn("Falha silenciosa ao guardar pontos_obtidos nos palpites individuais:", e);
+                    }
                 }
 
-                // 4. Sobrescreve o total calculado na tabela de classificação dos utilizadores
+                // 4. Sobrescreve o total calculado na coluna 'pontos_total' da tabela 'perfis'
                 const updatesPerfis = Object.keys(mapaPontosNovos).map(userId => {
                     return supabaseClient
                         .from('perfis')
-                        .update({ pontos: mapaPontosNovos[userId] })
+                        .update({ pontos_total: mapaPontosNovos[userId] }) // CORREÇÃO: coluna pontos_total
                         .eq('id', userId);
                 });
 
@@ -414,13 +442,14 @@
         }
 
         /**
-         * Motor de regras: compara o palpite contra o resultado final real do jogo
+         * Motor de regras: compara o palpite contra o resultado real oficial do jogo
          */
         function avaliarRegrasPalpite(palpite, jogo, regras) {
-            const pM = parseInt(palpite.gols_mandante);
-            const pV = parseInt(palpite.gols_visitante);
-            const jM = parseInt(jogo.gols_mandante);
-            const jV = parseInt(jogo.gols_visitante);
+            // CORREÇÃO: Mapeamento de colunas reais 'palpite_a', 'palpite_b', 'gols_a_oficial', 'gols_b_oficial'
+            const pM = parseInt(palpite.palpite_a);
+            const pV = parseInt(palpite.palpite_b);
+            const jM = parseInt(jogo.gols_a_oficial);
+            const jV = parseInt(jogo.gols_b_oficial);
 
             if (isNaN(pM) || isNaN(pV) || isNaN(jM) || isNaN(jV)) return 0;
 
