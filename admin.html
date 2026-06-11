@@ -293,6 +293,7 @@
             
             try {
                 const inputsA = document.querySelectorAll('input[id^="g-a-"]');
+                const promessas = [];
 
                 for (let inputA of inputsA) {
                     if (inputA.id.includes('fake')) continue;
@@ -303,33 +304,50 @@
                     if (!elB) continue;
                     const gbValue = elB.value;
 
-                    // Caso 1: Ambos preenchidos -> Atualiza o placar seco na tabela jogos através da rpc limpa
+                    // Caso 1: Ambos preenchidos -> Atualiza DIRETAMENTE na tabela jogos (Evita falha de RPC)
                     if (gaValue !== "" && gbValue !== "") {
-                        await _supabase.rpc('admin_atualizar_placar', { 
-                            id_jogo: idJogo, 
-                            g_a: parseInt(gaValue), 
-                            g_b: parseInt(gbValue) 
-                        });
+                        promessas.push(
+                            _supabase
+                                .from('jogos')
+                                .update({ 
+                                    gols_a_oficial: parseInt(gaValue), 
+                                    gols_b_oficial: parseInt(gbValue) 
+                                })
+                                .eq('id', idJogo)
+                        );
                     } 
-                    // Caso 2: Ambos os campos limpos -> Reseta o jogo no banco para NULL
+                    // Caso 2: Ambos limpos -> Reseta os gols oficiais para NULL
                     else if (gaValue === "" && gbValue === "") {
-                        await _supabase
-                            .from('jogos')
-                            .update({ gols_a_oficial: null, gols_b_oficial: null })
-                            .eq('id', idJogo);
+                        promessas.push(
+                            _supabase
+                                .from('jogos')
+                                .update({ 
+                                    gols_a_oficial: null, 
+                                    gols_b_oficial: null 
+                                })
+                                .eq('id', idJogo)
+                        );
                     }
                 }
                 
-                // EXECUÇÃO ISOLADA: Zera tudo e calcula do zero absoluto com os novos pesos
-                await _supabase.rpc('admin_recalcular_tudo');
+                // Executa em paralelo todas as gravações diretas de placares
+                if (promessas.length > 0) {
+                    await Promise.all(promessas);
+                }
                 
-                alert("✅ Ranking e placares atualizados com sucesso!"); 
+                // Agora que os dados estão fisicamente na tabela, força o recálculo limpo do zero
+                const { error: rpcError } = await _supabase.rpc('admin_recalcular_tudo');
+                if (rpcError) throw rpcError;
+                
+                alert("✅ Resultados oficiais gravados e ranking recalculado com sucesso!"); 
                 await carregarDados();
             } catch (e) { 
-                alert("Erro ao salvar placares: " + e.message); 
+                alert("Erro crítico ao salvar placares: " + e.message); 
+                console.error(e);
             }
             btn.innerText = "SALVAR TUDO"; btn.disabled = false;
         }
+        
         function mudarAba(id) {
             document.querySelectorAll('.secao').forEach(s => s.classList.add('hidden'));
             document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('tab-active'));
