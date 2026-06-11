@@ -306,19 +306,18 @@
             renderizarConteudo();
         }
 
-        // Função responsável pela troca de cores idêntica à visão por grupos
         function selecionarSubFaseMataMata(faseSelecionada) {
             subFaseAtiva = faseSelecionada;
             
-            // Reseta todos os botões secundários para o estado cinza desativado
+            // Estado Inativo: Fundo cinza suave, texto cinza escuro e borda sutil separadora
             document.querySelectorAll('.sub-fase-btn').forEach(btn => {
-                btn.className = "sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-gray-100 text-gray-500";
+                btn.className = "sub-fase-btn inline-block py-2 px-4 text-xs font-black uppercase tracking-wide transition-all bg-gray-100 border-gray-200 text-gray-600 rounded-lg";
             });
             
-            // Ativa com azul apenas o botão correspondente à fase selecionada
+            // Estado Ativo: Azul destacado com borda correspondente
             const btnAtivo = document.getElementById(`btn-sub-${faseSelecionada}`);
             if (btnAtivo) {
-                btnAtivo.className = "sub-fase-btn py-2 px-1 rounded-lg text-[9px] font-black uppercase transition-all bg-blue-600 text-white shadow-sm";
+                btnAtivo.className = "sub-fase-btn inline-block py-2 px-4 text-xs font-black uppercase tracking-wide transition-all bg-blue-600 border-blue-700 text-white rounded-lg shadow-sm";
             }
             
             renderizarConteudo();
