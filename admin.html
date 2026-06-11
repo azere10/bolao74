@@ -104,48 +104,34 @@
         }
 
         async function criarUsuarioSistema() {
-            const nome = document.getElementById('add-nome').value.trim();
-            const login = document.getElementById('add-login').value.trim().toLowerCase();
-            const senha = document.getElementById('add-senha').value;
+    const nome = document.getElementById('add-nome').value.trim();
+    const login = document.getElementById('add-login').value.trim().toLowerCase();
+    const senha = document.getElementById('add-senha').value;
 
-            if(!nome || !login || !senha) return alert("Preencha todos os campos!");
+    if(!nome || !login || !senha) return alert("Preencha todos os campos!");
 
-            const novoUserId = crypto.randomUUID();
+    // Gera um ID único para o novo participante
+    const novoUserId = crypto.randomUUID();
 
-            const { error: errorPerfil } = await _supabase.from('perfis').insert([{
-                id: novoUserId,
-                nome_completo: nome,
-                usuario_login: login,
-                senha_plana: senha,
-                pontos_total: 0
-            }]);
+    // Insere puramente o cadastro na tabela de perfis
+    const { error } = await _supabase.from('perfis').insert([{
+        id: novoUserId,
+        nome_completo: nome,
+        usuario_login: login,
+        senha_plana: senha,
+        pontos_total: 0
+    }]);
 
-            if(errorPerfil) {
-                return alert("Erro ao criar perfil: " + errorPerfil.message);
-            }
-
-            if (todosJogos && todosJogos.length > 0) {
-                const palpitesEmBranco = todosJogos
-                    .filter(j => j.id)
-                    .map(j => ({
-                        user_id: novoUserId,
-                        jogo_id: j.id,
-                        palpite_a: null,
-                        palpite_b: null
-                    }));
-
-                if (palpitesEmBranco.length > 0) {
-                    await _supabase.from('palpites').insert(palpitesEmBranco);
-                }
-            }
-
-            alert("Usuário criado com sucesso!");
-            document.getElementById('add-nome').value = '';
-            document.getElementById('add-login').value = '';
-            document.getElementById('add-senha').value = '';
-            carregarDados();
-        }
-
+    if(error) {
+        alert("Erro ao criar usuário: " + error.message);
+    } else {
+        alert("✨ Usuário '" + nome + "' criado com sucesso!");
+        document.getElementById('add-nome').value = '';
+        document.getElementById('add-login').value = '';
+        document.getElementById('add-senha').value = '';
+        carregarDados();
+    }
+}
         async function deletarUsuarioSistema(id) {
             if(confirm("Tem certeza que deseja excluir este participante? Todos os palpites dele serão apagados permanentemente!")) {
                 const { error } = await _supabase.rpc('admin_excluir_usuario', { user_id_param: id });
