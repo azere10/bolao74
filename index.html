@@ -73,6 +73,13 @@
             "finais": [{id:"J103",tA:"Perd J101",tB:"Perd J102",d:"18/07 18:00"},{id:"J104",tA:"Venc J101",tB:"Venc J102",d:"19/07 16:00"}]
         };
 
+        // Atalho para enviar o formulário ao pressionar Enter
+        function verificarEnterLogin(event) {
+            if (event.key === 'Enter') {
+                handleAuthSimplificado();
+            }
+        }
+
         async function handleAuthSimplificado() {
             const userLogin = document.getElementById('usuario').value.trim().toLowerCase();
             const pass = document.getElementById('password').value;
@@ -96,8 +103,33 @@
         function initAppSimplificado() {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('auth-header').innerHTML = `${currentUser.nome_completo} | <button onclick="location.reload()" class="underline text-red-300">SAIR</button>`;
+            
+            // Adicionado botão para o próprio usuário alterar a senha dele
+            document.getElementById('auth-header').innerHTML = `
+                <span>${currentUser.nome_completo}</span>
+                <button onclick="alterarMinhaSenha()" class="bg-blue-800 hover:bg-blue-900 text-white text-[9px] px-2 py-1 rounded font-black transition-colors">TROCAR SENHA</button>
+                <button onclick="location.reload()" class="underline text-red-300 font-black">SAIR</button>
+            `;
             carregarDados();
+        }
+
+        // Função para o próprio participante atualizar suas credenciais
+        async function alterarMinhaSenha() {
+            const novaSenha = prompt("Digite a sua nova senha de acesso:");
+            if (novaSenha === null) return;
+            if (novaSenha.trim() === "") return alert("A senha não pode ser vazia!");
+
+            const { error } = await _supabase
+                .from('perfis')
+                .update({ senha_plana: novaSenha.trim() })
+                .eq('id', currentUser.id);
+
+            if (error) {
+                alert("Erro ao atualizar senha: " + error.message);
+            } else {
+                alert("✅ Sua senha foi alterada com sucesso! Use a nova senha no próximo login.");
+                currentUser.senha_plana = novaSenha.trim();
+            }
         }
 
         async function carregarDados() {
