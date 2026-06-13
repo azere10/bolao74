@@ -463,7 +463,7 @@
             const atualizacoes = [];
 
             for (const linha of linhas) {
-                const jogoId = inlineQuerySelectorSafe(linha, 'data-jogo-id') || linha.getAttribute('data-jogo-id');
+                const jogoId = linha.getAttribute('data-jogo-id');
                 const inputM = inlineQuerySelectorSafe(linha, '.input-gols-mandante');
                 const inputV = inlineQuerySelectorSafe(linha, '.input-gols-visitante');
 
@@ -563,10 +563,11 @@
         }
 
         /**
-         * Processador inteligente que reconstrói a pontuação de todos os utilizadores a partir do zero (IMUNE A DEADLOCKS)
+         * Processador inteligente que reconstrói a pontuação de todos os utilizadores a partir do zero
+         * IMUNE A DEADLOCKS E PROTEGIDO CONTRA PALPITES DUPLICADOS NA BASE DE DADOS
          */
         async function recalcularPontosGerais() {
-            mostrarSpinner(true, "A recalcular o ranking geral sem concorrência paralela...");
+            mostrarSpinner(true, "A recalcular o ranking geral com proteção de integridade...");
             try {
                 // 1. Inicializa o mapa com 0 pontos para todos os perfis
                 const mapaPontosNovos = {};
@@ -580,15 +581,31 @@
 
                 const palpitesParaAtualizar = [];
                 
+                // Conjunto de chaves para rastrear e deduplicar palpites em tempo de execução
+                const processados = new Set();
+                let palpitesDuplicadosIgnorados = 0;
+
                 // 2. Avalia os palpites apenas contra os jogos finalizados atuais na memória
                 for (const palpite of listaPalpites) {
+                    if (!palpite.user_id || !palpite.jogo_id) continue;
+
+                    // CORREÇÃO DO ERRO DO INCREMENTO IRREAL:
+                    // Se o utilizador tiver mais de um palpite gravado na tabela para o mesmo jogo,
+                    // nós processamos apenas o primeiro registo e ignoramos os restantes.
+                    const chaveUnica = `${palpite.user_id}_${palpite.jogo_id}`;
+                    if (processados.has(chaveUnica)) {
+                        palpitesDuplicadosIgnorados++;
+                        continue; // Salta registos redundantes (lixo histórico de tabelas sem restrição única)
+                    }
+                    processados.add(chaveUnica);
+
                     const jogo = mapaJogos.get(palpite.jogo_id);
                     if (!jogo) continue; 
 
                     const pontosDoPalpite = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
 
-                    // OTIMIZAÇÃO CRÍTICA: Só adiciona para gravar na DB se o valor for diferente do atual!
-                    if (palpite.pontos_obtidos !== pontosDoPalpite) {
+                    // OTIMIZAÇÃO CRÍTICA: Só adiciona para gravar na DB se o valor calculado for diferente do armazenado!
+                    if (Number(palpite.pontos_obtidos) !== pontosDoPalpite) {
                         palpitesParaAtualizar.push({
                             id: palpite.id,
                             pontos_obtidos: pontosDoPalpite
@@ -600,7 +617,7 @@
                     }
                 }
 
-                // 3. Executa as atualizações de palpites de forma sequencial (Zero chance de deadlocks)
+                // 3. Executa as atualizações de palpites modificados de forma sequencial (Zero Deadlocks!)
                 if (palpitesParaAtualizar.length > 0) {
                     mostrarSpinner(true, `A atualizar palpites modificados (${palpitesParaAtualizar.length} registos)...`);
                     for (const item of palpitesParaAtualizar) {
@@ -615,11 +632,12 @@
                     }
                 }
 
-                // 4. Identifica quais os perfis que necessitam de atualização (Score de diferença)
+                // 4. Identifica quais os perfis que necessitam de atualização na coluna 'pontos_total'
                 const perfisParaAtualizar = [];
                 listaPerfis.forEach(user => {
                     const novosPontos = mapaPontosNovos[user.id] || 0;
-                    if (user.pontos_total !== novosPontos) {
+                    const pontosAtuais = Number(user.pontos_total) || 0;
+                    if (pontosAtuais !== novosPontos) {
                         perfisParaAtualizar.push({
                             id: user.id,
                             pontos_total: novosPontos
@@ -627,7 +645,7 @@
                     }
                 });
 
-                // 5. Atualiza os perfis modificados de forma sequencial
+                // 5. Atualiza os perfis modificados de forma sequencial na base de dados
                 if (perfisParaAtualizar.length > 0) {
                     mostrarSpinner(true, `A atualizar classificações dos utilizadores (${perfisParaAtualizar.length} registos)...`);
                     for (const item of perfisParaAtualizar) {
@@ -639,7 +657,13 @@
                     }
                 }
 
-                mostrarNotificacao("Ranking e pontuações recalculados com sucesso!", "success");
+                // Exibe aviso amigável no log informando se limpou redundâncias
+                let mensagemSucesso = "Ranking e pontuações recalculados com sucesso!";
+                if (palpitesDuplicadosIgnorados > 0) {
+                    mensagemSucesso += ` (${palpitesDuplicadosIgnorados} palpites duplicados ignorados e limpos no cálculo)`;
+                }
+
+                mostrarNotificacao(mensagemSucesso, "success");
                 await carregarDadosDoBanco();
 
             } catch (error) {
