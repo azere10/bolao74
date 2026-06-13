@@ -62,7 +62,7 @@
     <!-- ECRÃ DE CARREGAMENTO (SPINNER) -->
     <div id="loading-overlay" class="fixed inset-0 bg-[#0b132b]/80 z-40 flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
-        <p class="text-blue-300 font-medium">A carregar dados do Supabase...</p>
+        <p class="text-blue-300 font-medium text-sm">A carregar dados do Supabase...</p>
     </div>
 
     <!-- CONTEÚDO PRINCIPAL (MUDANÇA DE ABAS) -->
@@ -454,7 +454,7 @@
         }
 
         /**
-         * Recolhe os golos e atualiza o banco de dados (Garante a cláusula WHERE - Resolve o Bug 1)
+         * Recolhe os golos e atualiza o banco de dados de forma sequencial (Zero Deadlocks!)
          */
         async function guardarTodosResultados() {
             mostrarSpinner(true, "A registar resultados oficiais...");
@@ -485,15 +485,11 @@
                     continue;
                 }
 
-                atualizacoes.push(
-                    supabaseClient
-                        .from('jogos')
-                        .update({
-                            gols_a_oficial: golsM,
-                            gols_b_oficial: golsV
-                        })
-                        .eq('id', jogoId)
-                );
+                // Otimização: Só atualiza se o valor na UI for diferente do armazenado em listaJogos
+                const jogoOriginal = listaJogos.find(j => j.id == jogoId);
+                if (jogoOriginal && (jogoOriginal.gols_a_oficial !== golsM || jogoOriginal.gols_b_oficial !== golsV)) {
+                    atualizacoes.push({ id: jogoId, gols_a_oficial: golsM, gols_b_oficial: golsV });
+                }
             }
 
             if (atualizacoes.length === 0) {
@@ -503,9 +499,16 @@
             }
 
             try {
-                const resultados = await Promise.all(atualizacoes);
-                for (const r of resultados) {
-                    if (r.error) throw r.error;
+                // Executa sequencialmente para prevenir concorrência agressiva de transações
+                for (const item of atualizacoes) {
+                    const { error } = await supabaseClient
+                        .from('jogos')
+                        .update({
+                            gols_a_oficial: item.gols_a_oficial,
+                            gols_b_oficial: item.gols_b_oficial
+                        })
+                        .eq('id', item.id);
+                    if (error) throw error;
                 }
 
                 mostrarNotificacao("Resultados oficiais guardados com sucesso!", "success");
@@ -560,12 +563,12 @@
         }
 
         /**
-         * Processador inteligente que reconstrói a pontuação de todos os utilizadores a partir do zero (Resolve o Bug 2 e Bug 3)
+         * Processador inteligente que reconstrói a pontuação de todos os utilizadores a partir do zero (IMUNE A DEADLOCKS)
          */
         async function recalcularPontosGerais() {
-            mostrarSpinner(true, "A recalcular o ranking geral sem acumulações...");
+            mostrarSpinner(true, "A recalcular o ranking geral sem concorrência paralela...");
             try {
-                // 1. Inicializa o mapa com 0 pontos para todos os perfis (Zera os acumulados antigos - Resolve Bug 2)
+                // 1. Inicializa o mapa com 0 pontos para todos os perfis
                 const mapaPontosNovos = {};
                 listaPerfis.forEach(user => {
                     mapaPontosNovos[user.id] = 0; 
@@ -575,7 +578,7 @@
                 const jogosFinalizados = listaJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
                 const mapaJogos = new Map(jogosFinalizados.map(j => [j.id, j]));
 
-                const updatesPalpites = [];
+                const palpitesParaAtualizar = [];
                 
                 // 2. Avalia os palpites apenas contra os jogos finalizados atuais na memória
                 for (const palpite of listaPalpites) {
@@ -584,15 +587,12 @@
 
                     const pontosDoPalpite = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
 
-                    try {
-                        updatesPalpites.push(
-                            supabaseClient
-                                .from('palpites')
-                                .update({ pontos_obtidos: pontosDoPalpite })
-                                .eq('id', palpite.id)
-                        );
-                    } catch (e) {
-                        console.warn(e);
+                    // OTIMIZAÇÃO CRÍTICA: Só adiciona para gravar na DB se o valor for diferente do atual!
+                    if (palpite.pontos_obtidos !== pontosDoPalpite) {
+                        palpitesParaAtualizar.push({
+                            id: palpite.id,
+                            pontos_obtidos: pontosDoPalpite
+                        });
                     }
 
                     if (mapaPontosNovos[palpite.user_id] !== undefined) {
@@ -600,25 +600,43 @@
                     }
                 }
 
-                if (updatesPalpites.length > 0) {
-                    try {
-                        await Promise.all(updatesPalpites);
-                    } catch (e) {
-                        console.warn("Falha ao salvar pontos_obtidos nos palpites:", e);
+                // 3. Executa as atualizações de palpites de forma sequencial (Zero chance de deadlocks)
+                if (palpitesParaAtualizar.length > 0) {
+                    mostrarSpinner(true, `A atualizar palpites modificados (${palpitesParaAtualizar.length} registos)...`);
+                    for (const item of palpitesParaAtualizar) {
+                        try {
+                            await supabaseClient
+                                .from('palpites')
+                                .update({ pontos_obtidos: item.pontos_obtidos })
+                                .eq('id', item.id);
+                        } catch (e) {
+                            console.warn("Erro ao atualizar pontos_obtidos do palpite:", item.id, e);
+                        }
                     }
                 }
 
-                // 3. Sobrescreve o total calculado na coluna 'pontos_total' da tabela 'perfis'
-                const updatesPerfis = Object.keys(mapaPontosNovos).map(userId => {
-                    return supabaseClient
-                        .from('perfis')
-                        .update({ pontos_total: mapaPontosNovos[userId] })
-                        .eq('id', userId);
+                // 4. Identifica quais os perfis que necessitam de atualização (Score de diferença)
+                const perfisParaAtualizar = [];
+                listaPerfis.forEach(user => {
+                    const novosPontos = mapaPontosNovos[user.id] || 0;
+                    if (user.pontos_total !== novosPontos) {
+                        perfisParaAtualizar.push({
+                            id: user.id,
+                            pontos_total: novosPontos
+                        });
+                    }
                 });
 
-                const resultadosPerfis = await Promise.all(updatesPerfis);
-                for (const r of resultadosPerfis) {
-                    if (r.error) throw r.error;
+                // 5. Atualiza os perfis modificados de forma sequencial
+                if (perfisParaAtualizar.length > 0) {
+                    mostrarSpinner(true, `A atualizar classificações dos utilizadores (${perfisParaAtualizar.length} registos)...`);
+                    for (const item of perfisParaAtualizar) {
+                        const { error } = await supabaseClient
+                            .from('perfis')
+                            .update({ pontos_total: item.pontos_total })
+                            .eq('id', item.id);
+                        if (error) throw error;
+                    }
                 }
 
                 mostrarNotificacao("Ranking e pontuações recalculados com sucesso!", "success");
@@ -759,7 +777,6 @@
                     mostrarNotificacao("Utilizador atualizado com sucesso!", "success");
                 } else {
                     // Modo Criação (Senha padrão: 123456)
-                    // CORREÇÃO CRÍTICA: Geração local do UUID para contornar restrição de ID nulo no Supabase!
                     const novoId = gerarUUID();
                     const loginLimpo = nome
                         .toLowerCase()
@@ -944,7 +961,7 @@
         function mostrarSpinner(visivel, mensagem = "A carregar...") {
             const overlay = document.getElementById('loading-overlay');
             const texto = overlay.querySelector('p');
-            texto.textContent = mensagem;
+            texto.textContent = messageFallback(mensagem, "A carregar...");
 
             if (visivel) {
                 overlay.classList.remove('hidden');
@@ -953,6 +970,10 @@
                 overlay.classList.add('hidden');
                 overlay.classList.remove('flex');
             }
+        }
+
+        function messageFallback(val, defaultVal) {
+            return val !== undefined ? val : defaultVal;
         }
 
         /**
