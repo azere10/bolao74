@@ -9,7 +9,6 @@
     <!-- CDN do Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Cores de fundo e cartões combinando com o painel Admin */
         body {
             background-color: #0b132b;
             color: #f8fafc;
@@ -135,6 +134,20 @@
         <!-- SEÇÃO: RANKING GERAL -->
         <!-- ========================================== -->
         <section id="aba-ranking" class="hidden">
+            <!-- PAINEL DINÂMICO: RESENHA DO MAURINHO (NOVO) -->
+            <div id="painel-resenha" class="hidden bg-gradient-to-r from-blue-950/60 to-slate-900/80 rounded-2xl border border-blue-500/20 p-5 mb-6 shadow-xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-xl">🎙️</span>
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-blue-400">A Resenha do Maurinho</h3>
+                </div>
+                <p id="resenha-texto" class="text-xs sm:text-sm text-slate-300 leading-relaxed italic">
+                    A analisar as últimas atualizações para soltar a corneta...
+                </p>
+                <div id="resenha-destaques" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800/60">
+                    <!-- Gerado dinamicamente -->
+                </div>
+            </div>
+
             <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-3 sm:p-6 shadow-2xl">
                 <div class="mb-6">
                     <h2 class="text-xl font-bold text-white">Ranking Geral de Participantes</h2>
@@ -301,9 +314,7 @@
         </section>
     </main>
 
-    <!-- ========================================== -->
     <!-- BOTÃO FLUTUANTE DE SALVAR PALPITES (MOBILE) -->
-    <!-- ========================================== -->
     <button id="btn-salvar-flutuante" onclick="guardarMeusPalpites()" class="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-6 py-4 rounded-full shadow-2xl hover:shadow-emerald-900/40 transition-all transform active:scale-95 flex items-center gap-2 border border-emerald-500/30 hidden">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -311,9 +322,7 @@
         <span class="text-xs sm:text-sm tracking-wide">SALVAR MEUS PALPITES</span>
     </button>
 
-    <!-- ========================================== -->
     <!-- MODAL: AUDITORIA DE PALPITES (RANKING) -->
-    <!-- ========================================== -->
     <div id="modal-auditoria" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-[#1c2541] border border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
@@ -374,6 +383,7 @@
         };
         let abaAtiva = 'palpites';
         let modoExibicaoPalpites = 'grupo'; // 'grupo' ou 'dia'
+        let cacheDesviosRanking = {}; // Mapeia id_usuario -> { posAtual, posAnterior, diff }
 
         // Executado ao carregar a página
         window.addEventListener('DOMContentLoaded', async () => {
@@ -401,7 +411,6 @@
                         document.getElementById('app-header').classList.remove('hidden');
                         document.getElementById('app-content').classList.remove('hidden');
                         
-                        // Exibe o botão flutuante se estiver na aba de palpites
                         document.getElementById('btn-salvar-flutuante').classList.remove('hidden');
                         
                         document.getElementById('header-user-nome').textContent = currentUser.nome_completo;
@@ -492,7 +501,6 @@
             abaAtiva = aba;
             const tabs = ['palpites', 'ranking', 'regras', 'conta'];
             
-            // Gerencia visibilidade do botão flutuante de salvar
             const btnFlutuante = document.getElementById('btn-salvar-flutuante');
             if (aba === 'palpites') {
                 btnFlutuante.classList.remove('hidden');
@@ -562,6 +570,9 @@
                     document.getElementById('header-user-pontos').textContent = currentUser.pontos_total || 0;
                 }
 
+                // Cálculo das estatísticas dinâmicas e resenha em segundo plano
+                processarCalculosEstatisticosEranking();
+
                 renderizarMeusPalpites();
                 renderizarRankingGeral();
 
@@ -571,6 +582,220 @@
             } finally {
                 mostrarSpinner(false);
             }
+        }
+
+        /**
+         * Calcula dinamicamente as estatísticas de palpites coletivos para cada partida bloqueada
+         */
+        function calcularEstatisticasPalpites(jogoId) {
+            const palpitesJogo = listaPalpites.filter(p => p.jogo_id === jogoId);
+            const total = palpitesJogo.length;
+            if (total === 0) return null;
+
+            let vitA = 0;
+            let empate = 0;
+            let vitB = 0;
+            const placares = {};
+
+            palpitesJogo.forEach(p => {
+                const gA = parseInt(p.palpite_a, 10);
+                const gB = parseInt(p.palpite_b, 10);
+                if (isNaN(gA) || isNaN(gB)) return;
+
+                if (gA > gB) vitA++;
+                else if (gA < gB) vitB++;
+                else empate++;
+
+                const placarKey = `${gA}x${gB}`;
+                placares[placarKey] = (placares[placarKey] || 0) + 1;
+            });
+
+            // Encontrar o placar mais comum
+            let melhorPlacar = "—";
+            let maxVotos = 0;
+            for (const [placar, votos] of Object.entries(placares)) {
+                if (votos > maxVotos) {
+                    maxVotos = votos;
+                    melhorPlacar = placar;
+                }
+            }
+
+            const percA = Math.round((vitA / total) * 100);
+            const percEmp = Math.round((empate / total) * 100);
+            const percB = Math.round((vitB / total) * 100);
+            const percMelhorPlacar = Math.round((maxVotos / total) * 100);
+
+            return {
+                total,
+                percA,
+                percEmp,
+                percB,
+                melhorPlacar,
+                percMelhorPlacar
+            };
+        }
+
+        /**
+         * Processa variações de posições e monta a narrativa hilária no topo da classificação
+         */
+        function processarCalculosEstatisticosEranking() {
+            cacheDesviosRanking = {};
+
+            // Filtra os jogos finalizados (que possuem golos oficiais lançados pelo admin)
+            const jogosFinalizados = listaJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
+            if (jogosFinalizados.length === 0) {
+                document.getElementById('painel-resenha').classList.add('hidden');
+                return;
+            }
+
+            // O último jogo atualizado é o que tem a data mais recente na lista cronológica de finalizados
+            const ultimoJogo = jogosFinalizados[jogosFinalizados.length - 1];
+
+            // 1. CALCULA RANKING ATUAL REAL
+            const rankingAtual = [...listaPerfis].sort((a, b) => {
+                const diffPts = (b.pontos_total || 0) - (a.pontos_total || 0);
+                if (diffPts !== 0) return diffPts;
+                return a.nome_completo.localeCompare(b.nome_completo);
+            });
+
+            // 2. CALCULA RANKING RETROATIVO (Descontando apenas o último jogo atualizado)
+            const rankingAnteriorList = listaPerfis.map(user => {
+                // Descobre quanto este participante fez especificamente no último jogo
+                const palpiteUltimo = listaPalpites.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
+                let pontosUltimo = 0;
+                if (palpiteUltimo) {
+                    pontosUltimo = avaliarRegrasPalpite(palpiteUltimo, ultimoJogo, regrasPontuacao);
+                }
+
+                return {
+                    id: user.id,
+                    nome: user.nome_completo,
+                    pontos_retroativos: (user.pontos_total || 0) - pontosUltimo
+                };
+            });
+
+            // Ordena o ranking retroativo
+            rankingAnteriorList.sort((a, b) => {
+                const diffPts = b.pontos_retroativos - a.pontos_retroativos;
+                if (diffPts !== 0) return diffPts;
+                return a.nome.localeCompare(b.nome);
+            });
+
+            // Cria dicionários para encontrar as posições rapidamente (index + 1)
+            const dictPosAnterior = {};
+            rankingAnteriorList.forEach((user, index) => {
+                dictPosAnterior[user.id] = index + 1;
+            });
+
+            const profetas = []; // Quem cravou placar exato
+            let maiorSubidaUser = null;
+            let maiorSubidaPosicoes = -999;
+            let maiorQuedaUser = null;
+            let maiorQuedaPosicoes = -999; // Representa valor absoluto da queda
+
+            rankingAtual.forEach((user, index) => {
+                const posAtual = index + 1;
+                const posAnterior = dictPosAnterior[user.id] || posAtual;
+                const diferenca = posAnterior - posAtual; // Se posAnterior era 5 e atual é 2, subiu +3
+
+                cacheDesviosRanking[user.id] = {
+                    posAtual,
+                    posAnterior,
+                    diff: diferenca
+                };
+
+                // Identifica "Profetas" (quem cravou placar exato no último jogo)
+                const palpiteUltimo = listaPalpites.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
+                if (palpiteUltimo && ultimoJogo) {
+                    const basePts = avaliarRegrasPalpite(palpiteUltimo, ultimoJogo, { placarExato: 25, vencedorGols: 0, vencedorSimples: 0, golParcial: 0, erro: 0 });
+                    if (basePts > 0) {
+                        profetas.push(user.nome_completo);
+                    }
+                }
+
+                // Quem escalou mais posições (maior variação positiva)
+                if (diferenca > maiorSubidaPosicoes) {
+                    maiorSubidaPosicoes = diferenca;
+                    maiorSubidaUser = user;
+                }
+
+                // Quem escorregou mais (maior variação negativa)
+                const queda = -diferenca;
+                if (queda > maiorQuedaPosicoes) {
+                    maiorQuedaPosicoes = queda;
+                    maiorQuedaUser = user;
+                }
+            });
+
+            // 3. CONSTRÓI TEXTO E DESIGN DA CORNETA
+            const resenhaTextoEl = document.getElementById('resenha-texto');
+            const resenhaDestaquesEl = document.getElementById('resenha-destaques');
+            
+            // Frases engraçadas e motivacionais baseadas no último jogo
+            const piadasLiderança = [
+                `A tabela tremeu! O último resultado de <strong>${ultimoJogo.time_a} x ${ultimoJogo.time_b}</strong> bagunçou o coreto.`,
+                `Secadores ligados no limite! Quem apostou com o coração deu-se mal, mas os estrategistas estão a rir à toa.`,
+                `O apito final de <strong>${ultimoJogo.time_a} x ${ultimoJogo.time_b}</strong> deixou o grupo em polvorosa! Quem diria?`
+            ];
+
+            let narrativaNarrativa = piadasLiderança[Math.floor(Math.random() * piadasLiderança.length)];
+
+            if (maiorSubidaUser && maiorSubidaPosicoes > 0) {
+                narrativaNarrativa += ` Destaque absoluto para <strong>${maiorSubidaUser.nome_completo}</strong>, que disparou rumo ao topo como um foguete, subindo ${maiorSubidaPosicoes} posições de uma só vez! 🚀`;
+            } else {
+                narrativaNarrativa += ` A classificação geral está estabilizada e a tensão entre as primeiras posições está ao rubro! 🔥`;
+            }
+
+            resenhaTextoEl.innerHTML = narrativaNarrativa;
+
+            // Cria badges de destaques visuais elegantes
+            let htmlDestaques = "";
+
+            // Bloco de Profetas do Jogo
+            if (profetas.length > 0) {
+                htmlDestaques += `
+                    <div class="bg-emerald-950/40 border border-emerald-500/20 p-3 rounded-xl flex flex-col justify-center">
+                        <span class="text-[10px] uppercase font-black text-emerald-400 tracking-wider flex items-center gap-1">🎯 Os Profetas da Rodada</span>
+                        <span class="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
+                            Cravou em cheio o placar de ${ultimoJogo.time_a} x ${ultimoJogo.time_b}: <br/>
+                            <strong class="text-white">${profetas.join(', ')}</strong> (+25 pts de ouro!)
+                        </span>
+                    </div>
+                `;
+            } else {
+                htmlDestaques += `
+                    <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex flex-col justify-center">
+                        <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">🤫 Placar Seco</span>
+                        <span class="text-xs text-slate-400 mt-1 italic">
+                            Ninguém conseguiu profetizar o placar exato de ${ultimoJogo.time_a} x ${ultimoJogo.time_b}. O Maurinho agradece o silêncio!
+                        </span>
+                    </div>
+                `;
+            }
+
+            // Bloco de Flutuação de Líder ou Despenhadeiro
+            if (maiorQuedaUser && maiorQuedaPosicoes > 0) {
+                htmlDestaques += `
+                    <div class="bg-red-950/40 border border-red-500/20 p-3 rounded-xl flex flex-col justify-center">
+                        <span class="text-[10px] uppercase font-black text-red-400 tracking-wider flex items-center gap-1">📉 O Despenhadeiro</span>
+                        <span class="text-xs text-slate-300 mt-1 leading-relaxed">
+                            O participante <strong class="text-white">${maiorQuedaUser.nome_completo}</strong> escorregou feio e perdeu <strong class="text-red-400 font-bold">${maiorQuedaPosicoes} posições</strong>. Força, que ainda há tempo de dar a volta por cima!
+                        </span>
+                    </div>
+                `;
+            } else {
+                htmlDestaques += `
+                    <div class="bg-blue-950/40 border border-blue-500/20 p-3 rounded-xl flex flex-col justify-center">
+                        <span class="text-[10px] uppercase font-black text-blue-400 tracking-wider flex items-center gap-1">⭐ Disputa Limpa</span>
+                        <span class="text-xs text-slate-300 mt-1 italic">
+                            O ranking permaneceu incrivelmente equilibrado sem nenhuma queda drástica registada nas últimas horas.
+                        </span>
+                    </div>
+                `;
+            }
+
+            resenhaDestaquesEl.innerHTML = htmlDestaques;
+            document.getElementById('painel-resenha').classList.remove('hidden');
         }
 
         /**
@@ -630,11 +855,35 @@
                             ? "w-9 h-8 text-center bg-slate-900/50 text-slate-500 font-bold rounded border border-slate-800/40 outline-none text-xs opacity-40 cursor-not-allowed"
                             : "w-9 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs transition-all";
 
+                        // PALPITE INATIVO OU BLOQUEADO? CALCULA PAINEL DE TENDÊNCIAS DINÂMICO
+                        let htmlEstatisticas = "";
+                        if (isBloqueado) {
+                            const stats = calcularEstatisticasPalpites(jogo.id);
+                            if (stats && stats.total > 0) {
+                                htmlEstatisticas = `
+                                    <div class="mt-3 pt-3 border-t border-slate-800/60 bg-slate-900/30 rounded-lg p-2 flex flex-col gap-1.5">
+                                        <div class="flex justify-between items-center text-[9px] text-slate-400 font-black tracking-wider uppercase">
+                                            <span>📊 Tendência do Bolão</span>
+                                            <span class="text-blue-400">${stats.total} palpites</span>
+                                        </div>
+                                        <div class="flex h-2 rounded-full overflow-hidden bg-slate-850">
+                                            <div style="width: ${stats.percA}%" class="bg-blue-600 flex items-center justify-center text-[7px] text-white font-bold" title="Vitória ${jogo.time_a}">${stats.percA > 15 ? stats.percA + '%' : ''}</div>
+                                            <div style="width: ${stats.percEmp}%" class="bg-slate-500 flex items-center justify-center text-[7px] text-white font-bold" title="Empate">${stats.percEmp > 15 ? stats.percEmp + '%' : ''}</div>
+                                            <div style="width: ${stats.percB}%" class="bg-purple-600 flex items-center justify-center text-[7px] text-white font-bold" title="Vitória ${jogo.time_b}">${stats.percB > 15 ? stats.percB + '%' : ''}</div>
+                                        </div>
+                                        <div class="flex justify-between items-center text-[9px] text-slate-400">
+                                            <span>Predileto: <strong class="text-emerald-400 font-mono">${stats.melhorPlacar.replace('x', ' x ')}</strong></span>
+                                            <span>(${stats.percMelhorPlacar}%)</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+
                         htmlJogos += `
                             <div class="linha-jogo flex flex-col py-2 border-b border-slate-800/60 last:border-b-0 gap-1" data-jogo-id="${jogo.id}">
                                 <div class="flex items-center justify-between">
                                     <span class="text-[9px] text-slate-500 font-mono">${dataFormatada} às ${horaFormatada}</span>
-                                    <!-- RESOLVIDO: Mostra apenas o placar oficial sem poluír a tela com pontuações conquistadas -->
                                     ${isFinalizado ? `<span class="text-[9px] text-slate-400 font-bold bg-slate-900/50 px-1.5 py-0.5 rounded">Oficial: ${jogo.gols_a_oficial} x ${jogo.gols_b_oficial}</span>` : ''}
                                 </div>
                                 <div class="flex items-center justify-between gap-1">
@@ -646,11 +895,11 @@
                                     </div>
                                     <span class="w-1/3 text-left text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate">${jogo.time_b}</span>
                                 </div>
+                                ${htmlEstatisticas}
                             </div>
                         `;
                     });
 
-                    // Classificação compacta integrada para economizar espaço
                     const classificacaoHTML = calcularClassificacaoGrupo(jogosDoGrupo);
 
                     card.innerHTML = `
@@ -667,7 +916,7 @@
                             </div>
                         </div>
                         
-                        <!-- Mini Classificação Compacta logo abaixo -->
+                        <!-- Mini Classificação Compacta -->
                         <div class="pt-3 border-t border-slate-800/80 mt-3">
                             <div class="text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">Classificação</div>
                             <div class="space-y-0.5 max-h-[100px] overflow-y-auto no-scrollbar">
@@ -715,7 +964,31 @@
                             ? "w-9 h-8 text-center bg-slate-900/50 text-slate-500 font-bold rounded border border-slate-800/40 outline-none text-xs opacity-40 cursor-not-allowed"
                             : "w-9 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs transition-all";
 
-                        // RESOLVIDO: Visualização de data/hora robusta e limpa em dia corrido
+                        // PALPITE INATIVO OU BLOQUEADO? CALCULA PAINEL DE TENDÊNCIAS DINÂMICO
+                        let htmlEstatisticas = "";
+                        if (isBloqueado) {
+                            const stats = calcularEstatisticasPalpites(jogo.id);
+                            if (stats && stats.total > 0) {
+                                htmlEstatisticas = `
+                                    <div class="mt-3 pt-3 border-t border-slate-800/60 bg-slate-900/30 rounded-lg p-2 flex flex-col gap-1.5">
+                                        <div class="flex justify-between items-center text-[9px] text-slate-400 font-black tracking-wider uppercase">
+                                            <span>📊 Tendência do Bolão</span>
+                                            <span class="text-blue-400">${stats.total} palpites</span>
+                                        </div>
+                                        <div class="flex h-2 rounded-full overflow-hidden bg-slate-850">
+                                            <div style="width: ${stats.percA}%" class="bg-blue-600 flex items-center justify-center text-[7px] text-white font-bold" title="Vitória ${jogo.time_a}">${stats.percA > 15 ? stats.percA + '%' : ''}</div>
+                                            <div style="width: ${stats.percEmp}%" class="bg-slate-500 flex items-center justify-center text-[7px] text-white font-bold" title="Empate">${stats.percEmp > 15 ? stats.percEmp + '%' : ''}</div>
+                                            <div style="width: ${stats.percB}%" class="bg-purple-600 flex items-center justify-center text-[7px] text-white font-bold" title="Vitória ${jogo.time_b}">${stats.percB > 15 ? stats.percB + '%' : ''}</div>
+                                        </div>
+                                        <div class="flex justify-between items-center text-[9px] text-slate-400">
+                                            <span>Predileto: <strong class="text-emerald-400 font-mono">${stats.melhorPlacar.replace('x', ' x ')}</strong></span>
+                                            <span>(${stats.percMelhorPlacar}%)</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+
                         htmlJogosDia += `
                             <div class="linha-jogo flex flex-col py-2 border-b border-slate-800/60 last:border-b-0 gap-1" data-jogo-id="${jogo.id}">
                                 <div class="flex items-center justify-between text-[9px] text-slate-500 font-mono">
@@ -731,6 +1004,7 @@
                                     </div>
                                     <span class="w-1/3 text-left text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate">${jogo.time_b}</span>
                                 </div>
+                                ${htmlEstatisticas}
                             </div>
                         `;
                     });
@@ -757,8 +1031,8 @@
                 if (!tabela[j.time_b]) tabela[j.time_b] = { pontos: 0, time: j.time_b };
 
                 if (j.gols_a_oficial !== null && j.gols_b_oficial !== null && j.gols_a_oficial !== undefined && j.gols_b_oficial !== undefined) {
-                    const gM = parseInt(j.gols_a_oficial);
-                    const gV = parseInt(j.gols_b_oficial);
+                    const gM = parseInt(j.gols_a_oficial, 10);
+                    const gV = parseInt(j.gols_b_oficial, 10);
                     
                     if (gM > gV) {
                         tabela[j.time_a].pontos += 3;
@@ -810,7 +1084,7 @@
                 if (!jogoId || !inputA || !inputB) continue;
 
                 // Encontra jogo correto em memória para segurança
-                const idJ = isNaN(jogoId) ? jogoId : parseInt(jogoId);
+                const idJ = isNaN(jogoId) ? jogoId : parseInt(jogoId, 10);
                 const jogo = mapaJogos.get(idJ);
                 if (!jogo) continue;
 
@@ -881,13 +1155,12 @@
             });
 
             ordenados.forEach((user, index) => {
-                // Simplificação dos ícones/posições para economizar espaço horizontal no mobile
                 let medalhaPosicao = `${index + 1}º`;
                 let corLinha = "text-slate-300";
 
                 if (index === 0) {
-                    medalhaPosicao = "🥇";
-                    corLinha = "text-amber-400 font-extrabold";
+                    medalhaPosicao = "🏆";
+                    corLinha = "text-amber-400 font-extrabold animate-pulse";
                 } else if (index === 1) {
                     medalhaPosicao = "🥈";
                     corLinha = "text-slate-300 font-bold";
@@ -898,16 +1171,36 @@
 
                 const isCurrentUser = user.id === currentUser.id;
 
+                // Desenha a seta indicativa baseada no cache recalculado da resenha
+                let htmlSeta = "●";
+                let corSeta = "text-slate-500";
+                const cacheInfo = cacheDesviosRanking[user.id];
+
+                if (cacheInfo && cacheInfo.diff !== 0) {
+                    if (cacheInfo.diff > 0) {
+                        htmlSeta = `▲ +${cacheInfo.diff}`;
+                        corSeta = "text-emerald-400 font-extrabold";
+                    } else {
+                        htmlSeta = `▼ ${cacheInfo.diff}`;
+                        corSeta = "text-red-400 font-bold";
+                    }
+                }
+
                 const tr = document.createElement('tr');
                 tr.className = isCurrentUser 
                     ? "bg-blue-950/40 hover:bg-blue-900/30 transition-all font-medium border-l-4 border-blue-500" 
                     : "hover:bg-slate-800/20 transition-all";
 
-                // RESOLVIDO: Otimização de botões e texto para layouts de smartphones pequenos
                 tr.innerHTML = `
                     <td class="p-2 sm:p-4 text-center font-mono font-bold text-[11px] sm:text-xs text-slate-400">${medalhaPosicao}</td>
                     <td class="p-2 sm:p-4 ${corLinha} text-[11px] sm:text-sm truncate max-w-[100px] sm:max-w-none">
-                        ${user.nome_completo} ${isCurrentUser ? '<span class="text-[8px] bg-blue-900/60 text-blue-300 px-1 py-0.5 rounded font-bold ml-0.5 border border-blue-500/10">TU</span>' : ''}
+                        <div class="flex flex-col">
+                            <span class="flex items-center gap-1">
+                                ${user.nome_completo} 
+                                ${isCurrentUser ? '<span class="text-[8px] bg-blue-900/60 text-blue-300 px-1 py-0.5 rounded font-bold ml-0.5 border border-blue-500/10">TU</span>' : ''}
+                            </span>
+                            <span class="text-[8px] sm:text-[9px] ${corSeta}">${htmlSeta} na rodada</span>
+                        </div>
                     </td>
                     <td class="p-2 sm:p-4 text-center">
                         <span class="bg-[#1c2541] text-blue-400 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-bold text-[10px] sm:text-xs border border-blue-500/15 font-mono">
@@ -1091,10 +1384,10 @@
          * Motor de Regras Oficiais do Bolão (Igual ao do painel Admin)
          */
         function avaliarRegrasPalpite(palpite, jogo, regras) {
-            const pM = parseInt(palpite.palpite_a);
-            const pV = parseInt(palpite.palpite_b);
-            const jM = parseInt(jogo.gols_a_oficial);
-            const jV = parseInt(jogo.gols_b_oficial);
+            const pM = parseInt(palpite.palpite_a, 10);
+            const pV = parseInt(palpite.palpite_b, 10);
+            const jM = parseInt(jogo.gols_a_oficial, 10);
+            const jV = parseInt(jogo.gols_b_oficial, 10);
 
             if (isNaN(pM) || isNaN(pV) || isNaN(jM) || isNaN(jV)) return 0;
 
