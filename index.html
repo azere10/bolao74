@@ -381,6 +381,11 @@
         };
         let abaAtiva = 'palpites';
         let modoExibicaoPalpites = 'grupo'; 
+        
+        // VARIÁVEIS ADICIONADAS PARA A RESENHA DO MAURINHO
+        let lastKnownResults = {};
+        let primeiroCarregamentoFeito = false;
+        let pollInterval = null;
 
         window.addEventListener('DOMContentLoaded', async () => {
             await verificarSessaoAtiva();
@@ -417,6 +422,8 @@
                         document.getElementById('conta-user-login').textContent = `@${currentUser.usuario_login}`;
 
                         await carregarDadosDoBanco();
+                        // INICIA O CARREGAMENTO SILENCIOSO PARA A RESENHA
+                        if(!pollInterval) pollInterval = setInterval(() => carregarDadosDoBanco(true), 30000);
                         return;
                     }
                 } catch (e) {
@@ -465,6 +472,8 @@
 
                 mostrarNotificacao(`Bem-vindo ao bolão, ${currentUser.nome_completo}!`, "success");
                 await carregarDadosDoBanco();
+                // INICIA O CARREGAMENTO SILENCIOSO PARA A RESENHA
+                if(!pollInterval) pollInterval = setInterval(() => carregarDadosDoBanco(true), 30000);
 
             } catch (e) {
                 console.error(e);
@@ -475,6 +484,7 @@
         }
 
         function terminarSessao() {
+            if(pollInterval) { clearInterval(pollInterval); pollInterval = null; }
             localStorage.removeItem('bolao_user_session');
             currentUser = null;
             document.getElementById('tela-login').classList.remove('hidden');
@@ -485,8 +495,8 @@
             mostrarNotificacao("Sessão finalizada com sucesso.", "info");
         }
 
-        async function carregarDadosDoBanco() {
-            mostrarSpinner(true, "Atualizando dados do bolão...");
+        async function carregarDadosDoBanco(silencioso = false) {
+            if (!silencioso) mostrarSpinner(true, "Atualizando dados do bolão...");
             try {
                 const { data: jogos, error: errJogos } = await supabaseClient
                     .from('jogos')
@@ -494,6 +504,9 @@
 
                 if (errJogos) throw errJogos;
                 listaJogos = (jogos || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+
+                // EXECUTA A RESENHA DO MAURINHO
+                processarResenhaMaurinho(listaJogos);
 
                 const { data: palpites, error: errPalpites } = await supabaseClient.from('palpites').select('*');
                 if (errPalpites) throw errPalpites;
@@ -515,10 +528,38 @@
 
             } catch (error) {
                 console.error("Erro ao carregar dados do banco:", error);
-                mostrarNotificacao(`Erro de carregamento: ${error.message}`, "danger");
+                if (!silencioso) mostrarNotificacao(`Erro de carregamento: ${error.message}`, "danger");
             } finally {
-                mostrarSpinner(false);
+                if (!silencioso) mostrarSpinner(false);
             }
+        }
+
+        // FUNÇÃO DA RESENHA DO MAURINHO
+        function processarResenhaMaurinho(jogos) {
+            jogos.forEach(jogo => {
+                const chave = jogo.id;
+                const placarNovo = `${jogo.gols_a_oficial}x${jogo.gols_b_oficial}`;
+                
+                if (primeiroCarregamentoFeito && 
+                    lastKnownResults[chave] && 
+                    lastKnownResults[chave] !== 'nullxnull' && 
+                    placarNovo !== 'nullxnull' && 
+                    lastKnownResults[chave] !== placarNovo) {
+                    
+                    const mensagens = [
+                        `Maurinho Apita: Atenção! O placar de ${jogo.time_a} x ${jogo.time_b} mudou para ${jogo.gols_a_oficial}x${jogo.gols_b_oficial}! 👀`,
+                        `Olha o VAR do Maurinho! Gol no jogo ${jogo.time_a} x ${jogo.time_b}! Agora está ${jogo.gols_a_oficial}x${jogo.gols_b_oficial}! ⚽🔥`,
+                        `Atualização na área! O jogo ${jogo.time_a} e ${jogo.time_b} sofreu alteração! Placar atualizado para ${jogo.gols_a_oficial}x${jogo.gols_b_oficial}! 🏃‍♂️💨`
+                    ];
+                    
+                    const msgSorteada = mensagens[Math.floor(Math.random() * mensagens.length)];
+                    mostrarNotificacao(msgSorteada, 'info');
+                }
+                
+                lastKnownResults[chave] = placarNovo;
+            });
+            
+            primeiroCarregamentoFeito = true;
         }
 
         function calcularClassificacoesGerais() {
