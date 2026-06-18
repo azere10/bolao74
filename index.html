@@ -12,7 +12,7 @@
         body {
             background-color: #0b132b;
             color: #f8fafc;
-            transition: font-size 0.2s ease, background-color 0.2s ease;
+            transition: background-color 0.2s ease;
         }
         .card-grupo {
             background-color: #1c2541;
@@ -36,38 +36,14 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-        .acessibilidade-ativa {
-            font-size: 1.15rem !important;
-        }
-        .acessibilidade-ativa h1 { font-size: 2.1rem !important; }
-        .acessibilidade-ativa h2 { font-size: 1.7rem !important; }
-        .acessibilidade-ativa h3 { font-size: 1.5rem !important; }
-        .acessibilidade-ativa p, .acessibilidade-ativa span, .acessibilidade-ativa td, .acessibilidade-ativa button {
-            font-size: 1.15rem !important;
-        }
-        .acessibilidade-ativa input {
-            font-size: 1.25rem !important;
-            width: 2.6rem !important;
-            height: 2.6rem !important;
-        }
     </style>
 </head>
 <body class="min-h-screen font-sans antialiased pb-28" id="body-app">
 
-    <div class="bg-blue-950/80 border-b border-blue-800 text-white py-2 px-4 text-xs">
-        <div class="max-w-7xl mx-auto flex justify-between items-center flex-wrap gap-2">
-            <span class="font-medium text-blue-300">⚙️ Ajuda Visual:</span>
-            <div class="flex gap-2">
-                <button onclick="alternarAcessibilidade()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1 rounded shadow text-[10px] sm:text-xs flex items-center gap-1">
-                    <span>👓</span> Letra Grande: <span id="txt-acessibilidade-status" class="text-emerald-300">Desativada</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- CONTAINER DE FEEDBACK / NOTIFICAÇÕES -->
     <div id="feedback-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4"></div>
 
+    <!-- TELA DE LOGIN -->
     <div id="tela-login" class="fixed inset-0 bg-[#0b132b] z-50 flex items-center justify-center p-4">
         <div class="bg-[#1c2541] border border-slate-800 w-full max-w-md p-8 rounded-2xl shadow-2xl flex flex-col items-center">
             <div class="h-16 w-16 bg-blue-600/10 rounded-full flex items-center justify-center mb-4 border border-blue-500/20">
@@ -94,6 +70,7 @@
         </div>
     </div>
 
+    <!-- CABEÇALHO DA APLICAÇÃO -->
     <header id="app-header" class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-800 hidden">
         <div class="flex flex-col items-center md:items-start">
             <h1 class="text-2xl font-black tracking-wider text-blue-400 text-center md:text-left">BOLÃO DO MAURINHO</h1>
@@ -122,6 +99,7 @@
         <p class="text-blue-300 font-medium text-sm">Carregando dados do bolão...</p>
     </div>
 
+    <!-- CONTEÚDO PRINCIPAL -->
     <main id="app-content" class="max-w-7xl mx-auto px-4 mt-6 hidden">
 
         <!-- MEUS PALPITES -->
@@ -151,6 +129,7 @@
                 <!-- Injetado dinamicamente -->
             </div>
 
+            <!-- MATA-MATA -->
             <div id="container-matamata" class="hidden w-full overflow-x-auto pb-6 no-scrollbar">
                 <div class="flex gap-6 p-4 bg-slate-950/20 rounded-2xl border border-slate-900 w-max">
                     
@@ -188,6 +167,7 @@
             </div>
         </section>
 
+        <!-- RANKING -->
         <section id="aba-ranking" class="hidden">
             <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-3 sm:p-6 shadow-2xl">
                 <div class="mb-6">
@@ -211,6 +191,7 @@
             </div>
         </section>
 
+        <!-- REGRAS -->
         <section id="aba-regras" class="hidden">
             <div class="max-w-4xl mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-2xl space-y-6">
                 <div class="border-b border-slate-800 pb-4">
@@ -304,6 +285,7 @@
             </div>
         </section>
 
+        <!-- MINHA CONTA -->
         <section id="aba-conta" class="hidden">
             <div class="max-w-md mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-8 shadow-2xl">
                 <div class="border-b border-slate-800 pb-4 mb-6 flex flex-col items-center">
@@ -378,7 +360,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT DA APLICAÇÃO -->
+    <!-- LOGICA SCRIPT -->
     <script>
         const SUPABASE_URL = "https://auwzjdjyaqvqvznpfvif.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1d3pqZGp5YXF2cXZ6bnBmdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDQ1MjMsImV4cCI6MjA5MTg4MDUyM30.GLjH9CjmDOujKYtO9-ZGtUXHkkenyS1CV1E-odMC4yQ"; 
@@ -399,12 +381,8 @@
         };
         let abaAtiva = 'palpites';
         let modoExibicaoPalpites = 'grupo'; 
-        let modoAcessibilidade = false;
 
         window.addEventListener('DOMContentLoaded', async () => {
-            if (localStorage.getItem('bolao_acessibilidade') === 'true') {
-                alternarAcessibilidade(true);
-            }
             await verificarSessaoAtiva();
         });
 
@@ -412,30 +390,6 @@
             if (event.key === 'Enter') {
                 autenticarUsuario();
             }
-        }
-
-        function alternarAcessibilidade(forcarAtivo = null) {
-            const body = document.getElementById('body-app');
-            const statusTxt = document.getElementById('txt-acessibilidade-status');
-            
-            if (forcarAtivo !== null) {
-                modoAcessibilidade = forcarAtivo;
-            } else {
-                modoAcessibilidade = !modoAcessibilidade;
-            }
-
-            if (modoAcessibilidade) {
-                body.classList.add('acessibilidade-ativa');
-                statusTxt.textContent = "Ativada";
-                statusTxt.className = "text-emerald-400 font-extrabold";
-                localStorage.setItem('bolao_acessibilidade', 'true');
-            } else {
-                body.classList.remove('acessibilidade-ativa');
-                statusTxt.textContent = "Desativada";
-                statusTxt.className = "text-slate-400";
-                localStorage.setItem('bolao_acessibilidade', 'false');
-            }
-            renderizarMeusPalpites();
         }
 
         async function verificarSessaoAtiva() {
@@ -772,10 +726,14 @@
             const inputDisabled = isLocked ? "disabled" : "";
             const cursorClass = isLocked ? "cursor-not-allowed opacity-80" : "";
 
+            const dataObj = new Date(jogo.data_hora);
+            const dataFormatada = dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            const horaFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
             let inputsVisual = "";
             if (isLocked) {
                 inputsVisual = `
-                    <div class="flex items-center justify-center gap-1.5 bg-slate-950/40 border border-slate-800 p-1.5 rounded-xl min-w-[70px] sm:min-w-[90px] h-9 sm:h-10">
+                    <div class="flex items-center justify-center gap-1.5 bg-slate-950/40 border border-slate-800 p-1.5 rounded-xl min-w-[70px] sm:min-w-[95px] h-9 sm:h-10">
                         <span class="text-xs sm:text-sm font-black text-blue-400 font-mono">${pA !== "" ? pA : '—'}</span>
                         <span class="text-[10px] text-slate-600 font-bold">x</span>
                         <span class="text-xs sm:text-sm font-black text-blue-400 font-mono">${pB !== "" ? pB : '—'}</span>
@@ -783,7 +741,7 @@
                 `;
             } else {
                 inputsVisual = `
-                    <div class="flex items-center justify-center gap-1 bg-slate-900 border border-slate-700/60 px-2 py-1 rounded-lg ${cursorClass} min-w-[70px] sm:min-w-[90px] h-9 sm:h-10">
+                    <div class="flex items-center justify-center gap-1 bg-slate-900 border border-slate-700/60 px-2 py-1 rounded-lg ${cursorClass} min-w-[70px] sm:min-w-[95px] h-9 sm:h-10">
                         <input type="number" 
                                id="palpite-a-${jogo.id}" 
                                placeholder="-" 
@@ -837,6 +795,12 @@
 
             return `
                 <div class="linha-jogo flex flex-col p-3 rounded-xl border border-slate-800/80 my-1 ${cardBg}" data-jogo-id="${jogo.id}">
+                    <!-- Cabeçalho do Card: Informações Cronológicas de Horário -->
+                    <div class="flex justify-between items-center text-[9px] sm:text-[10px] text-slate-500 font-mono mb-2 border-b border-slate-800/30 pb-1">
+                        <span>${(jogo.fase || '').toUpperCase()}</span>
+                        <span>${dataFormatada} às ${horaFormatada}</span>
+                    </div>
+
                     <div class="flex items-center justify-between gap-1 w-full">
                         <!-- Equipe Mandante -->
                         <div class="text-right text-[11px] sm:text-xs font-bold text-slate-200 truncate w-[38%] pr-1" title="${timeAExibido}">
@@ -875,7 +839,8 @@
                 const gruposMap = {};
                 listaJogos.forEach(jogo => {
                     const fase = (jogo.fase || "GERAL").toUpperCase();
-                    if (fase.includes('32-EQUIPES') || fase.includes('OITAVAS') || fase.includes('QUARTAS') || fase.includes('SEMIFINAL') || fase.includes('FINAL') || fase.includes('MATA-MATA') || fase.includes('TERCEIRO') || fase.includes('3º LUGAR') || fase.includes('DISPUTA')) return;
+                    if (!fase.startsWith('GRUPO ')) return;
+                    
                     if (!gruposMap[fase]) gruposMap[fase] = [];
                     gruposMap[fase].push(jogo);
                 });
@@ -1352,7 +1317,7 @@
                 localStorage.setItem('bolao_user_session', JSON.stringify(currentUser));
 
                 document.getElementById('conta-nova-senha').value = "";
-                mostrarNotificacao("Senha atualizada com sucesso!", "success");
+                mostrarNotificacao("Senha updated com sucesso!", "success");
 
             } catch (e) {
                 console.error(e);
