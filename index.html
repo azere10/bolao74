@@ -1243,19 +1243,58 @@
 
             if (ordenados.length === 0) return '';
 
-            let htmlClassificacao = "<div class='text-[10px] uppercase font-bold text-slate-400 mb-1.5 tracking-wider'>Classificação Provisória</div>";
+            let htmlClassificacao = `
+                <div class="mt-2">
+                    <div class="text-[10px] uppercase font-black text-slate-400 mb-1.5 tracking-wider">Classificação Provisória</div>
+                    <div class="overflow-x-auto no-scrollbar">
+                        <table class="w-full text-left border-collapse text-[10px] min-w-[210px]">
+                            <thead>
+                                <tr class="text-slate-500 border-b border-slate-800 font-black uppercase text-[8px] tracking-wider">
+                                    <th class="py-1 w-6 text-center">Pos</th>
+                                    <th class="py-1 pl-1">Equipe</th>
+                                    <th class="py-1 text-center font-mono w-7">P</th>
+                                    <th class="py-1 text-center font-mono w-6">J</th>
+                                    <th class="py-1 text-center font-mono w-6">V</th>
+                                    <th class="py-1 text-center font-mono w-7">SG</th>
+                                    <th class="py-1 text-center font-mono w-6">GP</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800/30 text-slate-300">
+            `;
+
             ordenados.forEach((equipe, index) => {
                 let corColocacao = "text-slate-400";
-                if (index === 0) corColocacao = "text-emerald-400 font-bold";
-                if (index === 1) corColocacao = "text-blue-400 font-semibold";
+                let bgIndicador = "hover:bg-slate-800/20";
+                if (index === 0) {
+                    corColocacao = "text-emerald-400 font-bold";
+                    bgIndicador = "bg-emerald-950/10 hover:bg-emerald-950/20";
+                } else if (index === 1) {
+                    corColocacao = "text-blue-400 font-semibold";
+                    bgIndicador = "bg-blue-950/10 hover:bg-blue-950/20";
+                }
+
+                const sgFormatado = equipe.sg > 0 ? `+${equipe.sg}` : equipe.sg;
+                const jogosJogados = equipe.jogos ? equipe.jogos.length : 0;
 
                 htmlClassificacao += `
-                    <div class="flex justify-between items-center text-[10px] py-0.5 px-1 hover:bg-slate-800/30 rounded">
-                        <span class="${corColocacao}">${index + 1}º ${equipe.time}</span>
-                        <span class="font-mono font-bold text-slate-300">${equipe.pontos || 0}pt</span>
-                    </div>
+                    <tr class="transition-all ${bgIndicador}">
+                        <td class="py-1.5 text-center font-bold ${corColocacao}">${index + 1}º</td>
+                        <td class="py-1.5 pl-1 font-semibold truncate max-w-[85px]" title="${equipe.time}">${equipe.time}</td>
+                        <td class="py-1.5 text-center font-mono font-bold text-white bg-slate-900/30">${equipe.pontos || 0}</td>
+                        <td class="py-1.5 text-center font-mono text-slate-400">${jogosJogados}</td>
+                        <td class="py-1.5 text-center font-mono text-slate-400">${equipe.vitorias || 0}</td>
+                        <td class="py-1.5 text-center font-mono ${equipe.sg > 0 ? 'text-emerald-500' : equipe.sg < 0 ? 'text-red-400' : 'text-slate-400'}">${sgFormatado}</td>
+                        <td class="py-1.5 text-center font-mono text-slate-400">${equipe.gp || 0}</td>
+                    </tr>
                 `;
             });
+
+            htmlClassificacao += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
 
             return htmlClassificacao;
         }
