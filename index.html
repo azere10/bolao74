@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +12,6 @@
         body {
             background-color: #0b132b;
             color: #f8fafc;
-            transition: background-color 0.2s ease;
         }
         .card-grupo {
             background-color: #1c2541;
@@ -28,7 +27,7 @@
             -webkit-appearance: none;
             margin: 0;
         }
-        /* Esconde barras de scroll horizontais */
+        /* Esconde barras de scroll horizontais desnecessárias */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -38,12 +37,12 @@
         }
     </style>
 </head>
-<body class="min-h-screen font-sans antialiased pb-28" id="body-app">
+<body class="min-h-screen font-sans antialiased pb-28">
 
     <!-- CONTAINER DE FEEDBACK / NOTIFICAÇÕES -->
     <div id="feedback-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4"></div>
 
-    <!-- TELA DE LOGIN -->
+    <!-- TELA DE LOGIN (Mostrada se não estiver autenticado) -->
     <div id="tela-login" class="fixed inset-0 bg-[#0b132b] z-50 flex items-center justify-center p-4">
         <div class="bg-[#1c2541] border border-slate-800 w-full max-w-md p-8 rounded-2xl shadow-2xl flex flex-col items-center">
             <div class="h-16 w-16 bg-blue-600/10 rounded-full flex items-center justify-center mb-4 border border-blue-500/20">
@@ -52,31 +51,32 @@
                 </svg>
             </div>
             <h2 class="text-2xl font-extrabold text-blue-400 mb-1 tracking-wide text-center">BOLÃO DO MAURINHO</h2>
-            <p class="text-xs text-slate-400 mb-8 uppercase tracking-widest font-semibold">Acesso do Usuário</p>
+            <p class="text-xs text-slate-400 mb-8 uppercase tracking-widest font-semibold">Login de Acesso</p>
             
             <div class="w-full space-y-4">
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Usuário</label>
-                    <input type="text" id="login-user" onkeydown="verificarEnterLogin(event)" placeholder="Insira o seu usuário" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 outline-none text-sm" />
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Utilizador</label>
+                    <input type="text" id="login-user" placeholder="Insira o seu utilizador" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 outline-none text-sm" />
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Senha</label>
-                    <input type="password" id="login-password" onkeydown="verificarEnterLogin(event)" placeholder="••••••••" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 outline-none text-sm" />
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Palavra-passe</label>
+                    <input type="password" id="login-password" placeholder="••••••••" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 outline-none text-sm" />
                 </div>
-                <button onclick="autenticarUsuario()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-blue-900/30 transition-all transform active:scale-95 mt-4 text-sm">
+                <button onclick="autenticarUtilizador()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-blue-900/30 transition-all transform active:scale-95 mt-4 text-sm">
                     ENTRAR NO BOLÃO
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- CABEÇALHO DA APLICAÇÃO -->
+    <!-- HEADER / MENU DE ABAS (Mostrado apenas após autenticação) -->
     <header id="app-header" class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-800 hidden">
         <div class="flex flex-col items-center md:items-start">
             <h1 class="text-2xl font-black tracking-wider text-blue-400 text-center md:text-left">BOLÃO DO MAURINHO</h1>
-            <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Olá, <span id="header-user-nome" class="text-emerald-400">Usuário</span> (Pontos: <span id="header-user-pontos" class="text-blue-400 font-mono font-bold">0</span>)</p>
+            <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Olá, <span id="header-user-nome" class="text-emerald-400">Utilizador</span> (Pontos: <span id="header-user-pontos" class="text-blue-400 font-mono font-bold">0</span>)</p>
         </div>
 
+        <!-- Abas ultra responsivas otimizadas para telemóveis -->
         <div class="flex bg-slate-900/80 p-0.5 rounded-xl border border-slate-800 overflow-x-auto no-scrollbar max-w-full">
             <button id="tab-palpites" onclick="mudarAba('palpites')" class="px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all tab-active whitespace-nowrap">
                 PALPITES
@@ -93,88 +93,68 @@
         </div>
     </header>
 
-    <!-- SPINNER DE CARREGAMENTO -->
+    <!-- SPINNER DE PROCESSAMENTO -->
     <div id="loading-overlay" class="fixed inset-0 bg-[#0b132b]/80 z-40 flex flex-col items-center justify-center hidden">
         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-        <p class="text-blue-300 font-medium text-sm">Carregando dados do bolão...</p>
+        <p class="text-blue-300 font-medium text-sm">A carregar dados do bolão...</p>
     </div>
 
-    <!-- CONTEÚDO PRINCIPAL -->
+    <!-- CONTEÚDO DA APLICAÇÃO (Mostrado após login) -->
     <main id="app-content" class="max-w-7xl mx-auto px-4 mt-6 hidden">
 
-        <!-- MEUS PALPITES -->
+        <!-- ========================================== -->
+        <!-- SEÇÃO: MEUS PALPITES -->
+        <!-- ========================================== -->
         <section id="aba-palpites" class="block">
+            <!-- Controle e Filtros de Visualização -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
-                    <h2 class="text-xl font-extrabold text-white">Preencha seus Palpites</h2>
-                    <p class="text-xs text-slate-400 font-medium">Os palpites são bloqueados 5 minutos antes de cada partida.</p>
+                    <h2 class="text-xl font-extrabold text-white">Preencha os Seus Palpites</h2>
+                    <p class="text-xs text-slate-400">Edição encerrada 5 minutos antes de cada jogo.</p>
                 </div>
                 
-                <!-- Seletores Dinâmicos de Filtro -->
-                <div class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full sm:w-auto overflow-x-auto no-scrollbar">
-                    <button id="btn-view-grupos" onclick="mudarModoExibicao('grupo')" class="px-3 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md whitespace-nowrap">
+                <!-- Botão Alternador de Visualização (Grupo vs Dia) -->
+                <div class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full sm:w-auto">
+                    <button id="btn-view-grupos" onclick="mudarModoExibicao('grupo')" class="flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md">
                         POR GRUPOS
                     </button>
-                    <button id="btn-view-dias" onclick="mudarModoExibicao('dia')" class="px-3 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white whitespace-nowrap">
+                    <button id="btn-view-dias" onclick="mudarModoExibicao('dia')" class="flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white">
                         POR DIA
                     </button>
-                    <button id="btn-view-matamata" onclick="mudarModoExibicao('matamata')" class="px-3 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white whitespace-nowrap">
-                        MATA-MATA
-                    </button>
                 </div>
             </div>
 
-            <!-- Grelha Dinâmica de Palpites -->
+            <!-- Grelha Dinâmica de Palpites (Grupos ou Cronograma) -->
             <div id="grid-jogos-palpites" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Injetado dinamicamente -->
-            </div>
-
-            <!-- MATA-MATA -->
-            <div id="container-matamata" class="hidden w-full overflow-x-auto pb-6 no-scrollbar">
-                <div class="flex gap-6 p-4 bg-slate-950/20 rounded-2xl border border-slate-900 w-max">
-                    
-                    <!-- Fase de 32 Equipes -->
-                    <div class="flex-shrink-0 w-[290px] sm:w-[320px] space-y-4">
-                        <h4 class="text-xs font-black text-blue-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">32-Equipes (1.2x)</h4>
-                        <div id="fase-16avos" class="space-y-3"></div>
-                    </div>
-
-                    <!-- Oitavas de Final -->
-                    <div class="flex-shrink-0 w-[290px] sm:w-[320px] space-y-4 self-center">
-                        <h4 class="text-xs font-black text-purple-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Oitavas (1.5x)</h4>
-                        <div id="fase-oitavas" class="space-y-6"></div>
-                    </div>
-
-                    <!-- Quartas de Final -->
-                    <div class="flex-shrink-0 w-[290px] sm:w-[320px] space-y-4 self-center">
-                        <h4 class="text-xs font-black text-pink-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Quartas (2.0x)</h4>
-                        <div id="fase-quartas" class="space-y-12"></div>
-                    </div>
-
-                    <!-- Semifinais -->
-                    <div class="flex-shrink-0 w-[290px] sm:w-[320px] space-y-4 self-center">
-                        <h4 class="text-xs font-black text-amber-500 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Semifinais (2.5x)</h4>
-                        <div id="fase-semis" class="space-y-24"></div>
-                    </div>
-
-                    <!-- Finais (Decisão 3º Lugar & Grande Final) -->
-                    <div class="flex-shrink-0 w-[290px] sm:w-[320px] space-y-4 self-center">
-                        <h4 class="text-xs font-black text-emerald-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Decisões de Finais (3.0x)</h4>
-                        <div id="fase-final" class="space-y-4"></div>
-                    </div>
-
-                </div>
+                <!-- Preenchido dinamicamente com os jogos e palpites do usuário -->
             </div>
         </section>
 
-        <!-- RANKING -->
+        <!-- ========================================== -->
+        <!-- SEÇÃO: RANKING GERAL -->
+        <!-- ========================================== -->
         <section id="aba-ranking" class="hidden">
+            <!-- PAINEL DINÂMICO: RESENHA DO MAURINHO -->
+            <div id="painel-resenha" class="hidden bg-gradient-to-r from-blue-950/60 to-slate-900/80 rounded-2xl border border-blue-500/20 p-5 mb-6 shadow-xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-xl">🎙️</span>
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-blue-400">A Resenha do Maurinho</h3>
+                </div>
+                <p id="resenha-texto" class="text-xs sm:text-sm text-slate-300 leading-relaxed italic">
+                    A analisar as últimas atualizações para soltar a corneta...
+                </p>
+                <div id="resenha-destaques" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800/60">
+                    <!-- Gerado dinamicamente -->
+                </div>
+            </div>
+
             <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-3 sm:p-6 shadow-2xl">
                 <div class="mb-6">
                     <h2 class="text-xl font-bold text-white">Ranking Geral de Participantes</h2>
                     <p class="text-xs text-slate-400 mt-1">Confronte os palpites de outros participantes para os jogos que já iniciaram.</p>
                 </div>
 
+                <!-- Tabela de Classificação Otimizada para Mobile -->
                 <div class="overflow-x-auto rounded-xl border border-slate-800">
                     <table class="w-full text-left border-collapse bg-[#121b36]">
                         <thead>
@@ -185,20 +165,25 @@
                                 <th class="p-2 sm:p-4 text-center w-16 sm:w-28">Auditar</th>
                             </tr>
                         </thead>
-                        <tbody id="tabela-ranking-corpo" class="text-xs sm:text-sm text-slate-300 divide-y divide-slate-800/50"></tbody>
+                        <tbody id="tabela-ranking-corpo" class="text-xs sm:text-sm text-slate-300 divide-y divide-slate-800/50">
+                            <!-- Injetado dinamicamente -->
+                        </tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- REGRAS -->
+        <!-- ========================================== -->
+        <!-- SEÇÃO: REGULAMENTO -->
+        <!-- ========================================== -->
         <section id="aba-regras" class="hidden">
             <div class="max-w-4xl mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-2xl space-y-6">
                 <div class="border-b border-slate-800 pb-4">
-                    <h2 class="text-2xl font-black text-blue-400">REGULAMENTO DO BOLÃO</h2>
+                    <h2 class="text-2xl font-black text-blue-400">REGULAMENTO DO BOLÃO DO MAURINHO</h2>
                     <p class="text-xs text-slate-400 mt-1">Conheça os critérios de pontuação oficiais e garanta a sua classificação!</p>
                 </div>
 
+                <!-- NOTA CRÍTICA EVIDENCIADA DO RECALCULO DE RANKING -->
                 <div class="bg-amber-950/40 border border-amber-500/30 rounded-xl p-4 flex gap-3 items-start">
                     <div class="text-amber-400 mt-0.5">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -208,11 +193,12 @@
                     <div>
                         <span class="block text-sm font-bold text-amber-300">Aviso sobre a Atualização de Classificação</span>
                         <span class="block text-xs text-slate-400 mt-1 leading-relaxed">
-                            O ranking de classificação e os palpites individuais <strong>só serão processados e atualizados no sistema após o administrador lançar e confirmar o resultado oficial</strong> do respectivo jogo.
+                            O ranking de classificação e os palpites individuais <strong>só serão processados e atualizados no sistema após o administrador lançar e confirmar o resultado oficial</strong> do respetivo jogo. A sua pontuação não muda automaticamente no fim do jogo até que o admin faça o lançamento.
                         </span>
                     </div>
                 </div>
 
+                <!-- Critérios de Pontuação -->
                 <div>
                     <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
                         <span class="h-2 w-2 rounded-full bg-blue-500"></span> Regras de Pontuação Base (Por Jogo)
@@ -228,7 +214,7 @@
                         <div class="bg-[#121b36] border border-slate-800 p-4 rounded-xl flex justify-between items-center">
                             <div>
                                 <span class="block text-sm font-bold text-white">Vencedor + Saldo Exato</span>
-                                <span class="text-xs text-slate-400">Acertou o vencedor e saldo exato de gols.</span>
+                                <span class="text-xs text-slate-400">Acertou vencedor e saldo exato de golos.</span>
                             </div>
                             <span class="text-teal-400 font-black text-xl font-mono">+18 pts</span>
                         </div>
@@ -241,70 +227,81 @@
                         </div>
                         <div class="bg-[#121b36] border border-slate-800 p-4 rounded-xl flex justify-between items-center">
                             <div>
-                                <span class="block text-sm font-bold text-white">Acerto de Gol Parcial</span>
-                                <span class="text-xs text-slate-400">Errou a tendência, mas acertou os gols de 1 equipe.</span>
+                                <span class="block text-sm font-bold text-white">Acerto de Golo Parcial</span>
+                                <span class="text-xs text-slate-400">Errou a tendência, mas acertou os golos de 1 equipa.</span>
                             </div>
                             <span class="text-amber-500 font-black text-xl font-mono">+3 pts</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Multiplicadores de Fases -->
+                <!-- Multiplicadores por Fase -->
                 <div>
                     <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
                         <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Multiplicadores do Mata-Mata
                     </h3>
-                    <p class="text-xs text-slate-400 mb-4">À medida que o torneio avança, a sua pontuação base é multiplicada para dar mais emoção:</p>
-                    <div class="grid grid-cols-2 sm:grid-cols-6 gap-3">
+                    <p class="text-xs text-slate-400 mb-4">À medida que o torneio avança, a sua pontuação base é multiplicada para dar mais emoção (Arredondado para baixo):</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
                         <div class="bg-[#1c2541] border border-slate-800 p-3 rounded-lg text-center">
-                            <span class="block text-[10px] font-bold text-slate-400 uppercase">Grupos</span>
-                            <span class="text-white font-extrabold text-md font-mono">x1.0</span>
+                            <span class="block text-xs font-bold text-slate-400 uppercase">Grupos</span>
+                            <span class="text-white font-extrabold text-lg font-mono">x1.0</span>
                         </div>
                         <div class="bg-[#1c2541] border border-slate-800 p-3 rounded-lg text-center">
-                            <span class="block text-[10px] font-bold text-slate-400 uppercase">32-Equipes</span>
-                            <span class="text-emerald-400 font-extrabold text-md font-mono">x1.2</span>
+                            <span class="block text-xs font-bold text-slate-400 uppercase">16-avos</span>
+                            <span class="text-emerald-400 font-extrabold text-lg font-mono">x1.2</span>
                         </div>
                         <div class="bg-[#1c2541] border border-slate-800 p-3 rounded-lg text-center">
-                            <span class="block text-[10px] font-bold text-slate-400 uppercase">Oitavas</span>
-                            <span class="text-teal-400 font-extrabold text-md font-mono">x1.5</span>
+                            <span class="block text-xs font-bold text-slate-400 uppercase">Oitavas</span>
+                            <span class="text-teal-400 font-extrabold text-lg font-mono">x1.5</span>
                         </div>
                         <div class="bg-[#1c2541] border border-slate-800 p-3 rounded-lg text-center">
-                            <span class="block text-[10px] font-bold text-slate-400 uppercase">Quartas</span>
-                            <span class="text-blue-400 font-extrabold text-md font-mono">x2.0</span>
+                            <span class="block text-xs font-bold text-slate-400 uppercase">Quartas</span>
+                            <span class="text-blue-400 font-extrabold text-lg font-mono">x2.0</span>
                         </div>
                         <div class="bg-[#1c2541] border border-slate-800 p-3 rounded-lg text-center">
-                            <span class="block text-[10px] font-bold text-slate-400 uppercase">Semifinais</span>
-                            <span class="text-purple-400 font-extrabold text-md font-mono">x2.5</span>
+                            <span class="block text-xs font-bold text-slate-400 uppercase">Semifinais</span>
+                            <span class="text-purple-400 font-extrabold text-lg font-mono">x2.5</span>
                         </div>
-                        <div class="bg-[#1c2541] border border-slate-800 p-3 rounded-lg text-center">
-                            <span class="block text-[10px] font-bold text-slate-400 uppercase">Finais</span>
-                            <span class="text-amber-500 font-extrabold text-md font-mono">x3.0</span>
+                        <div class="col-span-2 sm:col-span-5 bg-[#1c2541] border border-slate-800 p-3 rounded-lg text-center">
+                            <span class="block text-xs font-bold text-slate-400 uppercase">Finais</span>
+                            <span class="text-amber-500 font-extrabold text-xl font-mono">x3.0</span>
                         </div>
                     </div>
+                </div>
+
+                <!-- Outros Termos -->
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                    <span class="block text-sm font-bold text-white mb-1.5">🔒 Regra de Bloqueio</span>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Todos os palpites são guardados diretamente na base de dados Supabase. O sistema bloqueia de forma automática e independente a edição de qualquer partida exatamente <strong>5 minutos antes da hora oficial de início</strong> do jogo. Palpites salvos após este horário não serão aceites pelo servidor.
+                    </p>
                 </div>
             </div>
         </section>
 
-        <!-- MINHA CONTA -->
+        <!-- ========================================== -->
+        <!-- SEÇÃO: MINHA CONTA -->
+        <!-- ========================================== -->
         <section id="aba-conta" class="hidden">
             <div class="max-w-md mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-8 shadow-2xl">
                 <div class="border-b border-slate-800 pb-4 mb-6 flex flex-col items-center">
                     <div class="h-14 w-14 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-full flex items-center justify-center font-bold text-xl mb-3 font-mono">
                         M
                     </div>
-                    <h2 id="conta-user-nome" class="text-lg font-black text-white">Nome do Usuário</h2>
-                    <p id="conta-user-login" class="text-xs text-slate-500 font-mono mt-0.5">login_usuario</p>
+                    <h2 id="conta-user-nome" class="text-lg font-black text-white">Nome do Utilizador</h2>
+                    <p id="conta-user-login" class="text-xs text-slate-500 font-mono mt-0.5">login_utilizador</p>
                 </div>
 
+                <!-- Alterar palavra-passe -->
                 <div class="space-y-4">
                     <div>
-                        <h3 class="text-sm font-bold text-white mb-3">Alterar a Minha Senha</h3>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nova Senha</label>
+                        <h3 class="text-sm font-bold text-white mb-3">Alterar a Minha Palavra-passe</h3>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nova Palavra-passe</label>
                         <input type="password" id="conta-nova-senha" placeholder="Digite a nova senha" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 outline-none text-sm" />
                     </div>
                     
                     <button onclick="atualizarSenhaPropria()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-blue-900/30 transition-all text-xs">
-                        ATUALIZAR SENHA
+                        ATUALIZAR PALAVRA-PASSE
                     </button>
 
                     <div class="border-t border-slate-800 pt-6 mt-6">
@@ -317,7 +314,7 @@
         </section>
     </main>
 
-    <!-- BOTÃO FLUTUANTE DE SALVAR PALPITES -->
+    <!-- BOTÃO FLUTUANTE DE SALVAR PALPITES (MOBILE) -->
     <button id="btn-salvar-flutuante" onclick="guardarMeusPalpites()" class="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-6 py-4 rounded-full shadow-2xl hover:shadow-emerald-900/40 transition-all transform active:scale-95 flex items-center gap-2 border border-emerald-500/30 hidden">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -325,7 +322,7 @@
         <span class="text-xs sm:text-sm tracking-wide">SALVAR MEUS PALPITES</span>
     </button>
 
-    <!-- MODAL: AUDITORIA DE PALPITES -->
+    <!-- MODAL: AUDITORIA DE PALPITES (RANKING) -->
     <div id="modal-auditoria" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-[#1c2541] border border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
@@ -336,6 +333,7 @@
                 <button onclick="fecharModalAuditoria()" class="text-slate-400 hover:text-white transition-all text-xl">✕</button>
             </div>
             <div class="p-6 overflow-y-auto space-y-4 no-scrollbar">
+                <!-- Tabela de palpites auditados -->
                 <div class="overflow-x-auto rounded-xl border border-slate-800">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -348,7 +346,9 @@
                                 <th class="p-3 text-center">Pontos Obtidos</th>
                             </tr>
                         </thead>
-                        <tbody id="auditoria-tabela-corpo" class="text-xs text-slate-300 divide-y divide-slate-800/30"></tbody>
+                        <tbody id="auditoria-tabela-corpo" class="text-xs text-slate-300 divide-y divide-slate-800/30">
+                            <!-- Injetado dinamicamente -->
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -360,18 +360,20 @@
         </div>
     </div>
 
-    <!-- LOGICA SCRIPT -->
     <script>
+        // =========================================================================
+        // CONFIGURAÇÃO DO SUPABASE (CHAVE PÚBLICA INTEGRADA)
+        // =========================================================================
         const SUPABASE_URL = "https://auwzjdjyaqvqvznpfvif.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1d3pqZGp5YXF2cXZ6bnBmdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDQ1MjMsImV4cCI6MjA5MTg4MDUyM30.GLjH9CjmDOujKYtO9-ZGtUXHkkenyS1CV1E-odMC4yQ"; 
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Estado local da aplicação
         let currentUser = null;
         let listaJogos = [];
         let listaPalpites = [];
         let listaPerfis = [];
-        let classificacoesGlobais = {}; 
         let regrasPontuacao = {
             placarExato: 25,
             vencedorGols: 18,
@@ -380,23 +382,90 @@
             erro: 0
         };
         let abaAtiva = 'palpites';
-        let modoExibicaoPalpites = 'grupo'; 
-        
-        // VARIÁVEIS ADICIONADAS PARA A RESENHA DO MAURINHO
-        let lastKnownResults = {};
-        let primeiroCarregamentoFeito = false;
-        let pollInterval = null;
+        let modoExibicaoPalpites = 'grupo'; // 'grupo' ou 'dia'
+        let cacheDesviosRanking = {}; // Mapeia id_usuario -> { posAtual, posAnterior, diff }
 
+        // Executado ao carregar a página
         window.addEventListener('DOMContentLoaded', async () => {
             await verificarSessaoAtiva();
         });
 
-        function verificarEnterLogin(event) {
-            if (event.key === 'Enter') {
-                autenticarUsuario();
+        function getLocalYMDFromDate(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getLocalYMD() {
+            return getLocalYMDFromDate(new Date());
+        }
+
+        function toggleDiaPassado(idAcord) {
+            const acord = document.getElementById(idAcord);
+            const seta = document.getElementById(`seta-${idAcord}`);
+            if (acord.classList.contains('hidden')) {
+                acord.classList.remove('hidden');
+                seta.textContent = "▲ Ocultar";
+            } else {
+                acord.classList.add('hidden');
+                seta.textContent = "▼ Mostrar";
             }
         }
 
+        function rolarParaDiaAtual() {
+            setTimeout(() => {
+                const hojeYMD = getLocalYMD(); 
+                const elementoDia = document.querySelector(`[data-dia-original="${hojeYMD}"]`);
+                if (elementoDia) {
+                    elementoDia.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 300);
+        }
+
+        function calcularEstatisticasPalpites(jogoId) {
+            const palpitesJogo = listaPalpites.filter(p => p.jogo_id === jogoId);
+            const total = palpitesJogo.length;
+            if (total === 0) return null;
+
+            let vitA = 0, empate = 0, vitB = 0;
+            const placares = {};
+
+            palpitesJogo.forEach(p => {
+                const gA = parseInt(p.palpite_a, 10);
+                const gB = parseInt(p.palpite_b, 10);
+                if (isNaN(gA) || isNaN(gB)) return;
+
+                if (gA > gB) vitA++;
+                else if (gA < gB) vitB++;
+                else empate++;
+
+                const placarKey = `${gA}x${gB}`;
+                placares[placarKey] = (placares[placarKey] || 0) + 1;
+            });
+
+            let melhorPlacar = "—";
+            let maxVotos = 0;
+            for (const [placar, votos] of Object.entries(placares)) {
+                if (votos > maxVotos) {
+                    maxVotos = votos;
+                    melhorPlacar = placar;
+                }
+            }
+
+            return {
+                total,
+                percA: Math.round((vitA / total) * 100),
+                percEmp: Math.round((empate / total) * 100),
+                percB: Math.round((vitB / total) * 100),
+                melhorPlacar,
+                percMelhorPlacar: Math.round((maxVotos / total) * 100)
+            };
+        }
+
+        /**
+         * Verifica se já existe um utilizador autenticado guardado no dispositivo
+         */
         async function verificarSessaoAtiva() {
             const userGuardado = localStorage.getItem('bolao_user_session');
             if (userGuardado) {
@@ -414,6 +483,7 @@
                         document.getElementById('tela-login').classList.add('hidden');
                         document.getElementById('app-header').classList.remove('hidden');
                         document.getElementById('app-content').classList.remove('hidden');
+                        
                         document.getElementById('btn-salvar-flutuante').classList.remove('hidden');
                         
                         document.getElementById('header-user-nome').textContent = currentUser.nome_completo;
@@ -422,8 +492,6 @@
                         document.getElementById('conta-user-login').textContent = `@${currentUser.usuario_login}`;
 
                         await carregarDadosDoBanco();
-                        // INICIA O CARREGAMENTO SILENCIOSO PARA A RESENHA
-                        if(!pollInterval) pollInterval = setInterval(() => carregarDadosDoBanco(true), 10000);
                         return;
                     }
                 } catch (e) {
@@ -433,16 +501,19 @@
             document.getElementById('tela-login').classList.remove('hidden');
         }
 
-        async function autenticarUsuario() {
+        /**
+         * Efetua o login verificando as credenciais na tabela de perfis
+         */
+        async function autenticarUtilizador() {
             const userIn = document.getElementById('login-user').value.trim();
             const passwordIn = document.getElementById('login-password').value.trim();
 
             if (!userIn || !passwordIn) {
-                mostrarNotificacao("Preencha todos os campos para acessar.", "warning");
+                mostrarNotificacao("Preencha todos os campos para aceder.", "warning");
                 return;
             }
 
-            mostrarSpinner(true, "Autenticando...");
+            mostrarSpinner(true, "A autenticar...");
             try {
                 const loginNormalizado = userIn.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
 
@@ -454,7 +525,7 @@
                     .maybeSingle();
 
                 if (error || !data) {
-                    throw new Error("Usuário ou senha incorretos.");
+                    throw new Error("Utilizador ou palavra-passe incorretos.");
                 }
 
                 currentUser = data;
@@ -463,6 +534,7 @@
                 document.getElementById('tela-login').classList.add('hidden');
                 document.getElementById('app-header').classList.remove('hidden');
                 document.getElementById('app-content').classList.remove('hidden');
+                
                 document.getElementById('btn-salvar-flutuante').classList.remove('hidden');
 
                 document.getElementById('header-user-nome').textContent = currentUser.nome_completo;
@@ -472,8 +544,6 @@
 
                 mostrarNotificacao(`Bem-vindo ao bolão, ${currentUser.nome_completo}!`, "success");
                 await carregarDadosDoBanco();
-                // INICIA O CARREGAMENTO SILENCIOSO PARA A RESENHA
-                if(!pollInterval) pollInterval = setInterval(() => carregarDadosDoBanco(true), 10000);
 
             } catch (e) {
                 console.error(e);
@@ -483,8 +553,10 @@
             }
         }
 
+        /**
+         * Termina a sessão limpa o armazenamento local do navegador
+         */
         function terminarSessao() {
-            if(pollInterval) { clearInterval(pollInterval); pollInterval = null; }
             localStorage.removeItem('bolao_user_session');
             currentUser = null;
             document.getElementById('tela-login').classList.remove('hidden');
@@ -492,11 +564,66 @@
             document.getElementById('app-content').classList.add('hidden');
             document.getElementById('btn-salvar-flutuante').classList.add('hidden');
             document.getElementById('login-password').value = "";
-            mostrarNotificacao("Sessão finalizada com sucesso.", "info");
+            mostrarNotificacao("Sessão terminada com sucesso.", "info");
         }
 
-        async function carregarDadosDoBanco(silencioso = false) {
-            if (!silencioso) mostrarSpinner(true, "Atualizando dados do bolão...");
+        /**
+         * Alterna entre os separadores principais ajustando os estados visuais
+         */
+        function mudarAba(aba) {
+            abaAtiva = aba;
+            const tabs = ['palpites', 'ranking', 'regras', 'conta'];
+            
+            const btnFlutuante = document.getElementById('btn-salvar-flutuante');
+            if (aba === 'palpites') {
+                btnFlutuante.classList.remove('hidden');
+            } else {
+                btnFlutuante.classList.add('hidden');
+            }
+
+            tabs.forEach(t => {
+                const button = document.getElementById(`tab-${t}`);
+                const section = document.getElementById(`aba-${t}`);
+                if (t === aba) {
+                    button.className = "px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all tab-active whitespace-nowrap";
+                    section.classList.remove('hidden');
+                    section.classList.add('block');
+                } else {
+                    button.className = "px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all text-slate-400 hover:text-white whitespace-nowrap";
+                    section.classList.add('hidden');
+                    section.classList.remove('block');
+                }
+            });
+        }
+
+        /**
+         * Altera o filtro de visualização entre Grupos e Dia (Cronograma)
+         */
+        function mudarModoExibicao(modo) {
+            modoExibicaoPalpites = modo;
+            
+            const btnG = document.getElementById('btn-view-grupos');
+            const btnD = document.getElementById('btn-view-dias');
+
+            if (modo === 'grupo') {
+                btnG.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md";
+                btnD.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white";
+            } else {
+                btnD.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md";
+                btnG.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white";
+            }
+
+            renderizarMeusPalpites();
+            if (modo === 'dia') {
+                rolarParaDiaAtual();
+            }
+        }
+
+        /**
+         * Procura todos os dados das tabelas para renderizar as listagens
+         */
+        async function carregarDadosDoBanco() {
+            mostrarSpinner(true, "A atualizar dados do bolão...");
             try {
                 const { data: jogos, error: errJogos } = await supabaseClient
                     .from('jogos')
@@ -504,9 +631,6 @@
 
                 if (errJogos) throw errJogos;
                 listaJogos = (jogos || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
-
-                // EXECUTA A RESENHA DO MAURINHO
-                processarResenhaMaurinho(listaJogos);
 
                 const { data: palpites, error: errPalpites } = await supabaseClient.from('palpites').select('*');
                 if (errPalpites) throw errPalpites;
@@ -522,63 +646,410 @@
                     document.getElementById('header-user-pontos').textContent = currentUser.pontos_total || 0;
                 }
 
-                calcularClassificacoesGerais();
+                // Cálculo das estatísticas dinâmicas e resenha em segundo plano
+                processarCalculosEstatisticosEranking();
+
                 renderizarMeusPalpites();
                 renderizarRankingGeral();
 
             } catch (error) {
                 console.error("Erro ao carregar dados do banco:", error);
-                if (!silencioso) mostrarNotificacao(`Erro de carregamento: ${error.message}`, "danger");
+                mostrarNotificacao(`Erro de carregamento: ${error.message}`, "danger");
             } finally {
-                if (!silencioso) mostrarSpinner(false);
+                mostrarSpinner(false);
             }
         }
 
-        // FUNÇÃO DA RESENHA DO MAURINHO
-        function processarResenhaMaurinho(jogos) {
-            jogos.forEach(jogo => {
-                const chave = jogo.id;
-                const placarNovo = `${jogo.gols_a_oficial}x${jogo.gols_b_oficial}`;
-                
-                if (primeiroCarregamentoFeito && 
-                    lastKnownResults[chave] && 
-                    placarNovo !== 'nullxnull' && 
-                    lastKnownResults[chave] !== placarNovo) {
-                    
-                    const mensagens = [
-                        `Maurinho Apita: Atenção! O placar de ${jogo.time_a} x ${jogo.time_b} mudou para ${jogo.gols_a_oficial}x${jogo.gols_b_oficial}! 👀`,
-                        `Olha o VAR do Maurinho! Gol no jogo ${jogo.time_a} x ${jogo.time_b}! Agora está ${jogo.gols_a_oficial}x${jogo.gols_b_oficial}! ⚽🔥`,
-                        `Atualização na área! O jogo ${jogo.time_a} e ${jogo.time_b} sofreu alteração! Placar atualizado para ${jogo.gols_a_oficial}x${jogo.gols_b_oficial}! 🏃‍♂️💨`
-                    ];
-                    
-                    const msgSorteada = mensagens[Math.floor(Math.random() * mensagens.length)];
-                    mostrarNotificacao(msgSorteada, 'info');
-                }
-                
-                lastKnownResults[chave] = placarNovo;
+        /**
+         * Processa variações de posições e monta a narrativa hilária no topo da classificação
+         */
+        function processarCalculosEstatisticosEranking() {
+            cacheDesviosRanking = {};
+
+            // Filtra os jogos finalizados (que possuem golos oficiais lançados pelo admin)
+            const jogosFinalizados = listaJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
+            if (jogosFinalizados.length === 0) {
+                document.getElementById('painel-resenha').classList.add('hidden');
+                return;
+            }
+
+            // O último jogo atualizado é o que tem a data mais recente na lista cronológica de finalizados
+            const ultimoJogo = jogosFinalizados[jogosFinalizados.length - 1];
+
+            // 1. CALCULA RANKING ATUAL REAL
+            const rankingAtual = [...listaPerfis].sort((a, b) => {
+                const diffPts = (b.pontos_total || 0) - (a.pontos_total || 0);
+                if (diffPts !== 0) return diffPts;
+                return a.nome_completo.localeCompare(b.nome_completo);
             });
+
+            // 2. CALCULA RANKING RETROATIVO (Descontando apenas o último jogo atualizado)
+            const rankingAnteriorList = listaPerfis.map(user => {
+                // Descobre quanto este participante fez especificamente no último jogo
+                const palpiteUltimo = listaPalpites.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
+                let pontosUltimo = 0;
+                if (palpiteUltimo) {
+                    pontosUltimo = avaliarRegrasPalpite(palpiteUltimo, ultimoJogo, regrasPontuacao);
+                }
+
+                return {
+                    id: user.id,
+                    nome: user.nome_completo,
+                    pontos_retroativos: (user.pontos_total || 0) - pontosUltimo
+                };
+            });
+
+            // Ordena o ranking retroativo
+            rankingAnteriorList.sort((a, b) => {
+                const diffPts = b.pontos_retroativos - a.pontos_retroativos;
+                if (diffPts !== 0) return diffPts;
+                return a.nome.localeCompare(b.nome);
+            });
+
+            // Cria dicionários para encontrar as posições rapidamente (index + 1)
+            const dictPosAnterior = {};
+            rankingAnteriorList.forEach((user, index) => {
+                dictPosAnterior[user.id] = index + 1;
+            });
+
+            const profetas = []; // Quem cravou placar exato
+            let maiorSubidaUser = null;
+            let maiorSubidaPosicoes = -999;
+            let maiorQuedaUser = null;
+            let maiorQuedaPosicoes = -999; // Representa valor absoluto da queda
+
+            rankingAtual.forEach((user, index) => {
+                const posAtual = index + 1;
+                const posAnterior = dictPosAnterior[user.id] || posAtual;
+                const diferenca = posAnterior - posAtual; // Se posAnterior era 5 e atual é 2, subiu +3
+
+                cacheDesviosRanking[user.id] = {
+                    posAtual,
+                    posAnterior,
+                    diff: diferenca
+                };
+
+                // Identifica "Profetas" (quem cravou placar exato no último jogo)
+                const palpiteUltimo = listaPalpites.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
+                if (palpiteUltimo && ultimoJogo) {
+                    const basePts = avaliarRegrasPalpite(palpiteUltimo, ultimoJogo, { placarExato: 25, vencedorGols: 0, vencedorSimples: 0, golParcial: 0, erro: 0 });
+                    if (basePts > 0) {
+                        profetas.push(user.nome_completo);
+                    }
+                }
+
+                // Quem escalou mais posições (maior variação positiva)
+                if (diferenca > maiorSubidaPosicoes) {
+                    maiorSubidaPosicoes = diferenca;
+                    maiorSubidaUser = user;
+                }
+
+                // Quem escorregou mais (maior variação negativa)
+                const queda = -diferenca;
+                if (queda > maiorQuedaPosicoes) {
+                    maiorQuedaPosicoes = queda;
+                    maiorQuedaUser = user;
+                }
+            });
+
+            // 3. CONSTRÓI TEXTO E DESIGN DA CORNETA
+            const resenhaTextoEl = document.getElementById('resenha-texto');
+            const resenhaDestaquesEl = document.getElementById('resenha-destaques');
             
-            primeiroCarregamentoFeito = true;
+            // Frases engraçadas e motivacionais baseadas no último jogo
+            const piadasLiderança = [
+                `A tabela tremeu! O último resultado de <strong>${ultimoJogo.time_a} x ${ultimoJogo.time_b}</strong> bagunçou o coreto.`,
+                `Secadores ligados no limite! Quem apostou com o coração deu-se mal, mas os estrategistas estão a rir à toa.`,
+                `O apito final de <strong>${ultimoJogo.time_a} x ${ultimoJogo.time_b}</strong> deixou o grupo em polvorosa! Quem diria?`
+            ];
+
+            let narrativaNarrativa = piadasLiderança[Math.floor(Math.random() * piadasLiderança.length)];
+
+            if (maiorSubidaUser && maiorSubidaPosicoes > 0) {
+                narrativaNarrativa += ` Destaque absoluto para <strong>${maiorSubidaUser.nome_completo}</strong>, que disparou rumo ao topo como um foguete, subindo ${maiorSubidaPosicoes} posições de uma só vez! 🚀`;
+            } else {
+                narrativaNarrativa += ` A classificação geral está estabilizada e a tensão entre as primeiras posições está ao rubro! 🔥`;
+            }
+
+            resenhaTextoEl.innerHTML = narrativaNarrativa;
+
+            // Cria badges de destaques visuais elegantes
+            let htmlDestaques = "";
+
+            // Bloco de Profetas do Jogo
+            if (profetas.length > 0) {
+                htmlDestaques += `
+                    <div class="bg-emerald-950/40 border border-emerald-500/20 p-3 rounded-xl flex flex-col justify-center">
+                        <span class="text-[10px] uppercase font-black text-emerald-400 tracking-wider flex items-center gap-1">🎯 Os Profetas da Rodada</span>
+                        <span class="text-xs text-slate-300 mt-1 font-medium leading-relaxed">
+                            Cravou em cheio o placar de ${ultimoJogo.time_a} x ${ultimoJogo.time_b}: <br/>
+                            <strong class="text-white">${profetas.join(', ')}</strong> (+25 pts de ouro!)
+                        </span>
+                    </div>
+                `;
+            } else {
+                htmlDestaques += `
+                    <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex flex-col justify-center">
+                        <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">🤫 Placar Seco</span>
+                        <span class="text-xs text-slate-400 mt-1 italic">
+                            Ninguém conseguiu profetizar o placar exato de ${ultimoJogo.time_a} x ${ultimoJogo.time_b}. O Maurinho agradece o silêncio!
+                        </span>
+                    </div>
+                `;
+            }
+
+            // Bloco de Flutuação de Líder ou Despenhadeiro
+            if (maiorQuedaUser && maiorQuedaPosicoes > 0) {
+                htmlDestaques += `
+                    <div class="bg-red-950/40 border border-red-500/20 p-3 rounded-xl flex flex-col justify-center">
+                        <span class="text-[10px] uppercase font-black text-red-400 tracking-wider flex items-center gap-1">📉 O Despenhadeiro</span>
+                        <span class="text-xs text-slate-300 mt-1 leading-relaxed">
+                            O participante <strong class="text-white">${maiorQuedaUser.nome_completo}</strong> escorregou feio e perdeu <strong class="text-red-400 font-bold">${maiorQuedaPosicoes} posições</strong>. Força, que ainda há tempo de dar a volta por cima!
+                        </span>
+                    </div>
+                `;
+            } else {
+                htmlDestaques += `
+                    <div class="bg-blue-950/40 border border-blue-500/20 p-3 rounded-xl flex flex-col justify-center">
+                        <span class="text-[10px] uppercase font-black text-blue-400 tracking-wider flex items-center gap-1">⭐ Disputa Limpa</span>
+                        <span class="text-xs text-slate-300 mt-1 italic">
+                            O ranking permaneceu incrivelmente equilibrado sem nenhuma queda drástica registada nas últimas horas.
+                        </span>
+                    </div>
+                `;
+            }
+
+            resenhaDestaquesEl.innerHTML = htmlDestaques;
+            document.getElementById('painel-resenha').classList.remove('hidden');
         }
 
-        function calcularClassificacoesGerais() {
-            classificacoesGlobais = {};
-            const gruposMap = {};
-            
-            listaJogos.forEach(j => {
-                const fase = (j.fase || "").toUpperCase();
-                if (fase.startsWith("GRUPO ")) {
+        /**
+         * Determina se o jogo atingiu o limite de edição (menos de 5 minutos antes do início)
+         */
+        function isJogoBloqueado(dataHoraJogoStr) {
+            const agora = new Date();
+            const dataJogo = new Date(dataHoraJogoStr);
+            const diferencaMinutos = (dataJogo.getTime() - agora.getTime()) / (1000 * 60);
+            return diferencaMinutos <= 5;
+        }
+
+        /**
+         * Desenha as interfaces de palpites (Pode ser por Grupo ou por Dia Cronológico)
+         */
+        function renderizarMeusPalpites() {
+            const container = document.getElementById('grid-jogos-palpites');
+            container.innerHTML = "";
+
+            const meusPalpitesMap = new Map(
+                listaPalpites.filter(p => p.user_id === currentUser.id).map(p => [p.jogo_id, p])
+            );
+
+            if (modoExibicaoPalpites === 'grupo') {
+                // ==========================================
+                // EXIBIÇÃO POR GRUPOS
+                // ==========================================
+                container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+
+                const gruposMap = {};
+                listaJogos.forEach(jogo => {
+                    const fase = (jogo.fase || "GERAL").toUpperCase();
                     if (!gruposMap[fase]) gruposMap[fase] = [];
-                    gruposMap[fase].push(j);
-                }
-            });
+                    gruposMap[fase].push(jogo);
+                });
 
-            Object.keys(gruposMap).forEach(fase => {
-                classificacoesGlobais[fase] = obterClassificacaoGrupoOrdenada(gruposMap[fase]);
-            });
+                Object.keys(gruposMap).sort().forEach(nomeGrupo => {
+                    const jogosDoGrupo = gruposMap[nomeGrupo];
+                    const card = document.createElement('div');
+                    card.className = "card-grupo rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-xl transition-all duration-300";
+
+                    let htmlJogos = "";
+                    jogosDoGrupo.forEach(jogo => {
+                        const palpite = meusPalpitesMap.get(jogo.id);
+                        const valA = palpite && palpite.palpite_a !== null ? palpite.palpite_a : "";
+                        const valB = palpite && palpite.palpite_b !== null ? palpite.palpite_b : "";
+
+                        const isBloqueado = isJogoBloqueado(jogo.data_hora);
+                        const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
+
+                        const dataObj = new Date(jogo.data_hora);
+                        const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+                        const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+                        const inputDisabledAttr = isBloqueado ? "disabled" : "";
+                        const inputClass = isBloqueado 
+                            ? "w-9 h-8 text-center bg-slate-900/50 text-slate-500 font-bold rounded border border-slate-800/40 outline-none text-xs opacity-40 cursor-not-allowed"
+                            : "w-9 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs transition-all";
+
+                        // Sem estatísticas/tendência na view de grupos conforme solicitado
+                        let htmlEstatisticas = "";
+
+                        htmlJogos += `
+                            <div class="linha-jogo flex flex-col py-2 border-b border-slate-800/60 last:border-b-0 gap-1" data-jogo-id="${jogo.id}">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[9px] text-slate-500 font-mono">${dataFormatada} às ${horaFormatada}</span>
+                                    ${isFinalizado ? `<span class="text-[9px] text-slate-400 font-bold bg-slate-900/50 px-1.5 py-0.5 rounded">Oficial: ${jogo.gols_a_oficial} x ${jogo.gols_b_oficial}</span>` : ''}
+                                </div>
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="w-1/3 text-right text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate">${jogo.time_a}</span>
+                                    <div class="flex items-center gap-0.5 justify-center w-1/3">
+                                        <input type="number" placeholder="-" value="${valA}" ${inputDisabledAttr} class="input-palpite-a ${inputClass}" />
+                                        <span class="text-xs ${isBloqueado ? 'text-slate-700' : 'text-slate-500'} font-bold px-0.5">x</span>
+                                        <input type="number" placeholder="-" value="${valB}" ${inputDisabledAttr} class="input-palpite-b ${inputClass}" />
+                                    </div>
+                                    <span class="w-1/3 text-left text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate">${jogo.time_b}</span>
+                                </div>
+                                ${htmlEstatisticas}
+                            </div>
+                        `;
+                    });
+
+                    const classificacaoHTML = calcularClassificacaoGrupo(jogosDoGrupo);
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-center mb-3 pb-1 border-b border-blue-500/20">
+                                <h2 class="text-md font-extrabold text-blue-400 tracking-wide">${nomeGrupo.startsWith("GRUPO") ? nomeGrupo : "GRUPO " + nomeGrupo}</h2>
+                                ${obterMultiplicadorFase(nomeGrupo) > 1 
+                                    ? `<span class="bg-purple-950/60 text-purple-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-purple-500/10">x${obterMultiplicadorFase(nomeGrupo)}</span>`
+                                    : ''
+                                }
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                ${htmlJogos}
+                            </div>
+                        </div>
+                        
+                        <!-- Mini Classificação Compacta -->
+                        <div class="pt-3 border-t border-slate-800/80 mt-3">
+                            <div class="text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-wider">Classificação</div>
+                            <div class="space-y-0.5 max-h-[160px] overflow-y-auto no-scrollbar">
+                                ${classificacaoHTML}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } else {
+                // ==========================================
+                // EXIBIÇÃO POR DIA (Cronograma / Mobile-First)
+                // ==========================================
+                container.className = "flex flex-col gap-4 max-w-2xl mx-auto w-full";
+
+                const diasMap = {};
+                listaJogos.forEach(jogo => {
+                    const dataObj = new Date(jogo.data_hora);
+                    const dataChave = dataObj.toLocaleDateString('pt-PT', { weekday: 'long', day: '2-digit', month: 'long' });
+                    const diaYMD = getLocalYMDFromDate(dataObj);
+                    
+                    if (!diasMap[dataChave]) diasMap[dataChave] = { dataObj, diaYMD, jogos: [] };
+                    diasMap[dataChave].jogos.push(jogo);
+                });
+
+                let idDiaCounter = 0;
+                const hojeYMD = getLocalYMD();
+
+                Object.keys(diasMap).sort((a,b) => diasMap[a].dataObj - diasMap[b].dataObj).forEach(diaNome => {
+                    idDiaCounter++;
+                    const infoDia = diasMap[diaNome];
+                    const jogosDoDia = infoDia.jogos;
+                    const isDiaPassado = infoDia.diaYMD < hojeYMD;
+                    const isHoje = infoDia.diaYMD === hojeYMD;
+
+                    const cardDia = document.createElement('div');
+                    cardDia.setAttribute('data-dia-original', infoDia.diaYMD);
+
+                    let htmlJogosDia = "";
+                    jogosDoDia.forEach(jogo => {
+                        const palpite = meusPalpitesMap.get(jogo.id);
+                        const valA = palpite && palpite.palpite_a !== null ? palpite.palpite_a : "";
+                        const valB = palpite && palpite.palpite_b !== null ? palpite.palpite_b : "";
+
+                        const isBloqueado = isJogoBloqueado(jogo.data_hora);
+                        const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
+
+                        const dataObj = new Date(jogo.data_hora);
+                        const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+                        const inputDisabledAttr = isBloqueado ? "disabled" : "";
+                        const inputClass = isBloqueado 
+                            ? "w-9 h-8 text-center bg-slate-900/50 text-slate-500 font-bold rounded border border-slate-800/40 outline-none text-xs opacity-40 cursor-not-allowed"
+                            : "w-9 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs transition-all";
+
+                        // PALPITE INATIVO OU BLOQUEADO? CALCULA PAINEL DE TENDÊNCIAS DINÂMICO APENAS NO DIA DE HOJE
+                        let htmlEstatisticas = "";
+                        if (isHoje && isBloqueado) {
+                            const stats = calcularEstatisticasPalpites(jogo.id);
+                            if (stats && stats.total > 0) {
+                                htmlEstatisticas = `
+                                    <div class="mt-3 pt-3 border-t border-slate-800/60 bg-slate-900/30 rounded-lg p-2 flex flex-col gap-1.5">
+                                        <div class="flex justify-between items-center text-[9px] text-slate-400 font-black tracking-wider uppercase">
+                                            <span>📊 Tendência do Bolão</span>
+                                            <span class="text-blue-400">${stats.total} palpites</span>
+                                        </div>
+                                        <div class="flex h-2 rounded-full overflow-hidden bg-slate-850">
+                                            <div style="width: ${stats.percA}%" class="bg-blue-600 flex items-center justify-center text-[7px] text-white font-bold" title="Vitória ${jogo.time_a}">${stats.percA > 15 ? stats.percA + '%' : ''}</div>
+                                            <div style="width: ${stats.percEmp}%" class="bg-slate-500 flex items-center justify-center text-[7px] text-white font-bold" title="Empate">${stats.percEmp > 15 ? stats.percEmp + '%' : ''}</div>
+                                            <div style="width: ${stats.percB}%" class="bg-purple-600 flex items-center justify-center text-[7px] text-white font-bold" title="Vitória ${jogo.time_b}">${stats.percB > 15 ? stats.percB + '%' : ''}</div>
+                                        </div>
+                                        <div class="flex justify-between items-center text-[9px] text-slate-400">
+                                            <span>Predileto: <strong class="text-emerald-400 font-mono">${stats.melhorPlacar.replace('x', ' x ')}</strong></span>
+                                            <span>(${stats.percMelhorPlacar}%)</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+
+                        htmlJogosDia += `
+                            <div class="linha-jogo flex flex-col py-2 border-b border-slate-800/60 last:border-b-0 gap-1" data-jogo-id="${jogo.id}">
+                                <div class="flex items-center justify-between text-[9px] text-slate-500 font-mono">
+                                    <span>${horaFormatada} — ${jogo.fase || "Geral"}</span>
+                                    ${isFinalizado ? `<span class="text-slate-400 font-bold bg-slate-900/50 px-1.5 py-0.5 rounded">Oficial: ${jogo.gols_a_oficial} x ${jogo.gols_b_oficial}</span>` : ''}
+                                </div>
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="w-1/3 text-right text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate">${jogo.time_a}</span>
+                                    <div class="flex items-center gap-0.5 justify-center w-1/3">
+                                        <input type="number" placeholder="-" value="${valA}" ${inputDisabledAttr} class="input-palpite-a ${inputClass}" />
+                                        <span class="text-xs ${isBloqueado ? 'text-slate-700' : 'text-slate-500'} font-bold px-0.5">x</span>
+                                        <input type="number" placeholder="-" value="${valB}" ${inputDisabledAttr} class="input-palpite-b ${inputClass}" />
+                                    </div>
+                                    <span class="w-1/3 text-left text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate">${jogo.time_b}</span>
+                                </div>
+                                ${htmlEstatisticas}
+                            </div>
+                        `;
+                    });
+
+                    if (isDiaPassado) {
+                        cardDia.className = "border border-slate-800/60 rounded-xl overflow-hidden bg-slate-900/10";
+                        cardDia.innerHTML = `
+                            <button onclick="toggleDiaPassado('dia-acord-${idDiaCounter}')" class="w-full p-4 bg-slate-900/30 flex justify-between items-center text-xs font-bold text-slate-400 hover:text-white transition-all">
+                                <span>📅 ${diaNome} (Jogos Anteriores)</span>
+                                <span id="seta-dia-acord-${idDiaCounter}" class="text-blue-500">▼ Mostrar</span>
+                            </button>
+                            <div id="dia-acord-${idDiaCounter}" class="hidden p-4 flex flex-col gap-2 bg-slate-950/10">
+                                ${htmlJogosDia}
+                            </div>
+                        `;
+                    } else {
+                        cardDia.className = "bg-[#1c2541] rounded-xl p-4 border border-slate-800 shadow-xl";
+                        cardDia.innerHTML = `
+                            <h3 class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-3 pb-1 border-b border-slate-800">📅 ${diaNome}</h3>
+                            <div class="flex flex-col gap-1">
+                                ${htmlJogosDia}
+                            </div>
+                        `;
+                    }
+                    container.appendChild(cardDia);
+                });
+            }
         }
 
-        function obterClassificacaoGrupoOrdenada(jogosGrupo) {
+        /**
+         * Calcula dinamicamente a tabela do grupo completo com P, J, V, SG e GP
+         */
+        function calcularClassificacaoGrupo(jogosGrupo) {
             const tabela = {};
             
             jogosGrupo.forEach(j => {
@@ -587,7 +1058,7 @@
             });
 
             jogosGrupo.forEach(j => {
-                if (j.gols_a_oficial !== null && j.gols_b_oficial !== null) {
+                if (j.gols_a_oficial !== null && j.gols_b_oficial !== null && j.gols_a_oficial !== undefined && j.gols_b_oficial !== undefined) {
                     const ga = parseInt(j.gols_a_oficial, 10);
                     const gb = parseInt(j.gols_b_oficial, 10);
                     
@@ -630,428 +1101,26 @@
                 return a.time.localeCompare(b.time);
             });
 
-            return teamsArr;
-        }
-
-        function resolverNomeEquipeMataMata(nomeOriginal) {
-            if (!nomeOriginal) return "—";
-            const trimmed = nomeOriginal.trim();
-            const match = trimmed.match(/^([123])(?:º)?([A-L])$/i);
-            if (match) {
-                const posicao = parseInt(match[1], 10); 
-                const grupoLetra = match[2].toUpperCase(); 
-                const grupoFaseKey = `GRUPO ${grupoLetra}`;
-                const classificacao = classificacoesGlobais[grupoFaseKey];
-                
-                if (classificacao && classificacao[posicao - 1]) {
-                    return `${classificacao[posicao - 1].time} (${posicao}º${grupoLetra} Prov.)`;
-                }
-                return `${posicao}º ${grupoLetra}`;
-            }
-            return nomeOriginal;
-        }
-
-        function isJogoMataMataBloqueadoParaPalpite(jogo) {
-            const faseNormal = (jogo.fase || "").toLowerCase();
-            const isKnockout = !faseNormal.includes("grupo");
-            if (!isKnockout) return false;
-
-            const isPlaceholderA = jogo.time_a.trim().match(/^([123])(?:º)?([A-L])$/i) || jogo.time_a.toLowerCase().includes("vencedor") || jogo.time_a.toLowerCase().includes("perdedor");
-            const isPlaceholderB = jogo.time_b.trim().match(/^([123])(?:º)?([A-L])$/i) || jogo.time_b.toLowerCase().includes("vencedor") || jogo.time_b.toLowerCase().includes("perdedor");
-            
-            return !!(isPlaceholderA || isPlaceholderB);
-        }
-
-        function isJogoBloqueado(dataHoraStr) {
-            const dataJogo = new Date(dataHoraStr);
-            const agora = new Date();
-            const limite = new Date(dataJogo.getTime() - 5 * 60 * 1000); // 5 minutos antes
-            return agora > limite;
-        }
-
-        function mudarAba(aba) {
-            abaAtiva = aba;
-            const tabs = ['palpites', 'ranking', 'regras', 'conta'];
-            
-            const btnFlutuante = document.getElementById('btn-salvar-flutuante');
-            if (aba === 'palpites') {
-                btnFlutuante.classList.remove('hidden');
-            } else {
-                btnFlutuante.classList.add('hidden');
-            }
-
-            tabs.forEach(t => {
-                const button = document.getElementById(`tab-${t}`);
-                const section = document.getElementById(`aba-${t}`);
-                if (t === aba) {
-                    button.className = "px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all tab-active whitespace-nowrap";
-                    section.classList.remove('hidden');
-                    section.classList.add('block');
-                } else {
-                    button.className = "px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all text-slate-400 hover:text-white whitespace-nowrap";
-                    section.classList.add('hidden');
-                    section.classList.remove('block');
-                }
-            });
-        }
-
-        function mudarModoExibicao(modo) {
-            modoExibicaoPalpites = modo;
-            
-            const btnG = document.getElementById('btn-view-grupos');
-            const btnD = document.getElementById('btn-view-dias');
-            const btnM = document.getElementById('btn-view-matamata');
-
-            btnG.className = "px-3 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white whitespace-nowrap";
-            btnD.className = "px-3 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white whitespace-nowrap";
-            btnM.className = "px-3 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white whitespace-nowrap";
-
-            if (modo === 'grupo') {
-                btnG.className = "px-3 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md whitespace-nowrap";
-                document.getElementById('grid-jogos-palpites').classList.remove('hidden');
-                document.getElementById('container-matamata').classList.add('hidden');
-            } else if (modo === 'dia') {
-                btnD.className = "px-3 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md whitespace-nowrap";
-                document.getElementById('grid-jogos-palpites').classList.remove('hidden');
-                document.getElementById('container-matamata').classList.add('hidden');
-            } else if (modo === 'matamata') {
-                btnM.className = "px-3 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md whitespace-nowrap";
-                document.getElementById('grid-jogos-palpites').classList.add('hidden');
-                document.getElementById('container-matamata').classList.remove('hidden');
-            }
-
-            renderizarMeusPalpites();
-
-            if (modo === 'dia') {
-                rolarParaDiaAtual();
-            }
-        }
-
-        function rolarParaDiaAtual() {
-            setTimeout(() => {
-                const hojeYMD = '2026-06-18'; 
-                const elementoDia = document.querySelector(`[data-dia-original="${hojeYMD}"]`);
-                if (elementoDia) {
-                    elementoDia.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }, 300);
-        }
-
-        function toggleDiaPassado(idAcord) {
-            const acord = document.getElementById(idAcord);
-            const seta = document.getElementById(`seta-${idAcord}`);
-            if (acord.classList.contains('hidden')) {
-                acord.classList.remove('hidden');
-                seta.textContent = "▲ Ocultar";
-            } else {
-                acord.classList.add('hidden');
-                seta.textContent = "▼ Mostrar";
-            }
-        }
-
-        function gerarHTMLJogoIndividual(jogo, meusPalpitesMap, forcarMostrarTendenciaNoDia = false) {
-            const palpite = meusPalpitesMap.get(jogo.id);
-            const pA = palpite && palpite.palpite_a !== null ? palpite.palpite_a : "";
-            const pB = palpite && palpite.palpite_b !== null ? palpite.palpite_b : "";
-
-            const isBloqueado = isJogoBloqueado(jogo.data_hora);
-            const isMataMataLock = isJogoMataMataBloqueadoParaPalpite(jogo);
-            const isLocked = isBloqueado || isMataMataLock;
-
-            const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
-
-            const timeAExibido = resolverNomeEquipeMataMata(jogo.time_a);
-            const timeBExibido = resolverNomeEquipeMataMata(jogo.time_b);
-
-            const inputDisabled = isLocked ? "disabled" : "";
-            const cursorClass = isLocked ? "cursor-not-allowed opacity-80" : "";
-
-            const dataObj = new Date(jogo.data_hora);
-            const dataFormatada = dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-            const horaFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-            let inputsVisual = "";
-            if (isLocked) {
-                inputsVisual = `
-                    <div class="flex items-center justify-center gap-1.5 bg-slate-950/40 border border-slate-800 p-1.5 rounded-xl min-w-[70px] sm:min-w-[95px] h-9 sm:h-10">
-                        <span class="text-xs sm:text-sm font-black text-blue-400 font-mono">${pA !== "" ? pA : '—'}</span>
-                        <span class="text-[10px] text-slate-600 font-bold">x</span>
-                        <span class="text-xs sm:text-sm font-black text-blue-400 font-mono">${pB !== "" ? pB : '—'}</span>
-                    </div>
-                `;
-            } else {
-                inputsVisual = `
-                    <div class="flex items-center justify-center gap-1 bg-slate-900 border border-slate-700/60 px-2 py-1 rounded-lg ${cursorClass} min-w-[70px] sm:min-w-[95px] h-9 sm:h-10">
-                        <input type="number" 
-                               id="palpite-a-${jogo.id}" 
-                               placeholder="-" 
-                               value="${pA}" 
-                               ${inputDisabled}
-                               class="input-palpite-a w-7 h-7 sm:w-8 sm:h-8 text-center bg-transparent text-white font-extrabold text-xs sm:text-sm outline-none focus:ring-0 p-0" />
-                        <span class="text-[10px] text-slate-500 font-extrabold">x</span>
-                        <input type="number" 
-                               id="palpite-b-${jogo.id}" 
-                               placeholder="-" 
-                               value="${pB}" 
-                               ${inputDisabled}
-                               class="input-palpite-b w-7 h-7 sm:w-8 sm:h-8 text-center bg-transparent text-white font-extrabold text-xs sm:text-sm outline-none focus:ring-0 p-0" />
-                    </div>
-                `;
-            }
-
-            let barraTendenciaHTML = "";
-            if (forcarMostrarTendenciaNoDia && isLocked) {
-                const palpitesDoJogo = listaPalpites.filter(p => p.jogo_id === jogo.id);
-                const total = palpitesDoJogo.length;
-                if (total > 0) {
-                    let vitA = 0, emp = 0, vitB = 0;
-                    palpitesDoJogo.forEach(p => {
-                        if (p.palpite_a > p.palpite_b) vitA++;
-                        else if (p.palpite_a < p.palpite_b) vitB++;
-                        else emp++;
-                    });
-                    const pctA = Math.round((vitA / total) * 100);
-                    const pctE = Math.round((emp / total) * 100);
-                    const pctB = Math.round((vitB / total) * 100);
-
-                    barraTendenciaHTML = `
-                        <div class="w-full mt-2 pt-2 border-t border-slate-850">
-                            <div class="flex justify-between text-[8px] sm:text-[9px] text-slate-400 font-black uppercase mb-1">
-                                <span class="text-blue-400">Vit ${jogo.time_a}: ${pctA}%</span>
-                                <span class="text-slate-400">Empate: ${pctE}%</span>
-                                <span class="text-red-400">Vit ${jogo.time_b}: ${pctB}%</span>
-                            </div>
-                            <div class="w-full bg-slate-950 rounded-full h-1 flex">
-                                <div class="bg-blue-500 h-full transition-all duration-500" style="width: ${pctA}%"></div>
-                                <div class="bg-slate-600 h-full transition-all duration-500" style="width: ${pctE}%"></div>
-                                <div class="bg-red-500 h-full transition-all duration-500" style="width: ${pctB}%"></div>
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-
-            const cardBg = isLocked ? 'bg-slate-900/10' : 'bg-[#121b36]/60';
-
-            return `
-                <div class="linha-jogo flex flex-col p-3 rounded-xl border border-slate-800/80 my-1 ${cardBg}" data-jogo-id="${jogo.id}">
-                    <!-- Cabeçalho do Card: Informações Cronológicas de Horário -->
-                    <div class="flex justify-between items-center text-[9px] sm:text-[10px] text-slate-500 font-mono mb-2 border-b border-slate-800/30 pb-1">
-                        <span>${(jogo.fase || '').toUpperCase()}</span>
-                        <span>${dataFormatada} às ${horaFormatada}</span>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-1 w-full">
-                        <!-- Equipe Mandante -->
-                        <div class="text-right text-[11px] sm:text-xs font-bold text-slate-200 truncate w-[38%] pr-1" title="${timeAExibido}">
-                            ${timeAExibido}
-                        </div>
-                        
-                        <!-- Bloco Central do Placar -->
-                        <div class="flex flex-col items-center justify-center w-[24%] flex-shrink-0">
-                            ${inputsVisual}
-                            ${isFinalizado ? `<span class="text-[8px] sm:text-[9px] bg-emerald-950/80 text-emerald-400 border border-emerald-500/15 px-1 sm:px-1.5 py-0.5 rounded font-black mt-1 font-mono whitespace-nowrap">Oficial: ${jogo.gols_a_oficial} x ${jogo.gols_b_oficial}</span>` : ''}
-                        </div>
-                        
-                        <!-- Equipe Visitante -->
-                        <div class="text-left text-[11px] sm:text-xs font-bold text-slate-200 truncate w-[38%] pl-1" title="${timeBExibido}">
-                            ${timeBExibido}
-                        </div>
-                    </div>
-                    ${barraTendenciaHTML}
-                </div>
-            `;
-        }
-
-        function renderizarMeusPalpites() {
-            const container = document.getElementById('grid-jogos-palpites');
-            container.innerHTML = "";
-
-            const meusPalpitesMap = new Map(
-                listaPalpites.filter(p => p.user_id === currentUser.id).map(p => [p.jogo_id, p])
-            );
-
-            const hojeLimiar = new Date('2026-06-18T00:00:00');
-
-            if (modoExibicaoPalpites === 'grupo') {
-                container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
-
-                const gruposMap = {};
-                listaJogos.forEach(jogo => {
-                    const fase = (jogo.fase || "GERAL").toUpperCase();
-                    if (!fase.startsWith('GRUPO ')) return;
-                    
-                    if (!gruposMap[fase]) gruposMap[fase] = [];
-                    gruposMap[fase].push(jogo);
-                });
-
-                Object.keys(gruposMap).sort().forEach(nomeGrupo => {
-                    const jogosDoGrupo = gruposMap[nomeGrupo];
-                    const card = document.createElement('div');
-                    card.className = "card-grupo rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-xl transition-all duration-300";
-
-                    let htmlJogos = "";
-                    jogosDoGrupo.forEach(jogo => {
-                        htmlJogos += gerarHTMLJogoIndividual(jogo, meusPalpitesMap, false);
-                    });
-
-                    const classificacaoHTML = nomeGrupo.toLowerCase().startsWith('grupo') ? calcularClassificacaoGrupoHTML(nomeGrupo) : '';
-
-                    card.innerHTML = `
-                        <div>
-                            <div class="flex justify-between items-center mb-3 pb-1 border-b border-blue-500/20">
-                                <h2 class="text-md font-extrabold text-blue-400 tracking-wide">${nomeGrupo}</h2>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                ${htmlJogos}
-                            </div>
-                        </div>
-                        ${classificacaoHTML ? `<div class="pt-3 border-t border-slate-800/80 mt-3">${classificacaoHTML}</div>` : ''}
-                    `;
-                    container.appendChild(card);
-                });
-
-            } else if (modoExibicaoPalpites === 'dia') {
-                container.className = "flex flex-col gap-4 max-w-2xl mx-auto w-full";
-
-                const diasMap = {};
-                listaJogos.forEach(jogo => {
-                    if (jogo.fase && (
-                        jogo.fase.toLowerCase().includes('32-equipes') || 
-                        jogo.fase.toLowerCase().includes('oitavas') || 
-                        jogo.fase.toLowerCase().includes('quartas') || 
-                        jogo.fase.toLowerCase().includes('semifinal') || 
-                        jogo.fase.toLowerCase().includes('final') || 
-                        jogo.fase.toLowerCase().includes('disputa') || 
-                        jogo.fase.toLowerCase().includes('3º lugar')
-                    )) return;
-                    const dataObj = new Date(jogo.data_hora);
-                    const dataChave = dataObj.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-                    const diaYMD = dataObj.toISOString().split('T')[0];
-                    
-                    if (!diasMap[dataChave]) diasMap[dataChave] = { dataObj, diaYMD, jogos: [] };
-                    diasMap[dataChave].jogos.push(jogo);
-                });
-
-                let idDiaCounter = 0;
-                Object.keys(diasMap).sort((a,b) => diasMap[a].dataObj - diasMap[b].dataObj).forEach(diaNome => {
-                    idDiaCounter++;
-                    const infoDia = diasMap[diaNome];
-                    const dataGrupoObj = infoDia.dataObj;
-                    const jogosDoDia = infoDia.jogos;
-                    const isDiaPassado = infoDia.diaYMD < '2026-06-18';
-                    const isHoje = infoDia.diaYMD === '2026-06-18';
-
-                    let htmlJogosDia = "";
-                    jogosDoDia.forEach(jogo => {
-                        htmlJogosDia += gerarHTMLJogoIndividual(jogo, meusPalpitesMap, isHoje);
-                    });
-
-                    const cardDia = document.createElement('div');
-                    cardDia.setAttribute('data-dia-original', infoDia.diaYMD);
-
-                    if (isDiaPassado) {
-                        cardDia.className = "border border-slate-800/60 rounded-xl overflow-hidden bg-slate-900/10";
-                        cardDia.innerHTML = `
-                            <button onclick="toggleDiaPassado('dia-acord-${idDiaCounter}')" class="w-full p-4 bg-slate-900/30 flex justify-between items-center text-xs font-bold text-slate-400 hover:text-white transition-all">
-                                <span>📅 ${diaNome} (Jogos Anteriores)</span>
-                                <span id="seta-dia-acord-${idDiaCounter}" class="text-blue-500">▼ Mostrar</span>
-                            </button>
-                            <div id="dia-acord-${idDiaCounter}" class="hidden p-4 flex flex-col gap-2 bg-slate-950/10">
-                                ${htmlJogosDia}
-                            </div>
-                        `;
-                    } else {
-                        cardDia.className = "bg-[#1c2541] rounded-xl p-4 border border-slate-800 shadow-xl";
-                        cardDia.innerHTML = `
-                            <h3 class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-3 pb-1 border-b border-slate-800">📅 ${diaNome}</h3>
-                            <div class="flex flex-col gap-1">
-                                ${htmlJogosDia}
-                            </div>
-                        `;
-                    }
-                    container.appendChild(cardDia);
-                });
-
-            } else if (modoExibicaoPalpites === 'matamata') {
-                renderizarArvoreMataMata(meusPalpitesMap);
-            }
-        }
-
-        function renderizarArvoreMataMata(meusPalpitesMap) {
-            const divsFases = {
-                'fase-16avos': [],
-                'fase-oitavas': [],
-                'fase-quartas': [],
-                'fase-semis': [],
-                'fase-final': []
-            };
-
-            listaJogos.forEach(jogo => {
-                if (!jogo.fase) return;
-                const faseNormal = jogo.fase.toLowerCase();
-                
-                let gameHtml = `<div class="bg-[#121b36]/80 p-3 rounded-lg border border-slate-800 shadow-md">
-                    ${gerarHTMLJogoIndividual(jogo, meusPalpitesMap, false)}
-                </div>`;
-
-                if (faseNormal.includes('32-equipes') || faseNormal.includes('32 equipes')) {
-                    divsFases['fase-16avos'].push(gameHtml);
-                } else if (faseNormal.includes('oitavas') || faseNormal.includes('oitavos')) {
-                    divsFases['fase-oitavas'].push(gameHtml);
-                } else if (faseNormal.includes('quartas') || faseNormal.includes('quartos')) {
-                    divsFases['fase-quartas'].push(gameHtml);
-                } else if (faseNormal.includes('semifinal') || faseNormal.includes('semifinais') || faseNormal.includes('meia')) {
-                    divsFases['fase-semis'].push(gameHtml);
-                } else if (faseNormal.includes('final') || faseNormal.includes('3º lugar') || faseNormal.includes('terceiro') || faseNormal.includes('disputa')) {
-                    divsFases['fase-final'].push(gameHtml);
-                }
-            });
-
-            Object.keys(divsFases).forEach(faseKey => {
-                const element = document.getElementById(faseKey);
-                element.innerHTML = "";
-                if (divsFases[faseKey].length === 0) {
-                    element.innerHTML = `
-                        <div class="p-4 bg-slate-900/40 rounded-lg border border-slate-850 text-center">
-                            <span class="block text-[10px] text-slate-500 uppercase font-black">Indefinido</span>
-                            <span class="text-[9px] text-slate-600">Aguardando resultados</span>
-                        </div>
-                    `;
-                } else {
-                    divsFases[faseKey].forEach(html => {
-                        element.innerHTML += html;
-                    });
-                }
-            });
-        }
-
-        function calcularClassificacaoGrupoHTML(nomeGrupo) {
-            const faseKey = nomeGrupo.toUpperCase();
-            const ordenados = classificacoesGlobais[faseKey] || [];
-
-            if (ordenados.length === 0) return '';
+            if (teamsArr.length === 0) return '';
 
             let htmlClassificacao = `
-                <div class="mt-2">
-                    <div class="text-[10px] uppercase font-black text-slate-400 mb-1.5 tracking-wider">Classificação Provisória</div>
-                    <div class="overflow-x-auto no-scrollbar">
-                        <table class="w-full text-left border-collapse text-[10px] min-w-[210px]">
-                            <thead>
-                                <tr class="text-slate-500 border-b border-slate-800 font-black uppercase text-[8px] tracking-wider">
-                                    <th class="py-1 w-6 text-center">Pos</th>
-                                    <th class="py-1 pl-1">Equipe</th>
-                                    <th class="py-1 text-center font-mono w-7">P</th>
-                                    <th class="py-1 text-center font-mono w-6">J</th>
-                                    <th class="py-1 text-center font-mono w-6">V</th>
-                                    <th class="py-1 text-center font-mono w-7">SG</th>
-                                    <th class="py-1 text-center font-mono w-6">GP</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-800/30 text-slate-300">
+                <div class="overflow-x-auto no-scrollbar">
+                    <table class="w-full text-left border-collapse text-[10px] min-w-[210px]">
+                        <thead>
+                            <tr class="text-slate-500 border-b border-slate-800 font-black uppercase text-[8px] tracking-wider">
+                                <th class="py-1 w-5 text-center">Pos</th>
+                                <th class="py-1 pl-1">Equipa</th>
+                                <th class="py-1 text-center font-mono w-6">P</th>
+                                <th class="py-1 text-center font-mono w-5">J</th>
+                                <th class="py-1 text-center font-mono w-5">V</th>
+                                <th class="py-1 text-center font-mono w-6">SG</th>
+                                <th class="py-1 text-center font-mono w-5">GP</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/30 text-slate-300">
             `;
 
-            ordenados.forEach((equipe, index) => {
+            teamsArr.forEach((equipe, index) => {
                 let corColocacao = "text-slate-400";
                 let bgIndicador = "hover:bg-slate-800/20";
                 if (index === 0) {
@@ -1079,17 +1148,19 @@
             });
 
             htmlClassificacao += `
-                            </tbody>
-                        </table>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
             `;
 
             return htmlClassificacao;
         }
 
+        /**
+         * Envia todos os novos palpites e deleta palpites vazios de forma idempotente e segura
+         */
         async function guardarMeusPalpites() {
-            mostrarSpinner(true, "Guardando as suas apostas...");
+            mostrarSpinner(true, "A guardar as suas apostas...");
 
             const linhas = document.querySelectorAll('.linha-jogo');
             const upserts = [];
@@ -1100,15 +1171,19 @@
             for (const linha of linhas) {
                 const jogoId = linha.getAttribute('data-jogo-id');
                 const inputA = linha.querySelector('.input-palpite-a');
-                const inputB = linha.querySelector('.input-palpite-b');
-                
+                const inputB = inlineQuerySelectorSafe(linha, '.input-palpite-b');
+
                 if (!jogoId || !inputA || !inputB) continue;
 
+                // Encontra jogo correto em memória para segurança
                 const idJ = isNaN(jogoId) ? jogoId : parseInt(jogoId, 10);
                 const jogo = mapaJogos.get(idJ);
                 if (!jogo) continue;
 
-                if (isJogoBloqueado(jogo.data_hora) || isJogoMataMataBloqueadoParaPalpite(jogo)) continue; 
+                // Não salva palpites em jogos cujas edições estejam bloqueadas
+                if (isJogoBloqueado(jogo.data_hora)) {
+                    continue; 
+                }
 
                 const vA = inputA.value.trim();
                 const vB = inputB.value.trim();
@@ -1158,6 +1233,9 @@
             }
         }
 
+        /**
+         * Renderiza a tabela do Ranking dos participantes do Bolão (Compactado para Mobile)
+         */
         function renderizarRankingGeral() {
             const tbody = document.getElementById('tabela-ranking-corpo');
             tbody.innerHTML = "";
@@ -1168,15 +1246,8 @@
                 return a.nome_completo.localeCompare(b.nome_completo);
             });
 
-            // Recupera o histórico de posições do cache local
-            let lastRankings = JSON.parse(localStorage.getItem('bolao_historico_ranking') || '{}');
-            let currentRankings = {};
-
             ordenados.forEach((user, index) => {
-                const posicaoAtual = index + 1;
-                currentRankings[user.id] = posicaoAtual;
-
-                let medalhaPosicao = `${posicaoAtual}º`;
+                let medalhaPosicao = `${index + 1}º`;
                 let corLinha = "text-slate-300";
 
                 if (index === 0) {
@@ -1190,20 +1261,22 @@
                     corLinha = "text-amber-600 font-semibold";
                 }
 
-                // Lógica da Tendência (Indicador Visual)
-                let iconTendencia = `<span class="text-slate-600 text-[10px] ml-1" title="Manteve a posição">➖</span>`;
-                if (lastRankings[user.id]) {
-                    const posAnterior = lastRankings[user.id];
-                    if (posicaoAtual < posAnterior) {
-                        const subiu = posAnterior - posicaoAtual;
-                        iconTendencia = `<span class="text-emerald-500 text-[10px] ml-1 font-black" title="Subiu ${subiu} posição(ões)">▲</span>`;
-                    } else if (posicaoAtual > posAnterior) {
-                        const caiu = posicaoAtual - posAnterior;
-                        iconTendencia = `<span class="text-red-500 text-[10px] ml-1 font-black" title="Caiu ${caiu} posição(ões)">▼</span>`;
+                const isCurrentUser = user.id === currentUser.id;
+
+                // Desenha a seta indicativa baseada no cache recalculado da resenha
+                let htmlSeta = "●";
+                let corSeta = "text-slate-500";
+                const cacheInfo = cacheDesviosRanking[user.id];
+
+                if (cacheInfo && cacheInfo.diff !== 0) {
+                    if (cacheInfo.diff > 0) {
+                        htmlSeta = `▲ +${cacheInfo.diff}`;
+                        corSeta = "text-emerald-400 font-extrabold";
+                    } else {
+                        htmlSeta = `▼ ${cacheInfo.diff}`;
+                        corSeta = "text-red-400 font-bold";
                     }
                 }
-
-                const isCurrentUser = user.id === currentUser.id;
 
                 const tr = document.createElement('tr');
                 tr.className = isCurrentUser 
@@ -1211,17 +1284,15 @@
                     : "hover:bg-slate-800/20 transition-all";
 
                 tr.innerHTML = `
-                    <td class="p-2 sm:p-4 text-center font-mono font-bold text-[11px] sm:text-xs text-slate-400">
-                        <div class="flex items-center justify-center gap-0.5">
-                            <span>${medalhaPosicao}</span>
-                            ${iconTendencia}
-                        </div>
-                    </td>
+                    <td class="p-2 sm:p-4 text-center font-mono font-bold text-[11px] sm:text-xs text-slate-400">${medalhaPosicao}</td>
                     <td class="p-2 sm:p-4 ${corLinha} text-[11px] sm:text-sm truncate max-w-[100px] sm:max-w-none">
-                        <span class="flex items-center gap-1">
-                            ${user.nome_completo} 
-                            ${isCurrentUser ? '<span class="text-[8px] bg-blue-900/60 text-blue-300 px-1 py-0.5 rounded font-bold ml-0.5 border border-blue-500/10">VOCÊ</span>' : ''}
-                        </span>
+                        <div class="flex flex-col">
+                            <span class="flex items-center gap-1">
+                                ${user.nome_completo} 
+                                ${isCurrentUser ? '<span class="text-[8px] bg-blue-900/60 text-blue-300 px-1 py-0.5 rounded font-bold ml-0.5 border border-blue-500/10">TU</span>' : ''}
+                            </span>
+                            <span class="text-[8px] sm:text-[9px] ${corSeta}">${htmlSeta} na rodada</span>
+                        </div>
                     </td>
                     <td class="p-2 sm:p-4 text-center">
                         <span class="bg-[#1c2541] text-blue-400 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-bold text-[10px] sm:text-xs border border-blue-500/15 font-mono">
@@ -1229,19 +1300,23 @@
                         </span>
                     </td>
                     <td class="p-2 sm:p-4 text-center">
-                        <button onclick="abrirAuditoriaDeUsuario('${user.id}')" class="bg-[#242f54] hover:bg-indigo-600 hover:text-white text-indigo-300 font-bold p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1 mx-auto">
+                        <button onclick="abrirAuditoriaDeUtilizador('${user.id}')" class="bg-[#242f54] hover:bg-indigo-600 hover:text-white text-indigo-300 font-bold p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1 mx-auto">
                             <span>🔍</span><span class="hidden sm:inline">Auditar</span>
                         </button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
-
-            // Guarda o ranking atual para ser comparado na próxima vez
-            localStorage.setItem('bolao_historico_ranking', JSON.stringify(currentRankings));
         }
 
-        function abrirAuditoriaDeUsuario(userId) {
+        // =========================================================================
+        // MOTOR DE AUDITORIA DE PALPITES COM CRITÉRIO DE PRIVACIDADE
+        // =========================================================================
+
+        /**
+         * Abre o painel de auditoria do jogador selecionado filtrando e escondendo palpites futuros
+         */
+        function abrirAuditoriaDeUtilizador(userId) {
             const user = listaPerfis.find(u => u.id === userId);
             if (!user) return;
 
@@ -1254,7 +1329,7 @@
             const palpitesUser = listaPalpites.filter(p => p.user_id === userId);
 
             if (palpitesUser.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 italic">Este participante ainda não efetuou palpites.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 italic">Este utilizador ainda não efetuou palpites.</td></tr>`;
                 document.getElementById('modal-auditoria').classList.remove('hidden');
                 return;
             }
@@ -1269,16 +1344,15 @@
                 const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
                 const isSelf = userId === currentUser.id;
 
-                const timeAExibido = resolverNomeEquipeMataMata(jogo.time_a);
-                const timeBExibido = resolverNomeEquipeMataMata(jogo.time_b);
-
                 let palpiteTexto = "🔒 Ocultado (Futuro)";
                 let pontosObtidosTexto = "—";
                 let badgeClass = "bg-slate-800 text-slate-500";
                 let badgeNome = "Privado";
 
+                // Se o palpite já está bloqueado (falta < 5 min), foi finalizado ou pertence ao próprio usuário: EXIBE!
                 if (isBloqueado || isFinalizado || isSelf) {
                     palpiteTexto = `${palpite.palpite_a} x ${palpite.palpite_b}`;
+                    
                     const pontosGanho = isFinalizado ? avaliarRegrasPalpite(palpite, jogo, regrasPontuacao) : 0;
                     pontosObtidosTexto = isFinalizado ? `+${pontosGanho} pts` : "—";
 
@@ -1302,7 +1376,7 @@
                                 }
                             }
                         } else if (palpite.palpite_a === jogo.gols_a_oficial || palpite.palpite_b === jogo.gols_b_oficial) {
-                            rawRule = "Gol Parcial";
+                            rawRule = "Golo Parcial";
                         } else {
                             rawRule = "Errou";
                         }
@@ -1316,9 +1390,9 @@
                         } else if (rawRule === "Venc/Empate Simples") {
                             badgeClass = "bg-blue-950 text-blue-400 border border-blue-500/20";
                             badgeNome = "Vencedor/Empate";
-                        } else if (rawRule === "Gol Parcial") {
+                        } else if (rawRule === "Golo Parcial") {
                             badgeClass = "bg-amber-950 text-amber-500 border border-amber-500/10";
-                            badgeNome = "Gol Parcial";
+                            badgeNome = "Golo Parcial";
                         } else {
                             badgeClass = "bg-red-950/40 text-red-400 border border-red-500/10";
                             badgeNome = "Nenhum ponto";
@@ -1334,15 +1408,15 @@
                 }
 
                 const dataObj = new Date(jogo.data_hora);
-                const dataFormatada = dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-                const horaFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+                const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-800/10 transition-all border-b border-slate-800/40";
                 tr.innerHTML = `
                     <td class="p-3 text-slate-400 font-semibold uppercase tracking-wide text-[10px]">${jogo.fase || "Geral"}</td>
                     <td class="p-3 text-[10px] text-slate-500 font-mono">${dataFormatada} - ${horaFormatada}</td>
-                    <td class="p-3 font-semibold text-slate-300">${timeAExibido} x ${timeBExibido}</td>
+                    <td class="p-3 font-semibold text-slate-300">${jogo.time_a} x ${jogo.time_b}</td>
                     <td class="p-3 text-center font-mono font-bold text-white text-xs">${isFinalizado ? `${jogo.gols_a_oficial} - ${jogo.gols_b_oficial}` : '—'}</td>
                     <td class="p-3 text-center font-mono font-bold text-blue-400 text-xs">${palpiteTexto}</td>
                     <td class="p-3 text-center">
@@ -1364,15 +1438,18 @@
             document.getElementById('modal-auditoria').classList.add('hidden');
         }
 
+        /**
+         * Permite ao utilizador alterar a sua própria palavra-passe no separador de perfil
+         */
         async function atualizarSenhaPropria() {
             const novaSenha = document.getElementById('conta-nova-senha').value.trim();
 
             if (!novaSenha) {
-                mostrarNotificacao("Por favor, digite a nova senha.", "warning");
+                mostrarNotificacao("Por favor, digite a nova palavra-passe.", "warning");
                 return;
             }
 
-            mostrarSpinner(true, "Atualizando senha...");
+            mostrarSpinner(true, "A atualizar palavra-passe...");
             try {
                 const { error } = await supabaseClient
                     .from('perfis')
@@ -1385,7 +1462,7 @@
                 localStorage.setItem('bolao_user_session', JSON.stringify(currentUser));
 
                 document.getElementById('conta-nova-senha').value = "";
-                mostrarNotificacao("Senha updated com sucesso!", "success");
+                mostrarNotificacao("Palavra-passe atualizada com sucesso!", "success");
 
             } catch (e) {
                 console.error(e);
@@ -1395,41 +1472,44 @@
             }
         }
 
+        /**
+         * Motor de Regras Oficiais do Bolão (Igual ao do painel Admin)
+         */
         function avaliarRegrasPalpite(palpite, jogo, regras) {
-            const pA = parseInt(palpite.palpite_a, 10);
-            const pB = parseInt(palpite.palpite_b, 10);
-            const jA = parseInt(jogo.gols_a_oficial, 10);
-            const jB = parseInt(jogo.gols_b_oficial, 10);
+            const pM = parseInt(palpite.palpite_a, 10);
+            const pV = parseInt(palpite.palpite_b, 10);
+            const jM = parseInt(jogo.gols_a_oficial, 10);
+            const jV = parseInt(jogo.gols_b_oficial, 10);
 
-            if (isNaN(pA) || isNaN(pB) || isNaN(jA) || isNaN(jB)) return 0;
+            if (isNaN(pM) || isNaN(pV) || isNaN(jM) || isNaN(jV)) return 0;
 
             const multiplicador = obterMultiplicadorFase(jogo.fase);
             let pontosBase = 0;
 
-            if (pA === jA && pB === jB) {
-                pontosBase = regras.placarExato;
+            if (pM === jM && pV === jV) {
+                pontosBase = regras.placarExato; // 25
             } else {
-                const vencedorPalpite = pA > pB ? 1 : (pA < pB ? 2 : 0);
-                const vencedorReal = jA > jB ? 1 : (jA < jB ? 2 : 0);
+                const vencedorPalpite = pM > pV ? 1 : (pM < pV ? 2 : 0);
+                const vencedorReal = jM > jV ? 1 : (jM < jV ? 2 : 0);
 
                 if (vencedorPalpite === vencedorReal) {
                     if (vencedorReal === 0) {
-                        pontosBase = regras.vencedorSimples;
+                        pontosBase = rulesFallback(regras.vencedorSimples, 15);
                     } else {
-                        const saldoPalpite = pA - pB;
-                        const saldoReal = jA - jB;
+                        const saldoPalpite = pM - pV;
+                        const saldoReal = jM - jV;
 
                         if (saldoPalpite === saldoReal) {
-                            pontosBase = regras.vencedorGols;
+                            pontosBase = rulesFallback(regras.vencedorGols, 18);
                         } else {
-                            pontosBase = regras.vencedorSimples;
+                            pontosBase = rulesFallback(regras.vencedorSimples, 15);
                         }
                     }
                 } else {
-                    if (pA === jA || pB === jB) {
-                        pontosBase = regras.golParcial;
+                    if (pM === jM || pV === jV) {
+                        pontosBase = rulesFallback(regras.golParcial, 3);
                     } else {
-                        pontosBase = regras.erro;
+                        pontosBase = regras.erro; // 0
                     }
                 }
             }
@@ -1437,11 +1517,18 @@
             return Math.floor(pontosBase * multiplicador);
         }
 
+        function rulesFallback(val, defaultVal) {
+            return val !== undefined ? val : defaultVal;
+        }
+
+        /**
+         * Retorna o fator multiplicador oficial com base no nome da fase
+         */
         function obterMultiplicadorFase(fase) {
             if (!fase) return 1.0;
             const faseNormalizada = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             
-            if (faseNormalizada.includes("32-equipes") || faseNormalizada.includes("32 equipes") || faseNormalizada.includes("16-avos") || faseNormalizada.includes("16 avos")) {
+            if (faseNormalizada.includes("16-avos") || faseNormalizada.includes("16 avos") || faseNormalizada.includes("dezasseis")) {
                 return 1.2;
             }
             if (faseNormalizada.includes("oitavas") || faseNormalizada.includes("oitavos")) {
@@ -1450,16 +1537,32 @@
             if (faseNormalizada.includes("quartas") || faseNormalizada.includes("quartos")) {
                 return 2.0;
             }
-            if (faseNormalizada.includes("semifinal") || faseNormalizada.includes("semifinais") || faseNormalizada.includes("meia")) {
+            if (faseNormalizada.includes("semifinal") || faseNormalizada.includes("semifinais") || faseNormalizada.includes("meia") || faseNormalizada.includes("meias")) {
                 return 2.5;
             }
-            if (faseNormalizada.includes("final") || faseNormalizada.includes("3º lugar") || faseNormalizada.includes("disputa") || faseNormalizada.includes("terceiro")) {
+            if (faseNormalizada.includes("final") || faseNormalizada.includes("finais")) {
+                if (faseNormalizada.includes("oitava") || faseNormalizada.includes("quarta") || faseNormalizada.includes("semi")) {
+                    if (faseNormalizada.includes("semi")) return 2.5;
+                    if (faseNormalizada.includes("quarta")) return 2.0;
+                    if (faseNormalizada.includes("oitava")) return 1.5;
+                }
                 return 3.0;
             }
             return 1.0; 
         }
 
-        function mostrarSpinner(visivel, mensagem = "Carregando...") {
+        function inlineQuerySelectorSafe(parent, selector) {
+            try {
+                return parent.querySelector(selector);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        /**
+         * Controla a exibição visual do painel de carregamento
+         */
+        function mostrarSpinner(visivel, mensagem = "A carregar...") {
             const overlay = document.getElementById('loading-overlay');
             const texto = overlay.querySelector('p');
             texto.textContent = mensagem;
@@ -1473,6 +1576,9 @@
             }
         }
 
+        /**
+         * Cria alertas animados integrados na interface em tempo real
+         */
         function mostrarNotificacao(mensagem, tipo = 'info') {
             const container = document.getElementById('feedback-container');
             const alertBox = document.createElement('div');
