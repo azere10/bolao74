@@ -423,7 +423,7 @@
 
                         await carregarDadosDoBanco();
                         // INICIA O CARREGAMENTO SILENCIOSO PARA A RESENHA
-                        if(!pollInterval) pollInterval = setInterval(() => carregarDadosDoBanco(true), 30000);
+                        if(!pollInterval) pollInterval = setInterval(() => carregarDadosDoBanco(true), 10000);
                         return;
                     }
                 } catch (e) {
@@ -473,7 +473,7 @@
                 mostrarNotificacao(`Bem-vindo ao bolão, ${currentUser.nome_completo}!`, "success");
                 await carregarDadosDoBanco();
                 // INICIA O CARREGAMENTO SILENCIOSO PARA A RESENHA
-                if(!pollInterval) pollInterval = setInterval(() => carregarDadosDoBanco(true), 30000);
+                if(!pollInterval) pollInterval = setInterval(() => carregarDadosDoBanco(true), 10000);
 
             } catch (e) {
                 console.error(e);
@@ -542,7 +542,6 @@
                 
                 if (primeiroCarregamentoFeito && 
                     lastKnownResults[chave] && 
-                    lastKnownResults[chave] !== 'nullxnull' && 
                     placarNovo !== 'nullxnull' && 
                     lastKnownResults[chave] !== placarNovo) {
                     
@@ -1169,8 +1168,15 @@
                 return a.nome_completo.localeCompare(b.nome_completo);
             });
 
+            // Recupera o histórico de posições do cache local
+            let lastRankings = JSON.parse(localStorage.getItem('bolao_historico_ranking') || '{}');
+            let currentRankings = {};
+
             ordenados.forEach((user, index) => {
-                let medalhaPosicao = `${index + 1}º`;
+                const posicaoAtual = index + 1;
+                currentRankings[user.id] = posicaoAtual;
+
+                let medalhaPosicao = `${posicaoAtual}º`;
                 let corLinha = "text-slate-300";
 
                 if (index === 0) {
@@ -1184,6 +1190,19 @@
                     corLinha = "text-amber-600 font-semibold";
                 }
 
+                // Lógica da Tendência (Indicador Visual)
+                let iconTendencia = `<span class="text-slate-600 text-[10px] ml-1" title="Manteve a posição">➖</span>`;
+                if (lastRankings[user.id]) {
+                    const posAnterior = lastRankings[user.id];
+                    if (posicaoAtual < posAnterior) {
+                        const subiu = posAnterior - posicaoAtual;
+                        iconTendencia = `<span class="text-emerald-500 text-[10px] ml-1 font-black" title="Subiu ${subiu} posição(ões)">▲</span>`;
+                    } else if (posicaoAtual > posAnterior) {
+                        const caiu = posicaoAtual - posAnterior;
+                        iconTendencia = `<span class="text-red-500 text-[10px] ml-1 font-black" title="Caiu ${caiu} posição(ões)">▼</span>`;
+                    }
+                }
+
                 const isCurrentUser = user.id === currentUser.id;
 
                 const tr = document.createElement('tr');
@@ -1192,7 +1211,12 @@
                     : "hover:bg-slate-800/20 transition-all";
 
                 tr.innerHTML = `
-                    <td class="p-2 sm:p-4 text-center font-mono font-bold text-[11px] sm:text-xs text-slate-400">${medalhaPosicao}</td>
+                    <td class="p-2 sm:p-4 text-center font-mono font-bold text-[11px] sm:text-xs text-slate-400">
+                        <div class="flex items-center justify-center gap-0.5">
+                            <span>${medalhaPosicao}</span>
+                            ${iconTendencia}
+                        </div>
+                    </td>
                     <td class="p-2 sm:p-4 ${corLinha} text-[11px] sm:text-sm truncate max-w-[100px] sm:max-w-none">
                         <span class="flex items-center gap-1">
                             ${user.nome_completo} 
@@ -1212,6 +1236,9 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            // Guarda o ranking atual para ser comparado na próxima vez
+            localStorage.setItem('bolao_historico_ranking', JSON.stringify(currentRankings));
         }
 
         function abrirAuditoriaDeUsuario(userId) {
