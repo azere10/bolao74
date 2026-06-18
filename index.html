@@ -47,9 +47,13 @@
             font-size: 1.1rem !important;
         }
         .acessibilidade-ativa input {
-            font-size: 1.3rem !important;
-            width: 3.5rem !important;
-            height: 3rem !important;
+            font-size: 1.2rem !important;
+            width: 2.4rem !important;
+            height: 2.4rem !important;
+        }
+        .acessibilidade-ativa .bloco-placar {
+            min-w-[165px] !important;
+            gap: 0.5rem !important;
         }
     </style>
 </head>
@@ -70,7 +74,7 @@
     <!-- CONTAINER DE FEEDBACK / NOTIFICAÇÕES -->
     <div id="feedback-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4"></div>
 
-    <!-- TELA DE LOGIN (Mostrada se não estiver autenticado) -->
+    <!-- TELA DE LOGIN -->
     <div id="tela-login" class="fixed inset-0 bg-[#0b132b] z-50 flex items-center justify-center p-4">
         <div class="bg-[#1c2541] border border-slate-800 w-full max-w-md p-8 rounded-2xl shadow-2xl flex flex-col items-center">
             <div class="h-16 w-16 bg-blue-600/10 rounded-full flex items-center justify-center mb-4 border border-blue-500/20">
@@ -97,7 +101,7 @@
         </div>
     </div>
 
-    <!-- HEADER / MENU DE ABAS (Mostrado apenas após autenticação) -->
+    <!-- HEADER / MENU DE ABAS -->
     <header id="app-header" class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-800 hidden">
         <div class="flex flex-col items-center md:items-start">
             <h1 class="text-2xl font-black tracking-wider text-blue-400 text-center md:text-left">BOLÃO DO MAURINHO</h1>
@@ -126,21 +130,20 @@
         <p class="text-blue-300 font-medium text-sm">Carregando dados do bolão...</p>
     </div>
 
-    <!-- CONTEÚDO DA APLICAÇÃO (Mostrado após login) -->
+    <!-- CONTEÚDO DA APLICAÇÃO -->
     <main id="app-content" class="max-w-7xl mx-auto px-4 mt-6 hidden">
 
         <!-- ========================================== -->
         <!-- SEÇÃO: MEUS PALPITES -->
         <!-- ========================================== -->
         <section id="aba-palpites" class="block">
-            <!-- Controle e Filtros de Visualização -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <h2 class="text-xl font-extrabold text-white">Preencha seus Palpites</h2>
                     <p class="text-xs text-slate-400 font-medium">Os palpites são bloqueados 5 minutos antes de cada partida.</p>
                 </div>
                 
-                <!-- Botão Alternador de Visualização Simplificado (Grupo vs Dia vs Mata-Mata) -->
+                <!-- Botão Alternador de Visualização -->
                 <div class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full sm:w-auto overflow-x-auto no-scrollbar">
                     <button id="btn-view-grupos" onclick="mudarModoExibicao('grupo')" class="px-3 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md whitespace-nowrap">
                         POR GRUPOS
@@ -154,53 +157,43 @@
                 </div>
             </div>
 
-            <!-- Grelha Dinâmica de Palpites (Grupos ou Cronograma) -->
+            <!-- Grelha Dinâmica de Palpites -->
             <div id="grid-jogos-palpites" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Preenchido dinamicamente com os jogos e palpites do usuário -->
+                <!-- Preenchido dinamicamente -->
             </div>
 
-            <!-- ESTRUTURA VISUAL MATA-MATA (CHAVEAMENTO SLIDER RESPONSIVO) -->
+            <!-- ESTRUTURA VISUAL MATA-MATA -->
             <div id="container-matamata" class="hidden w-full overflow-x-auto pb-6 no-scrollbar">
                 <div class="flex gap-6 min-w-[1200px] justify-between items-start p-4 bg-slate-950/20 rounded-2xl border border-slate-900">
                     
                     <!-- 16-avos de final -->
                     <div class="flex-1 space-y-4">
                         <h4 class="text-xs font-black text-blue-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">32-Equipes (1.2x)</h4>
-                        <div id="fase-16avos" class="space-y-3">
-                            <!-- Injetado via JS -->
-                        </div>
+                        <div id="fase-16avos" class="space-y-3"></div>
                     </div>
 
                     <!-- Oitavas de final -->
                     <div class="flex-1 space-y-4 self-center">
                         <h4 class="text-xs font-black text-purple-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Oitavas (1.5x)</h4>
-                        <div id="fase-oitavas" class="space-y-6">
-                            <!-- Injetado via JS -->
-                        </div>
+                        <div id="fase-oitavas" class="space-y-6"></div>
                     </div>
 
                     <!-- Quartas de final -->
                     <div class="flex-1 space-y-4 self-center">
                         <h4 class="text-xs font-black text-pink-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Quartas (2.0x)</h4>
-                        <div id="fase-quartas" class="space-y-12">
-                            <!-- Injetado via JS -->
-                        </div>
+                        <div id="fase-quartas" class="space-y-12"></div>
                     </div>
 
                     <!-- Semifinais -->
                     <div class="flex-1 space-y-4 self-center">
                         <h4 class="text-xs font-black text-amber-500 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Semifinais (2.5x)</h4>
-                        <div id="fase-semis" class="space-y-24">
-                            <!-- Injetado via JS -->
-                        </div>
+                        <div id="fase-semis" class="space-y-24"></div>
                     </div>
 
                     <!-- Grande Final -->
                     <div class="flex-1 space-y-4 self-center">
                         <h4 class="text-xs font-black text-emerald-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Grande Final (3.0x)</h4>
-                        <div id="fase-final" class="space-y-4">
-                            <!-- Injetado via JS -->
-                        </div>
+                        <div id="fase-final" class="space-y-4"></div>
                     </div>
 
                 </div>
@@ -217,11 +210,9 @@
                     <h3 class="text-sm font-extrabold uppercase tracking-wider text-blue-400">A Resenha do Maurinho</h3>
                 </div>
                 <p id="resenha-texto" class="text-xs sm:text-sm text-slate-300 leading-relaxed italic">
-                    Analisando as últimas atualizações para soltar a corneta...
+                    Analisando as últimas atualizações...
                 </p>
-                <div id="resenha-destaques" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800/60">
-                    <!-- Gerado dinamicamente -->
-                </div>
+                <div id="resenha-destaques" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800/60"></div>
             </div>
 
             <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-3 sm:p-6 shadow-2xl">
@@ -230,7 +221,6 @@
                     <p class="text-xs text-slate-400 mt-1">Confronte os palpites de outros participantes para os jogos que já iniciaram.</p>
                 </div>
 
-                <!-- Tabela de Classificação Otimizada para Celular -->
                 <div class="overflow-x-auto rounded-xl border border-slate-800">
                     <table class="w-full text-left border-collapse bg-[#121b36]">
                         <thead>
@@ -241,9 +231,7 @@
                                 <th class="p-2 sm:p-4 text-center w-16 sm:w-28">Auditar</th>
                             </tr>
                         </thead>
-                        <tbody id="tabela-ranking-corpo" class="text-xs sm:text-sm text-slate-300 divide-y divide-slate-800/50">
-                            <!-- Injetado dinamicamente -->
-                        </tbody>
+                        <tbody id="tabela-ranking-corpo" class="text-xs sm:text-sm text-slate-300 divide-y divide-slate-800/50"></tbody>
                     </table>
                 </div>
             </div>
@@ -357,7 +345,6 @@
                     <p id="conta-user-login" class="text-xs text-slate-500 font-mono mt-0.5">login_usuario</p>
                 </div>
 
-                <!-- Alterar senha -->
                 <div class="space-y-4">
                     <div>
                         <h3 class="text-sm font-bold text-white mb-3">Alterar a Minha Senha</h3>
@@ -398,7 +385,6 @@
                 <button onclick="fecharModalAuditoria()" class="text-slate-400 hover:text-white transition-all text-xl">✕</button>
             </div>
             <div class="p-6 overflow-y-auto space-y-4 no-scrollbar">
-                <!-- Tabela de palpites auditados -->
                 <div class="overflow-x-auto rounded-xl border border-slate-800">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -411,9 +397,7 @@
                                 <th class="p-3 text-center">Pontos Obtidos</th>
                             </tr>
                         </thead>
-                        <tbody id="auditoria-tabela-corpo" class="text-xs text-slate-300 divide-y divide-slate-800/30">
-                            <!-- Injetado dinamicamente -->
-                        </tbody>
+                        <tbody id="auditoria-tabela-corpo" class="text-xs text-slate-300 divide-y divide-slate-800/30"></tbody>
                     </table>
                 </div>
             </div>
@@ -437,7 +421,7 @@
         let listaJogos = [];
         let listaPalpites = [];
         let listaPerfis = [];
-        let classificacoesGlobais = {}; // Classificação provisória calculada por grupo
+        let classificacoesGlobais = {}; 
         let regrasPontuacao = {
             placarExato: 25,
             vencedorGols: 18,
@@ -446,11 +430,10 @@
             erro: 0
         };
         let abaAtiva = 'palpites';
-        let modoExibicaoPalpites = 'grupo'; // 'grupo', 'dia' ou 'matamata'
+        let modoExibicaoPalpites = 'grupo'; 
         let cacheDesviosRanking = {};
         let modoAcessibilidade = false;
 
-        // Executado ao carregar a página
         window.addEventListener('DOMContentLoaded', async () => {
             if (localStorage.getItem('bolao_acessibilidade') === 'true') {
                 alternarAcessibilidade(true);
@@ -464,7 +447,6 @@
             }
         }
 
-        // Alterna o modo de acessibilidade de letra grande
         function alternarAcessibilidade(forcarAtivo = null) {
             const body = document.getElementById('body-app');
             const statusTxt = document.getElementById('txt-acessibilidade-status');
@@ -606,9 +588,7 @@
                     document.getElementById('header-user-pontos').textContent = currentUser.pontos_total || 0;
                 }
 
-                // Calcula classificações dos grupos com critérios oficiais da FIFA
                 calcularClassificacoesGerais();
-
                 processarCalculosEstatisticosEranking();
                 renderizarMeusPalpites();
                 renderizarRankingGeral();
@@ -621,7 +601,6 @@
             }
         }
 
-        // Realiza cálculo dinâmico dos grupos seguindo critérios estritos FIFA
         function calcularClassificacoesGerais() {
             classificacoesGlobais = {};
             const gruposMap = {};
@@ -678,28 +657,22 @@
 
             const timesArr = Object.values(tabela);
 
-            // Algoritmo de classificação de acordo com critérios de desempate oficiais da FIFA
             timesArr.sort((a, b) => {
-                // 1. Pontos
                 if (b.pontos !== a.pontos) return b.pontos - a.pontos;
-                // 2. Saldo de Gols
                 if (b.sg !== a.sg) return b.sg - a.sg;
-                // 3. Gols Pró (Marcados)
                 if (b.gp !== a.gp) return b.gp - a.gp;
-                // 4. Confronto Direto
+                
                 const jogoDireto = a.jogos.find(jg => jg.contra === b.time);
                 if (jogoDireto) {
                     if (jogoDireto.gp > jogoDireto.gc) return 1; 
                     if (jogoDireto.gp < jogoDireto.gc) return -1; 
                 }
-                // Fallback: Ordem alfabética
                 return a.time.localeCompare(b.time);
             });
 
             return timesArr;
         }
 
-        // Resolve dinamicamente times provisórios para o mata-mata
         function resolverNomeEquipeMataMata(nomeOriginal) {
             if (!nomeOriginal) return "—";
             const trimmed = nomeOriginal.trim();
@@ -718,7 +691,6 @@
             return nomeOriginal;
         }
 
-        // Verifica se uma partida de mata-mata possui times definidos ou provisórios em aberto
         function isJogoMataMataBloqueadoParaPalpite(jogo) {
             const faseNormal = (jogo.fase || "").toLowerCase();
             const isKnockout = !faseNormal.includes("grupo");
@@ -783,13 +755,20 @@
 
             renderizarMeusPalpites();
 
-            // Rola suavemente para a posição do dia atual na visualização por dia
             if (modo === 'dia') {
                 rolarParaDiaAtual();
             }
         }
 
-        // Rola automaticamente para o card correspondente ao dia de hoje
+        function isJogoDeHoje(dataHoraStr) {
+            const dataJogo = new Date(dataHoraStr);
+            const hojeYMD = "2026-06-18"; // Dia de Hoje estabelecido
+            const ano = dataJogo.getFullYear();
+            const mes = String(dataJogo.getMonth() + 1).padStart(2, '0');
+            const dia = String(dataJogo.getDate()).padStart(2, '0');
+            return `${ano}-${mes}-${dia}` === hojeYMD;
+        }
+
         function rolarParaDiaAtual() {
             const cards = document.querySelectorAll('[data-dia-original]');
             const hojeStr = '2026-06-18'; 
@@ -1034,7 +1013,6 @@
                         htmlJogos += gerarHTMLJogoIndividual(jogo, meusPalpitesMap);
                     });
 
-                    // Aplica cálculo de classificação do grupo dinâmico baseado nos critérios FIFA
                     const classificacaoHTML = nomeGrupo.toLowerCase().startsWith('grupo') ? calcularClassificacaoGrupoHTML(nomeGrupo) : '';
 
                     card.innerHTML = `
@@ -1130,15 +1108,15 @@
                 ? "w-9 h-8 text-center bg-slate-900/50 text-slate-500 font-bold rounded border border-slate-800/40 outline-none text-xs opacity-40 cursor-not-allowed"
                 : "w-9 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs transition-all";
 
-            // Exibe a barra de tendências de palpites após o fechamento das apostas para aquele jogo (bloqueado)
+            // Só renderiza a barra de tendências se for visualização diária, estiver bloqueado E for o jogo atual do dia
             let htmlEstatisticas = "";
-            if (isBloqueado) {
+            if (modoExibicaoPalpites === 'dia' && isBloqueado && isJogoDeHoje(jogo.data_hora)) {
                 const stats = calcularEstatisticasPalpites(jogo.id);
                 if (stats && stats.total > 0) {
                     htmlEstatisticas = `
                         <div class="mt-3 pt-3 border-t border-slate-800/60 bg-slate-900/30 rounded-lg p-2 flex flex-col gap-1.5">
                             <div class="flex justify-between items-center text-[9px] text-slate-400 font-black tracking-wider uppercase">
-                                <span>📊 Tendência do Bolão</span>
+                                <span>📊 Tendência do Bolão (Hoje)</span>
                                 <span class="text-blue-400">${stats.total} palpites</span>
                             </div>
                             <div class="flex h-2 rounded-full overflow-hidden bg-slate-850">
@@ -1155,7 +1133,6 @@
                 }
             }
 
-            // Exibe badge de bloqueio provisório para o mata-mata
             let htmlBloqueioMataMata = "";
             if (isMataMataBloqueado) {
                 htmlBloqueioMataMata = `
@@ -1169,15 +1146,15 @@
 
             const btsMandante = (isBloqueado || isMataMataBloqueado)
                 ? '' 
-                : `<div class="flex flex-col gap-0.5">
-                        <button onclick="ajustarPlacarClick('palp-a', 'somar', '${jogo.id}')" class="bg-slate-700 text-white font-black px-1.5 py-0.5 rounded text-[10px] sm:text-xs hover:bg-slate-600">+</button>
-                        <button onclick="ajustarPlacarClick('palp-a', 'subtrair', '${jogo.id}')" class="bg-slate-700 text-white font-black px-1.5 py-0.5 rounded text-[10px] sm:text-xs hover:bg-slate-600">-</button>
+                : `<div class="flex flex-col gap-0.5 flex-shrink-0">
+                        <button onclick="ajustarPlacarClick('palp-a', 'somar', '${jogo.id}')" class="bg-slate-700 hover:bg-slate-600 active:bg-blue-600 text-white font-black w-5 h-4 flex items-center justify-center rounded text-[9px] sm:text-[10px] transition-colors">+</button>
+                        <button onclick="ajustarPlacarClick('palp-a', 'subtrair', '${jogo.id}')" class="bg-slate-700 hover:bg-slate-600 active:bg-blue-600 text-white font-black w-5 h-4 flex items-center justify-center rounded text-[9px] sm:text-[10px] transition-colors">-</button>
                    </div>`;
             const btsVisitante = (isBloqueado || isMataMataBloqueado)
                 ? '' 
-                : `<div class="flex flex-col gap-0.5">
-                        <button onclick="ajustarPlacarClick('palp-b', 'somar', '${jogo.id}')" class="bg-slate-700 text-white font-black px-1.5 py-0.5 rounded text-[10px] sm:text-xs hover:bg-slate-600">+</button>
-                        <button onclick="ajustarPlacarClick('palp-b', 'subtrair', '${jogo.id}')" class="bg-slate-700 text-white font-black px-1.5 py-0.5 rounded text-[10px] sm:text-xs hover:bg-slate-600">-</button>
+                : `<div class="flex flex-col gap-0.5 flex-shrink-0">
+                        <button onclick="ajustarPlacarClick('palp-b', 'somar', '${jogo.id}')" class="bg-slate-700 hover:bg-slate-600 active:bg-blue-600 text-white font-black w-5 h-4 flex items-center justify-center rounded text-[9px] sm:text-[10px] transition-colors">+</button>
+                        <button onclick="ajustarPlacarClick('palp-b', 'subtrair', '${jogo.id}')" class="bg-slate-700 hover:bg-slate-600 active:bg-blue-600 text-white font-black w-5 h-4 flex items-center justify-center rounded text-[9px] sm:text-[10px] transition-colors">-</button>
                    </div>`;
 
             return `
@@ -1186,18 +1163,25 @@
                         <span class="text-[9px] text-slate-500 font-mono">${dataFormatada} às ${horaFormatada}</span>
                         ${isFinalizado ? `<span class="text-[9px] text-slate-400 font-bold bg-slate-900/50 px-1.5 py-0.5 rounded">Oficial: ${jogo.gols_a_oficial} x ${jogo.gols_b_oficial}</span>` : ''}
                     </div>
-                    <div class="flex items-center justify-between gap-1">
-                        <span class="w-1/3 text-right text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate" title="${timeAExibido}">${timeAExibido}</span>
+                    <div class="flex items-center justify-between gap-1.5 py-1">
+                        <!-- Time Mandante (A) -->
+                        <span class="flex-1 text-right text-xs sm:text-sm font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate" title="${timeAExibido}">
+                            ${timeAExibido}
+                        </span>
                         
-                        <div class="flex items-center gap-1 justify-center w-1/3">
+                        <!-- Bloco do Placar (Garante que nunca ocorra sobreposição no celular) -->
+                        <div class="bloco-placar flex-shrink-0 flex items-center justify-center gap-1 sm:gap-1.5 bg-slate-900/30 px-1 sm:px-2 py-1 rounded-lg border border-slate-800/50 min-w-[145px] sm:min-w-[170px]">
                             ${btsMandante}
                             <input type="number" id="palp-a-${jogo.id}" placeholder="-" value="${valA}" ${inputDisabledAttr} class="input-palpite-a ${inputClass}" />
-                            <span class="text-xs ${isBloqueado ? 'text-slate-700' : 'text-slate-500'} font-bold px-0.5">x</span>
+                            <span class="text-xs ${isBloqueado ? 'text-slate-700' : 'text-slate-500'} font-black px-1">x</span>
                             <input type="number" id="palp-b-${jogo.id}" placeholder="-" value="${valB}" ${inputDisabledAttr} class="input-palpite-b ${inputClass}" />
                             ${btsVisitante}
                         </div>
                         
-                        <span class="w-1/3 text-left text-xs font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate" title="${timeBExibido}">${timeBExibido}</span>
+                        <!-- Time Visitante (B) -->
+                        <span class="flex-1 text-left text-xs sm:text-sm font-semibold ${isBloqueado ? 'text-slate-500' : 'text-slate-300'} truncate" title="${timeBExibido}">
+                            ${timeBExibido}
+                        </span>
                     </div>
                     ${htmlBloqueioMataMata}
                     ${htmlEstatisticas}
@@ -1253,7 +1237,6 @@
             });
         }
 
-        // Gera a classificação do grupo baseada nos critérios dinâmicos calculados
         function calcularClassificacaoGrupoHTML(nomeGrupo) {
             const faseKey = nomeGrupo.toUpperCase();
             const ordenados = classificacoesGlobais[faseKey] || [];
@@ -1615,7 +1598,6 @@
             return Math.floor(pontosBase * multiplicador);
         }
 
-        // Retorna multiplicador correspondente à fase do torneio
         function obterMultiplicadorFase(fase) {
             if (!fase) return 1.0;
             const faseNormalizada = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
