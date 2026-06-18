@@ -4,57 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bolão do Maurinho - Painel Admin</title>
-    <!-- Tailwind CSS para Estilização Premium -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- CDN do Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #0b132b; color: #f8fafc; }
         .card-grupo { background-color: #1c2541; border: 1px solid #2a3759; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="min-h-screen font-sans antialiased pb-12">
+<body class="min-h-screen p-4">
 
-    <header class="max-w-7xl mx-auto px-4 py-6 border-b border-slate-800">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-3xl font-extrabold tracking-wider text-blue-400">BOLÃO DO MAURINHO ADMIN</h1>
-            
-            <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-800">
-                <button id="btn-tab-jogos" onclick="mudarAba('jogos')" class="px-5 py-2 rounded-lg font-bold text-sm transition-all bg-blue-600 text-white shadow-md">CONTROLE DE JOGOS</button>
-                <button id="btn-tab-matamata" onclick="mudarAba('matamata')" class="px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-400 hover:text-white">MATA-MATA</button>
-                <button id="btn-tab-users" onclick="mudarAba('users')" class="px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-400 hover:text-white">GESTÃO DE UTILIZADORES</button>
+    <!-- Cabeçalho (Mantendo o layout original) -->
+    <header class="max-w-7xl mx-auto py-6 border-b border-slate-800">
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold text-blue-400">BOLÃO DO MAURINHO ADMIN</h1>
+            <div class="flex bg-slate-900 p-1 rounded-lg">
+                <button onclick="mudarAba('jogos')" class="px-4 py-2 bg-blue-600 rounded">CONTROLE DE JOGOS</button>
+                <button onclick="mudarAba('matamata')" class="px-4 py-2">MATA-MATA</button>
+                <button onclick="mudarAba('users')" class="px-4 py-2">GESTÃO DE UTILIZADORES</button>
             </div>
-
-            <div class="flex items-center gap-3">
-                <button id="btn-acao-topo" onclick="guardarTodosResultados()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-lg shadow-lg hover:shadow-emerald-900/30 transition-all transform active:scale-95 flex items-center gap-2">
-                    GUARDAR TUDO
-                </button>
-            </div>
+            <button onclick="guardarTodosResultados()" class="bg-emerald-600 px-6 py-2 rounded">GUARDAR TUDO</button>
         </div>
     </header>
 
-    <div id="loading-overlay" class="fixed inset-0 bg-[#0b132b]/80 z-40 flex flex-col items-center justify-center hidden">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
-        <p class="text-blue-300 font-medium text-sm">A carregar dados...</p>
-    </div>
-
-    <main class="max-w-7xl mx-auto px-4 mt-8">
-        <section id="aba-jogos" class="block">
-            <div id="grid-grupos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    <main class="max-w-7xl mx-auto mt-8">
+        <!-- ABA JOGOS (Foco em Grupos) -->
+        <section id="aba-jogos" class="grid grid-cols-3 gap-4">
+            <div id="grid-jogos" class="contents"></div>
         </section>
-
-        <section id="aba-matamata" class="hidden">
-            <div class="text-center py-20 card-grupo rounded-xl text-slate-400">
-                Conteúdo da fase Mata-Mata em breve.
-            </div>
-        </section>
-
-        <section id="aba-users" class="hidden">
-            <!-- Conteúdo de usuários será carregado aqui -->
-            <div id="tabela-usuarios-container"></div>
-        </section>
+        
+        <!-- ABAS MATA-MATA e USERS ocultas por padrão -->
+        <section id="aba-matamata" class="hidden text-center text-slate-500">Em breve...</section>
+        <section id="aba-users" class="hidden text-center text-slate-500">Em breve...</section>
     </main>
 
     <script>
@@ -62,38 +42,29 @@
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1d3pqZGp5YXF2cXZ6bnBmdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDQ1MjMsImV4cCI6MjA5MTg4MDUyM30.GLjH9CjmDOujKYtO9-ZGtUXHkkenyS1CV1E-odMC4yQ"; 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let listaJogos = [];
-
-        async function carregarDadosDoBanco() {
-            document.getElementById('loading-overlay').classList.remove('hidden');
-            const { data, error } = await supabaseClient.from('jogos').select('*');
-            if (error) { console.error(error); alert("Erro ao carregar: " + error.message); return; }
-            
-            listaJogos = (data || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
-            renderizarGrupos();
-            document.getElementById('loading-overlay').classList.add('hidden');
+        async function carregarDados() {
+            const { data } = await supabaseClient.from('jogos').select('*');
+            renderizar(data || []);
         }
 
         function mudarAba(aba) {
             document.getElementById('aba-jogos').classList.toggle('hidden', aba !== 'jogos');
             document.getElementById('aba-matamata').classList.toggle('hidden', aba !== 'matamata');
             document.getElementById('aba-users').classList.toggle('hidden', aba !== 'users');
-            document.getElementById('btn-acao-topo').classList.toggle('hidden', aba !== 'jogos');
         }
 
-        function renderizarGrupos() {
-            const grid = document.getElementById('grid-grupos');
+        function renderizar(jogos) {
+            const grid = document.getElementById('grid-jogos');
             grid.innerHTML = "";
-            listaJogos.forEach(jogo => {
-                // Removemos o filtro agressivo para garantir visibilidade
+            // Filtro para mostrar apenas Grupos, como solicitado no print
+            jogos.filter(j => (j.fase || "").toUpperCase().includes("GRUPO")).forEach(j => {
                 const card = document.createElement('div');
-                card.className = "card-grupo p-4 rounded-lg";
-                card.innerHTML = `<div>${jogo.time_a} ${jogo.gols_a_oficial || '-'} x ${jogo.gols_b_oficial || '-'} ${jogo.time_b}</div>`;
+                card.className = "card-grupo p-4 rounded flex justify-between items-center text-sm";
+                card.innerHTML = `<span>${j.time_a} ${j.gols_a_oficial || '-'} x ${j.gols_b_oficial || '-'} ${j.time_b}</span>`;
                 grid.appendChild(card);
             });
         }
-
-        carregarDadosDoBanco();
+        carregarDados();
     </script>
 </body>
 </html>
