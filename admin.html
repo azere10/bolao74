@@ -4,68 +4,1035 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bolão do Maurinho - Painel Admin</title>
+    <!-- Tailwind CSS para Estilização Premium -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CDN do Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #0b132b; color: #f8fafc; }
-        .card-grupo { background-color: #1c2541; border: 1px solid #2a3759; }
+        /* Personalização para o tema escuro premium */
+        body {
+            background-color: #0b132b;
+            color: #f8fafc;
+        }
+        .card-grupo {
+            background-color: #1c2541;
+            border: 1px solid #2a3759;
+        }
+        /* Esconde barras de scroll horizontais desnecessárias */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
-<body class="min-h-screen p-4">
+<body class="min-h-screen font-sans antialiased pb-12">
 
-    <!-- Cabeçalho (Mantendo o layout original) -->
-    <header class="max-w-7xl mx-auto py-6 border-b border-slate-800">
-        <div class="flex justify-between items-center">
-            <h1 class="text-3xl font-extrabold text-blue-400">BOLÃO DO MAURINHO ADMIN</h1>
-            <div class="flex bg-slate-900 p-1 rounded-lg">
-                <button onclick="mudarAba('jogos')" class="px-4 py-2 bg-blue-600 rounded">CONTROLE DE JOGOS</button>
-                <button onclick="mudarAba('matamata')" class="px-4 py-2">MATA-MATA</button>
-                <button onclick="mudarAba('users')" class="px-4 py-2">GESTÃO DE UTILIZADORES</button>
+    <!-- CABEÇALHO / BARRA SUPERIOR E ABAS -->
+    <header class="max-w-7xl mx-auto px-4 py-6 border-b border-slate-800">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-3xl font-extrabold tracking-wider text-blue-400">BOLÃO DO MAURINHO ADMIN</h1>
+            
+            <!-- Seletores de Abas -->
+            <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+                <button id="btn-tab-jogos" onclick="mudarAba('jogos')" class="px-5 py-2 rounded-lg font-bold text-sm transition-all bg-blue-600 text-white shadow-md">
+                    CONTROLE DE JOGOS
+                </button>
+                <button id="btn-tab-users" onclick="mudarAba('users')" class="px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-400 hover:text-white">
+                    GESTÃO DE UTILIZADORES
+                </button>
             </div>
-            <button onclick="guardarTodosResultados()" class="bg-emerald-600 px-6 py-2 rounded">GUARDAR TUDO</button>
+
+            <div class="flex items-center gap-3">
+                <button id="btn-acao-topo" onclick="guardarTodosResultados()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-lg shadow-lg hover:shadow-emerald-900/30 transition-all transform active:scale-95 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                    GUARDAR TUDO
+                </button>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto mt-8">
-        <!-- ABA JOGOS (Foco em Grupos) -->
-        <section id="aba-jogos" class="grid grid-cols-3 gap-4">
-            <div id="grid-jogos" class="contents"></div>
-        </section>
+    <!-- BANNER DE FEEDBACK / NOTIFICAÇÕES (Substitui os pop-ups de alerta bloqueantes) -->
+    <div id="feedback-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4"></div>
+
+    <!-- ECRÃ DE CARREGAMENTO (SPINNER) -->
+    <div id="loading-overlay" class="fixed inset-0 bg-[#0b132b]/80 z-40 flex flex-col items-center justify-center transition-opacity duration-300">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+        <p class="text-blue-300 font-medium text-sm">A carregar dados do Supabase...</p>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL (MUDANÇA DE ABAS) -->
+    <main class="max-w-7xl mx-auto px-4 mt-8">
         
-        <!-- ABAS MATA-MATA e USERS ocultas por padrão -->
-        <section id="aba-matamata" class="hidden text-center text-slate-500">Em breve...</section>
-        <section id="aba-users" class="hidden text-center text-slate-500">Em breve...</section>
+        <!-- ========================================== -->
+        <!-- ABA 1: CONTROLE DE JOGOS -->
+        <!-- ========================================== -->
+        <section id="aba-jogos" class="block">
+            <div id="grid-grupos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Os cartões dos grupos serão desenhados aqui dinamicamente -->
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- ABA 2: GERENCIAMENTO DE USUÁRIOS -->
+        <!-- ========================================== -->
+        <section id="aba-users" class="hidden">
+            <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-6 shadow-2xl">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Utilizadores Ativos</h2>
+                        <p class="text-xs text-slate-400">Crie, edite, apague e audite as pontuações individuais.</p>
+                    </div>
+                    <button onclick="abrirModalCriarUsuario()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-lg transition-all text-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Novo Utilizador
+                    </button>
+                </div>
+
+                <!-- Tabela de Utilizadores -->
+                <div class="overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-left border-collapse bg-[#121b36]">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 text-xs font-bold uppercase tracking-wider bg-slate-900/80">
+                                <th class="p-4">Nome Completo</th>
+                                <th class="p-4">Login de Acesso</th>
+                                <th class="p-4">Palavra-passe (Privada)</th>
+                                <th class="p-4 text-center">Pontos Totais</th>
+                                <th class="p-4 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-usuarios-corpo" class="text-sm text-slate-300 divide-y divide-slate-800/50">
+                            <!-- Injetado dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </main>
 
+    <!-- ========================================== -->
+    <!-- MODAL: AUDITORIA DE PALPITES -->
+    <!-- ========================================== -->
+    <div id="modal-auditoria" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-[#1c2541] border border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
+                <div>
+                    <h3 id="auditoria-titulo-user" class="text-xl font-bold text-white">Auditoria de Palpites</h3>
+                    <p id="auditoria-resumo-pts" class="text-xs text-blue-400 mt-1">Pontuação total: 0 pts</p>
+                </div>
+                <button onclick="fecharModalAuditoria()" class="text-slate-400 hover:text-white transition-all text-xl">✕</button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 no-scrollbar">
+                <!-- Tabela/Grelha de palpites auditados -->
+                <div class="overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/50 text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-800">
+                                <th class="p-3">Fase/Grupo</th>
+                                <th class="p-3">Data/Hora</th>
+                                <th class="p-3">Jogo (Real)</th>
+                                <th class="p-3 text-center">Resultado Oficial</th>
+                                <th class="p-3 text-center">Palpite Realizado</th>
+                                <th class="p-3 text-center">Pontos Obtidos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditoria-tabela-corpo" class="text-xs text-slate-300 divide-y divide-slate-800/30">
+                            <!-- Injetado dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-900/30 border-t border-slate-800 text-right rounded-b-2xl">
+                <button onclick="fecharModalAuditoria()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-5 py-2 rounded-lg text-xs transition-all">
+                    Fechar Auditoria
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: CRIAR / EDITAR UTILIZADOR -->
+    <!-- ========================================== -->
+    <div id="modal-usuario" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-[#1c2541] border border-slate-700 w-full max-w-md rounded-xl shadow-2xl flex flex-col">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 rounded-t-xl">
+                <h3 id="modal-usuario-titulo" class="text-lg font-bold text-white">Criar Novo Utilizador</h3>
+                <button onclick="fecharModalUsuario()" class="text-slate-400 hover:text-white transition-all">✕</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="modal-usuario-id" />
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome Completo</label>
+                    <input type="text" id="modal-usuario-nome" placeholder="Ex: João Silva" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 outline-none text-sm" />
+                </div>
+                <div id="modal-campo-senha" class="hidden">
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Palavra-passe (Plana)</label>
+                    <input type="text" id="modal-usuario-senha" placeholder="Insira a nova palavra-passe" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 outline-none text-sm" />
+                </div>
+            </div>
+            <div class="p-4 bg-slate-900/30 border-t border-slate-800 flex justify-end gap-2 rounded-b-xl">
+                <button onclick="fecharModalUsuario()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all">
+                    Cancelar
+                </button>
+                <button onclick="submeterFormularioUsuario()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg text-xs font-bold transition-all">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // =========================================================================
+        // CONFIGURAÇÃO DO SUPABASE (CHAVE PÚBLICA INTEGRADA)
+        // =========================================================================
         const SUPABASE_URL = "https://auwzjdjyaqvqvznpfvif.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1d3pqZGp5YXF2cXZ6bnBmdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDQ1MjMsImV4cCI6MjA5MTg4MDUyM30.GLjH9CjmDOujKYtO9-ZGtUXHkkenyS1CV1E-odMC4yQ"; 
+
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function carregarDados() {
-            const { data } = await supabaseClient.from('jogos').select('*');
-            renderizar(data || []);
-        }
+        // Memória local de dados
+        let listaJogos = [];
+        let listaPalpites = [];
+        let listaPerfis = [];
+        let regrasPontuacao = {
+            placarExato: 25,       // Regras Oficiais do seu bolão (Base)
+            vencedorGols: 18,
+            vencedorSimples: 15,
+            golParcial: 3,
+            erro: 0
+        };
+        let abaAtiva = 'jogos';
 
+        // Inicialização automática
+        window.addEventListener('DOMContentLoaded', async () => {
+            await carregarDadosDoBanco();
+        });
+
+        /**
+         * Alterna entre as abas e ajusta os botões visuais
+         */
         function mudarAba(aba) {
-            document.getElementById('aba-jogos').classList.toggle('hidden', aba !== 'jogos');
-            document.getElementById('aba-matamata').classList.toggle('hidden', aba !== 'matamata');
-            document.getElementById('aba-users').classList.toggle('hidden', aba !== 'users');
+            abaAtiva = aba;
+            const btnJogos = document.getElementById('btn-tab-jogos');
+            const btnUsers = document.getElementById('btn-tab-users');
+            const abaJogosEl = document.getElementById('aba-jogos');
+            const abaUsersEl = document.getElementById('aba-users');
+            const btnAcaoTopo = document.getElementById('btn-acao-topo');
+
+            if (aba === 'jogos') {
+                btnJogos.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all bg-blue-600 text-white shadow-md";
+                btnUsers.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-400 hover:text-white";
+                abaJogosEl.classList.remove('hidden');
+                abaUsersEl.classList.add('hidden');
+                btnAcaoTopo.classList.remove('hidden');
+            } else {
+                btnUsers.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all bg-blue-600 text-white shadow-md";
+                btnJogos.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-400 hover:text-white";
+                abaUsersEl.classList.remove('hidden');
+                abaJogosEl.classList.add('hidden');
+                btnAcaoTopo.classList.add('hidden');
+            }
         }
 
-        function renderizar(jogos) {
-            const grid = document.getElementById('grid-jogos');
+        /**
+         * Procura todos os registos necessários para carregar a página e efetuar cálculos
+         */
+        async function carregarDadosDoBanco() {
+            mostrarSpinner(true, "A aceder ao banco de dados...");
+            try {
+                // 1. Carrega todos os jogos agendados
+                const { data: jogos, error: errJogos } = await supabaseClient
+                    .from('jogos')
+                    .select('*');
+
+                if (errJogos) throw errJogos;
+                
+                // ORDENAÇÃO CRÍTICA POR DATA/HORA antes de qualquer processamento
+                listaJogos = (jogos || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+
+                // 2. Carrega palpites e perfis de utilizadores
+                const { data: palpites, error: errPalpites } = await supabaseClient.from('palpites').select('*');
+                if (errPalpites) throw errPalpites;
+                listaPalpites = palpites || [];
+
+                const { data: perfis, error: errPerfis } = await supabaseClient.from('perfis').select('*');
+                if (errPerfis) throw errPerfis;
+                listaPerfis = perfis || [];
+
+                // Desenha as interfaces com base nos dados mais recentes
+                renderizarGrupos();
+                renderizarUsuariosTabela();
+
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                mostrarNotificacao(`Falha ao conectar ao Supabase: ${error.message}`, "danger");
+            } finally {
+                mostrarSpinner(false);
+            }
+        }
+
+        /**
+         * Desenha dinamicamente as tabelas de grupos mantendo o agrupamento, 
+         * mas exibindo-os na sequência cronológica exata de data/hora (Dentro de cada grupo).
+         */
+        function renderizarGrupos() {
+            const grid = document.getElementById('grid-grupos');
             grid.innerHTML = "";
-            // Filtro para mostrar apenas Grupos, como solicitado no print
-            jogos.filter(j => (j.fase || "").toUpperCase().includes("GRUPO")).forEach(j => {
+
+            const gruposMap = {};
+            
+            // Como a 'listaJogos' já está ordenada por data_hora globalmente,
+            // ao mapeá-los para os seus grupos respetivos, a ordem cronológica mantém-se intacta.
+            listaJogos.forEach(jogo => {
+                const grp = (jogo.fase || "GERAL").toUpperCase();
+                if (!gruposMap[grp]) gruposMap[grp] = [];
+                gruposMap[grp].push(jogo);
+            });
+
+            Object.keys(gruposMap).sort().forEach(nomeGrupo => {
+                const jogosDoGrupo = gruposMap[nomeGrupo];
+                
                 const card = document.createElement('div');
-                card.className = "card-grupo p-4 rounded flex justify-between items-center text-sm";
-                card.innerHTML = `<span>${j.time_a} ${j.gols_a_oficial || '-'} x ${j.gols_b_oficial || '-'} ${j.time_b}</span>`;
+                card.className = "card-grupo rounded-xl p-5 flex flex-col justify-between shadow-xl transition-all duration-300";
+
+                let htmlJogos = "";
+                jogosDoGrupo.forEach(jogo => {
+                    const golsM = jogo.gols_a_oficial !== null && jogo.gols_a_oficial !== undefined ? jogo.gols_a_oficial : "";
+                    const golsV = jogo.gols_b_oficial !== null && jogo.gols_b_oficial !== undefined ? jogo.gols_b_oficial : "";
+                    
+                    const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
+                    const statusClass = isFinalizado ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/30';
+
+                    // Formata a exibição de data e hora de forma elegante
+                    const dataObj = new Date(jogo.data_hora);
+                    const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+                    const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+                    htmlJogos += `
+                        <div class="linha-jogo flex flex-col py-2 border-b border-slate-800 last:border-b-0 gap-1 ${statusClass} rounded px-2 my-1 transition-all" data-jogo-id="${jogo.id}">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-slate-500 font-mono font-bold">${dataFormatada} às ${horaFormatada}</span>
+                                ${isFinalizado ? '<span class="text-[9px] bg-emerald-900 text-emerald-300 px-1.5 py-0.5 rounded font-bold">FIM</span>' : ''}
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <!-- Equipa Mandante (time_a) -->
+                                <span class="w-1/3 text-right text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_a}</span>
+                                
+                                <!-- Inputs de Pontuação -->
+                                <div class="flex items-center gap-1 justify-center w-1/3">
+                                    <input type="number" 
+                                           placeholder="-" 
+                                           value="${golsM}" 
+                                           class="input-gols-mandante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                                    <span class="text-xs text-slate-500 font-bold px-0.5">x</span>
+                                    <input type="number" 
+                                           placeholder="-" 
+                                           value="${golsV}" 
+                                           class="input-gols-visitante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                                </div>
+                                
+                                <!-- Equipa Visitante (time_b) -->
+                                <span class="w-1/3 text-left text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_b}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                const classificacaoHTML = calcularClassificacaoGrupo(jogosDoGrupo);
+
+                card.innerHTML = `
+                    <div>
+                        <h2 class="text-lg font-extrabold text-blue-400 mb-4 tracking-wide pb-1 border-b border-blue-500/20">${nomeGrupo.startsWith("GRUPO") ? nomeGrupo : "GRUPO " + nomeGrupo}</h2>
+                        <div class="flex flex-col gap-1.5 mb-5">
+                            ${htmlJogos}
+                        </div>
+                    </div>
+                    <!-- Tabela de Classificação do Grupo -->
+                    <div class="pt-4 border-t border-slate-800/80">
+                        <div class="text-[11px] uppercase font-bold text-slate-400 mb-2">Classificação Provisória</div>
+                        <div class="space-y-1">
+                            ${classificacaoHTML}
+                        </div>
+                    </div>
+                `;
+                
                 grid.appendChild(card);
             });
         }
-        carregarDados();
+
+        /**
+         * Calcula dinamicamente a tabela do grupo baseado nos golos introduzidos
+         */
+        function calcularClassificacaoGrupo(jogos) {
+            const tabela = {};
+
+            jogos.forEach(j => {
+                if (!tabela[j.time_a]) tabela[j.time_a] = { pontos: 0, time: j.time_a };
+                if (!tabela[j.time_b]) tabela[j.time_b] = { pontos: 0, time: j.time_b };
+
+                if (j.gols_a_oficial !== null && j.gols_b_oficial !== null && j.gols_a_oficial !== undefined && j.gols_b_oficial !== undefined) {
+                    const gM = parseInt(j.gols_a_oficial);
+                    const gV = parseInt(j.gols_b_oficial);
+                    
+                    if (gM > gV) {
+                        tabela[j.time_a].pontos += 3;
+                    } else if (gM < gV) {
+                        tabela[j.time_b].pontos += 3;
+                    } else {
+                        tabela[j.time_a].pontos += 1;
+                        tabela[j.time_b].pontos += 1;
+                    }
+                }
+            });
+
+            const ordenados = Object.values(tabela).sort((a, b) => b.pontos - a.pontos);
+
+            let htmlClassificacao = "";
+            ordenados.forEach((equipe, index) => {
+                let corColocacao = "text-slate-400";
+                if (index === 0) corColocacao = "text-emerald-400 font-bold";
+                if (index === 1) corColocacao = "text-blue-400 font-semibold";
+
+                htmlClassificacao += `
+                    <div class="flex justify-between items-center text-xs py-0.5 px-1 hover:bg-slate-800/30 rounded">
+                        <span class="${corColocacao}">${index + 1}º ${equipe.time}</span>
+                        <span class="font-mono font-bold text-slate-300">${equipe.pontos}pt</span>
+                    </div>
+                `;
+            });
+
+            return htmlClassificacao;
+        }
+
+        /**
+         * Desenha e mapeia a lista de utilizadores cadastrados no sistema
+         */
+        function renderizarUsuariosTabela() {
+            const tbody = document.getElementById('tabela-usuarios-corpo');
+            tbody.innerHTML = "";
+
+            // Ordena utilizadores por ordem alfabética de nome
+            const ordenados = [...listaPerfis].sort((a, b) => a.nome_completo.localeCompare(b.nome_completo));
+
+            ordenados.forEach(user => {
+                // MODIFICAÇÃO: Cria máscara de asteriscos para ocultar a palavra-passe original
+                const senhaMascarada = user.senha_plana ? '*'.repeat(user.senha_plana.length) : "---";
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/20 transition-all";
+                tr.innerHTML = `
+                    <td class="p-4 font-semibold text-white">${user.nome_completo}</td>
+                    <td class="p-4 text-slate-400 font-mono text-xs">${user.usuario_login}</td>
+                    <td class="p-4 font-mono text-slate-300 text-xs tracking-wider">${senhaMascarada}</td>
+                    <td class="p-4 text-center">
+                        <span class="bg-blue-950 text-blue-400 px-3 py-1 rounded-full font-bold text-xs border border-blue-500/20">
+                            ${user.pontos_total || 0} pts
+                        </span>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="abrirAuditoria('${user.id}')" class="bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1">
+                                🔍 Auditar Palpites
+                            </button>
+                            <button onclick="abrirModalEditarUsuario('${user.id}')" class="bg-amber-600/80 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all">
+                                Editar
+                            </button>
+                            <button onclick="removerUsuario('${user.id}', '${user.nome_completo}')" class="bg-red-950/80 hover:bg-red-800 text-red-200 font-bold px-3 py-1.5 rounded-lg text-xs transition-all">
+                                Apagar
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /**
+         * Recolhe os golos e atualiza o banco de dados de forma sequencial (Zero Deadlocks!)
+         */
+        async function guardarTodosResultados() {
+            mostrarSpinner(true, "A registar resultados oficiais...");
+            
+            const linhas = document.querySelectorAll('.linha-jogo');
+            const atualizacoes = [];
+
+            for (const linha of linhas) {
+                const jogoId = linha.getAttribute('data-jogo-id');
+                const inputM = inlineQuerySelectorSafe(linha, '.input-gols-mandante');
+                const inputV = inlineQuerySelectorSafe(linha, '.input-gols-visitante');
+
+                if (!inputM || !inputV) continue;
+
+                if (!jogoId || jogoId === "undefined" || jogoId === "null") {
+                    console.warn("Registo ignorado: Falta ID do jogo.");
+                    continue;
+                }
+
+                if (inputM.value === "" || inputV.value === "") {
+                    continue; 
+                }
+
+                const golsM = parseInt(inputM.value, 10);
+                const golsV = parseInt(inputV.value, 10);
+
+                if (isNaN(golsM) || isNaN(golsV)) {
+                    continue;
+                }
+
+                // Otimização: Só atualiza se o valor na UI for diferente do armazenado em listaJogos
+                const jogoOriginal = listaJogos.find(j => j.id == jogoId);
+                if (jogoOriginal && (jogoOriginal.gols_a_oficial !== golsM || jogoOriginal.gols_b_oficial !== golsV)) {
+                    atualizacoes.push({ id: jogoId, gols_a_oficial: golsM, gols_b_oficial: golsV });
+                }
+            }
+
+            if (atualizacoes.length === 0) {
+                mostrarSpinner(false);
+                mostrarNotificacao("Nenhum resultado novo detetado para guardar.", "warning");
+                return;
+            }
+
+            try {
+                // Executa sequencialmente para prevenir concorrência agressiva de transações
+                for (const item of atualizacoes) {
+                    const { error } = await supabaseClient
+                        .from('jogos')
+                        .update({
+                            gols_a_oficial: item.gols_a_oficial,
+                            gols_b_oficial: item.gols_b_oficial
+                        })
+                        .eq('id', item.id);
+                    if (error) throw error;
+                }
+
+                mostrarNotificacao("Resultados oficiais guardados com sucesso!", "success");
+                
+                await carregarDadosDoBanco();
+                await recalcularPontosGerais();
+
+            } catch (error) {
+                console.error("Erro ao guardar dados:", error);
+                mostrarNotificacao(`Erro crítico: ${error.message}`, "danger");
+                mostrarSpinner(false);
+            }
+        }
+
+        function inlineQuerySelectorSafe(parent, selector) {
+            try {
+                return parent.querySelector(selector);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        /**
+         * Retorna o fator multiplicador oficial com base no nome ou identificação da fase do mata-mata
+         */
+        function obterMultiplicadorFase(fase) {
+            if (!fase) return 1.0;
+            const faseNormalizada = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            if (faseNormalizada.includes("16-avos") || faseNormalizada.includes("16 avos") || faseNormalizada.includes("dezasseis")) {
+                return 1.2;
+            }
+            if (faseNormalizada.includes("oitavas") || faseNormalizada.includes("oitavos")) {
+                return 1.5;
+            }
+            if (faseNormalizada.includes("quartas") || faseNormalizada.includes("quartos")) {
+                return 2.0;
+            }
+            if (faseNormalizada.includes("semifinal") || faseNormalizada.includes("semifinais") || faseNormalizada.includes("meia") || faseNormalizada.includes("meias")) {
+                return 2.5;
+            }
+            if (faseNormalizada.includes("final") || faseNormalizada.includes("finais")) {
+                // Previne conflitos de fases compostas
+                if (faseNormalizada.includes("oitava") || faseNormalizada.includes("quarta") || faseNormalizada.includes("semi")) {
+                    if (faseNormalizada.includes("semi")) return 2.5;
+                    if (faseNormalizada.includes("quarta")) return 2.0;
+                    if (faseNormalizada.includes("oitava")) return 1.5;
+                }
+                return 3.0;
+            }
+            return 1.0; // Padrão: Fase de Grupos
+        }
+
+        /**
+         * Processador inteligente que reconstrói a pontuação de todos os utilizadores a partir do zero
+         * IMUNE A DEADLOCKS E PROTEGIDO CONTRA PALPITES DUPLICADOS NA BASE DE DADOS
+         */
+        async function recalcularPontosGerais() {
+            mostrarSpinner(true, "A recalcular o ranking geral com proteção de integridade...");
+            try {
+                // 1. Inicializa o mapa com 0 pontos para todos os perfis
+                const mapaPontosNovos = {};
+                listaPerfis.forEach(user => {
+                    mapaPontosNovos[user.id] = 0; 
+                });
+
+                // Considera apenas jogos cujos golos oficiais já estejam preenchidos no banco de dados
+                const jogosFinalizados = listaJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
+                const mapaJogos = new Map(jogosFinalizados.map(j => [j.id, j]));
+
+                const palpitesParaAtualizar = [];
+                
+                // Conjunto de chaves para rastrear e deduplicar palpites em tempo de execução
+                const processados = new Set();
+                let palpitesDuplicadosIgnorados = 0;
+
+                // 2. Avalia os palpites apenas contra os jogos finalizados atuais na memória
+                for (const palpite of listaPalpites) {
+                    if (!palpite.user_id || !palpite.jogo_id) continue;
+
+                    // CORREÇÃO DO ERRO DO INCREMENTO IRREAL:
+                    // Se o utilizador tiver mais de um palpite gravado na tabela para o mesmo jogo,
+                    // nós processamos apenas o primeiro registo e ignoramos os restantes.
+                    const chaveUnica = `${palpite.user_id}_${palpite.jogo_id}`;
+                    if (processados.has(chaveUnica)) {
+                        palpitesDuplicadosIgnorados++;
+                        continue; // Salta registos redundantes (lixo histórico de tabelas sem restrição única)
+                    }
+                    processados.add(chaveUnica);
+
+                    const jogo = mapaJogos.get(palpite.jogo_id);
+                    if (!jogo) continue; 
+
+                    const pontosDoPalpite = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
+
+                    // OTIMIZAÇÃO CRÍTICA: Só adiciona para gravar na DB se o valor calculado for diferente do armazenado!
+                    if (Number(palpite.pontos_obtidos) !== pontosDoPalpite) {
+                        palpitesParaAtualizar.push({
+                            id: palpite.id,
+                            pontos_obtidos: pontosDoPalpite
+                        });
+                    }
+
+                    if (mapaPontosNovos[palpite.user_id] !== undefined) {
+                        mapaPontosNovos[palpite.user_id] += pontosDoPalpite;
+                    }
+                }
+
+                // 3. Executa as atualizações de palpites modificados de forma sequencial (Zero Deadlocks!)
+                if (palpitesParaAtualizar.length > 0) {
+                    mostrarSpinner(true, `A atualizar palpites modificados (${palpitesParaAtualizar.length} registos)...`);
+                    for (const item of palpitesParaAtualizar) {
+                        try {
+                            await supabaseClient
+                                .from('palpites')
+                                .update({ pontos_obtidos: item.pontos_obtidos })
+                                .eq('id', item.id);
+                        } catch (e) {
+                            console.warn("Erro ao atualizar pontos_obtidos do palpite:", item.id, e);
+                        }
+                    }
+                }
+
+                // 4. Identifica quais os perfis que necessitam de atualização na coluna 'pontos_total'
+                const perfisParaAtualizar = [];
+                listaPerfis.forEach(user => {
+                    const novosPontos = mapaPontosNovos[user.id] || 0;
+                    const pontosAtuais = Number(user.pontos_total) || 0;
+                    if (pontosAtuais !== novosPontos) {
+                        perfisParaAtualizar.push({
+                            id: user.id,
+                            pontos_total: novosPontos
+                        });
+                    }
+                });
+
+                // 5. Atualiza os perfis modificados de forma sequencial na base de dados
+                if (perfisParaAtualizar.length > 0) {
+                    mostrarSpinner(true, `A atualizar classificações dos utilizadores (${perfisParaAtualizar.length} registos)...`);
+                    for (const item of perfisParaAtualizar) {
+                        const { error } = await supabaseClient
+                            .from('perfis')
+                            .update({ pontos_total: item.pontos_total })
+                            .eq('id', item.id);
+                        if (error) throw error;
+                    }
+                }
+
+                // Exibe aviso amigável no log informando se limpou redundâncias
+                let mensagemSucesso = "Ranking e pontuações recalculados com sucesso!";
+                if (palpitesDuplicadosIgnorados > 0) {
+                    mensagemSucesso += ` (${palpitesDuplicadosIgnorados} palpites duplicados ignorados e limpos no cálculo)`;
+                }
+
+                mostrarNotificacao(mensagemSucesso, "success");
+                await carregarDadosDoBanco();
+
+            } catch (error) {
+                console.error("Erro no recálculo geral:", error);
+                mostrarNotificacao(`Erro no recálculo: ${error.message}`, "danger");
+            } finally {
+                mostrarSpinner(false);
+            }
+        }
+
+        /**
+         * Motor de Regras Oficiais do Bolão (Conforme o print fornecido pelo utilizador, com multiplicadores de fase)
+         */
+        function avaliarRegrasPalpite(palpite, jogo, regras) {
+            const pM = parseInt(palpite.palpite_a);
+            const pV = parseInt(palpite.palpite_b);
+            const jM = parseInt(jogo.gols_a_oficial);
+            const jV = parseInt(jogo.gols_b_oficial);
+
+            if (isNaN(pM) || isNaN(pV) || isNaN(jM) || isNaN(jV)) return 0;
+
+            const multiplicador = obterMultiplicadorFase(jogo.fase);
+            let pontosBase = 0;
+
+            // REGRA 1: Placar Exato (Acertou em cheio) -> 25 Pts
+            if (pM === jM && pV === jV) {
+                pontosBase = regras.placarExato; // 25
+            } else {
+                const vencedorPalpite = pM > pV ? 1 : (pM < pV ? 2 : 0);
+                const vencedorReal = jM > jV ? 1 : (jM < jV ? 2 : 0);
+
+                // Verifica se acertou a tendência do jogo (Vencedor ou Empate)
+                if (vencedorPalpite === vencedorReal) {
+                    if (vencedorReal === 0) {
+                        // Foi empate, mas não foi exato (ex: apostou 1x1, acabou 2x2)
+                        pontosBase = regras.vencedorSimples; // 15
+                    } else {
+                        // Acertou o vencedor do jogo
+                        const saldoPalpite = pM - pV;
+                        const saldoReal = jM - jV;
+
+                        // REGRA 2: Acertou o Vencedor e o Saldo de Gols -> 18 Pts
+                        if (saldoPalpite === saldoReal) {
+                            pontosBase = regras.vencedorGols; // 18
+                        } else {
+                            // REGRA 3: Acertou Vencedor/Empate, mas Errou o saldo -> 15 Pts
+                            pontosBase = regras.vencedorSimples; // 15
+                        }
+                    }
+                } else {
+                    // Errou a tendência (vencedor ou empate real foi diferente do palpite)
+                    // REGRA 4: Errou a tendência, mas acertou os gols de 1 dos 2 times -> 3 Pts
+                    if (pM === jM || pV === jV) {
+                        pontosBase = regras.golParcial; // 3
+                    } else {
+                        pontosBase = regras.erro; // 0
+                    }
+                }
+            }
+
+            // Arredonda para baixo os multiplicadores de mata-mata que dão valores decimais (.5)
+            return Math.floor(pontosBase * multiplicador);
+        }
+
+        /**
+         * Função utilitária para gerar UUID v4 no lado do cliente
+         * Evita o erro de restrição de ID nulo no Supabase quando a tabela não possui autogeração ativa
+         */
+        function gerarUUID() {
+            try {
+                return crypto.randomUUID();
+            } catch (e) {
+                // Fallback robusto para navegadores mais antigos ou contextos de rede inseguros
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+        }
+
+        // =========================================================================
+        // GERENCIAMENTO DE UTILIZADORES (C.R.U.D.)
+        // =========================================================================
+
+        function abrirModalCriarUsuario() {
+            document.getElementById('modal-usuario-titulo').textContent = "Criar Novo Utilizador";
+            document.getElementById('modal-usuario-id').value = "";
+            document.getElementById('modal-usuario-nome').value = "";
+            document.getElementById('modal-campo-senha').classList.add('hidden'); // Criação usa password automática (123456)
+            document.getElementById('modal-usuario').classList.remove('hidden');
+        }
+
+        function abrirModalEditarUsuario(userId) {
+            const user = listaPerfis.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('modal-usuario-titulo').textContent = "Editar Utilizador";
+            document.getElementById('modal-usuario-id').value = user.id;
+            document.getElementById('modal-usuario-nome').value = user.nome_completo;
+            document.getElementById('modal-usuario-senha').value = user.senha_plana || "123456";
+            document.getElementById('modal-campo-senha').classList.remove('hidden'); // Edição permite alterar password
+            document.getElementById('modal-usuario').classList.remove('hidden');
+        }
+
+        function fecharModalUsuario() {
+            document.getElementById('modal-usuario').classList.add('hidden');
+        }
+
+        /**
+         * Executa a submissão de dados do utilizador (Criação e Edição)
+         */
+        async function submeterFormularioUsuario() {
+            const id = document.getElementById('modal-usuario-id').value;
+            const nome = document.getElementById('modal-usuario-nome').value.trim();
+            const senha = document.getElementById('modal-usuario-senha').value.trim();
+
+            if (!nome) {
+                mostrarNotificacao("Por favor, insira o nome completo do utilizador.", "warning");
+                return;
+            }
+
+            mostrarSpinner(true, "A gravar dados do utilizador...");
+            try {
+                if (id) {
+                    // Modo Edição
+                    const { error } = await supabaseClient
+                        .from('perfis')
+                        .update({
+                            nome_completo: nome,
+                            senha_plana: senha || "123456"
+                        })
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    mostrarNotificacao("Utilizador atualizado com sucesso!", "success");
+                } else {
+                    // Modo Criação (Senha padrão: 123456)
+                    const novoId = gerarUUID();
+                    const loginLimpo = nome
+                        .toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .replace(/\s+/g, "");
+
+                    const { error } = await supabaseClient
+                        .from('perfis')
+                        .insert([{
+                            id: novoId, // Injeta o UUID gerado
+                            nome_completo: nome,
+                            usuario_login: loginLimpo,
+                            senha_plana: "123456",
+                            pontos_total: 0
+                        }]);
+
+                    if (error) throw error;
+                    mostrarNotificacao("Utilizador criado com sucesso com a senha padrão '123456'!", "success");
+                }
+
+                fecharModalUsuario();
+                await carregarDadosDoBanco();
+
+            } catch (error) {
+                console.error("Erro ao gravar utilizador:", error);
+                mostrarNotificacao(`Falha ao gravar utilizador: ${error.message}`, "danger");
+            } finally {
+                mostrarSpinner(false);
+            }
+        }
+
+        /**
+         * Remove com segurança o registo do utilizador
+         */
+        async function removerUsuario(userId, nome) {
+            const confirmacao = confirm(`Tem certeza absoluta de que deseja apagar o utilizador "${nome}"? Isto apagará permanentemente o seu histórico.`);
+            if (!confirmacao) return;
+
+            mostrarSpinner(true, "A apagar utilizador...");
+            try {
+                const { error } = await supabaseClient
+                    .from('perfis')
+                    .delete()
+                    .eq('id', userId);
+
+                if (error) throw error;
+
+                mostrarNotificacao("Utilizador apagado com sucesso!", "success");
+                await carregarDadosDoBanco();
+
+            } catch (error) {
+                console.error("Erro ao apagar utilizador:", error);
+                mostrarNotificacao(`Não foi possível apagar: ${error.message}`, "danger");
+            } finally {
+                mostrarSpinner(false);
+            }
+        }
+
+        // =========================================================================
+        // MOTOR DE AUDITORIA DE PALPITES
+        // =========================================================================
+
+        /**
+         * Abre o painel e processa em tempo real a auditoria de cada aposta do utilizador selecionado
+         */
+        function abrirAuditoria(userId) {
+            const user = listaPerfis.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('auditoria-titulo-user').textContent = `Auditoria de Palpites: ${user.nome_completo}`;
+            document.getElementById('auditoria-resumo-pts').textContent = `Pontuação geral calculada: ${user.pontos_total || 0} pts`;
+
+            const tbody = document.getElementById('auditoria-tabela-corpo');
+            tbody.innerHTML = "";
+
+            const palpitesUser = listaPalpites.filter(p => p.user_id === userId);
+
+            if (palpitesUser.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 italic">Este utilizador ainda não efetuou palpites.</td></tr>`;
+                document.getElementById('modal-auditoria').classList.remove('hidden');
+                return;
+            }
+
+            const mapaPalpites = new Map(palpitesUser.map(p => [p.jogo_id, p]));
+
+            listaJogos.forEach(jogo => {
+                const palpite = mapaPalpites.get(jogo.id);
+                if (!palpite) return; 
+
+                const pM = palpite.palpite_a;
+                const pV = palpite.palpite_b;
+                const jM = jogo.gols_a_oficial;
+                const jV = jogo.gols_b_oficial;
+
+                const isFinalizado = jM !== null && jV !== null;
+                const pontosGanho = isFinalizado ? avaliarRegrasPalpite(palpite, jogo, regrasPontuacao) : 0;
+                const multiplicador = obterMultiplicadorFase(jogo.fase);
+
+                let badgeClass = "bg-slate-800 text-slate-400";
+                let metaRegraNome = "Sem Resultado Oficial";
+
+                if (isFinalizado) {
+                    // Identificação retroativa da regra base para fins visuais
+                    const vencedorPalpite = pM > pV ? 1 : (pM < pV ? 2 : 0);
+                    const vencedorReal = jM > jV ? 1 : (jM < jV ? 2 : 0);
+
+                    let rawRule = "";
+                    if (pM === jM && pV === jV) {
+                        rawRule = "Placar Exato";
+                    } else if (vencedorPalpite === vencedorReal) {
+                        if (vencedorReal === 0) {
+                            rawRule = "Vencedor/Empate Simples";
+                        } else {
+                            const saldoPalpite = pM - pV;
+                            const saldoReal = jM - jV;
+                            if (saldoPalpite === saldoReal) {
+                                rawRule = "Vencedor + Saldo";
+                            } else {
+                                rawRule = "Vencedor/Empate Simples";
+                            }
+                        }
+                    } else if (pM === jM || pV === jV) {
+                        rawRule = "Golo Parcial";
+                    } else {
+                        rawRule = "Errou";
+                    }
+
+                    // Define estilo da badge com base na regra de pontuação correspondente
+                    if (rawRule === "Placar Exato") {
+                        badgeClass = "bg-emerald-950 text-emerald-400 border border-emerald-500/30";
+                        metaRegraNome = `Placar Exato (+${pontosGanho})`;
+                    } else if (rawRule === "Vencedor + Saldo") {
+                        badgeClass = "bg-teal-950 text-teal-400 border border-teal-500/30";
+                        metaRegraNome = `Venc. + Saldo (+${pontosGanho})`;
+                    } else if (rawRule === "Vencedor/Empate Simples") {
+                        badgeClass = "bg-blue-950 text-blue-400 border border-blue-500/30";
+                        metaRegraNome = `Venc/Empate Simples (+${pontosGanho})`;
+                    } else if (rawRule === "Golo Parcial") {
+                        badgeClass = "bg-slate-900 text-amber-500 border border-amber-500/20";
+                        metaRegraNome = `Golo Parcial (+${pontosGanho})`;
+                    } else {
+                        badgeClass = "bg-red-950/50 text-red-400 border border-red-500/10";
+                        metaRegraNome = `Errou Tudo (0)`;
+                    }
+                }
+
+                const dataObj = new Date(jogo.data_hora);
+                const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+                const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/10 transition-all border-b border-slate-800/50";
+                tr.innerHTML = `
+                    <td class="p-3 text-slate-400 font-semibold uppercase tracking-wide text-[10px]">${jogo.fase || "Geral"}</td>
+                    <td class="p-3 text-[10px] text-slate-500 font-mono">${dataFormatada} - ${horaFormatada}</td>
+                    <td class="p-3 font-semibold text-slate-300">${jogo.time_a} x ${jogo.time_b}</td>
+                    <td class="p-3 text-center font-mono font-bold text-white text-xs">${isFinalizado ? `${jM} - ${jV}` : '—'}</td>
+                    <td class="p-3 text-center font-mono font-bold text-blue-400 text-xs">${pM} - ${pV}</td>
+                    <td class="p-3 text-center">
+                        <div class="flex flex-col gap-1 items-center">
+                            <span class="px-2.5 py-1 rounded text-[10px] font-bold ${badgeClass}">
+                                ${metaRegraNome}
+                            </span>
+                            ${multiplicador > 1 ? `<span class="text-[9px] text-slate-400 italic">Multiplicador: x${multiplicador}</span>` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('modal-auditoria').classList.remove('hidden');
+        }
+
+        function fecharModalAuditoria() {
+            document.getElementById('modal-auditoria').classList.add('hidden');
+        }
+
+        /**
+         * Controla o painel visual de carregamento
+         */
+        function mostrarSpinner(visivel, mensagem = "A carregar...") {
+            const overlay = document.getElementById('loading-overlay');
+            const texto = overlay.querySelector('p');
+            texto.textContent = messageFallback(mensagem, "A carregar...");
+
+            if (visivel) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            } else {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
+        }
+
+        function messageFallback(val, defaultVal) {
+            return val !== undefined ? val : defaultVal;
+        }
+
+        /**
+         * Cria caixas de alerta dinâmicas de feedback visual na tela (Substitui alert() nativo)
+         */
+        function mostrarNotificacao(mensagem, tipo = 'info') {
+            const container = document.getElementById('feedback-container');
+            const alertBox = document.createElement('div');
+            
+            let classesTipo = 'bg-blue-600 border-blue-500 text-white';
+            if (tipo === 'success') classesTipo = 'bg-emerald-800/95 border-emerald-500 text-emerald-200';
+            if (tipo === 'warning') classesTipo = 'bg-amber-800/95 border-amber-500 text-amber-200';
+            if (tipo === 'danger') classesTipo = 'bg-red-900/95 border-red-600 text-red-200';
+
+            alertBox.className = `p-4 rounded-xl border shadow-2xl flex justify-between items-center transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto ${classesTipo}`;
+            alertBox.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="font-medium text-xs sm:text-sm">${mensagem}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-white hover:text-slate-300 font-bold ml-4 text-xs">✕</button>
+            `;
+
+            container.appendChild(alertBox);
+
+            setTimeout(() => {
+                alertBox.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                alertBox.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => {
+                    alertBox.remove();
+                }, 300);
+            }, 5000);
+        }
     </script>
 </body>
 </html>
-```eof
