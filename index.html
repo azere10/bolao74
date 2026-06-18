@@ -36,7 +36,6 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-        /* Classes especiais para o Modo Acessibilidade Ativado */
         .acessibilidade-ativa {
             font-size: 1.15rem !important;
         }
@@ -51,15 +50,10 @@
             width: 2.6rem !important;
             height: 2.6rem !important;
         }
-        .acessibilidade-ativa .bloco-placar {
-            min-width: 175px !important;
-            gap: 0.6rem !important;
-        }
     </style>
 </head>
 <body class="min-h-screen font-sans antialiased pb-28" id="body-app">
 
-    <!-- BARRA DE ACESSIBILIDADE RÁPIDA (PENSADA PARA IDOSOS) -->
     <div class="bg-blue-950/80 border-b border-blue-800 text-white py-2 px-4 text-xs">
         <div class="max-w-7xl mx-auto flex justify-between items-center flex-wrap gap-2">
             <span class="font-medium text-blue-300">⚙️ Ajuda Visual:</span>
@@ -74,7 +68,6 @@
     <!-- CONTAINER DE FEEDBACK / NOTIFICAÇÕES -->
     <div id="feedback-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4"></div>
 
-    <!-- TELA DE LOGIN -->
     <div id="tela-login" class="fixed inset-0 bg-[#0b132b] z-50 flex items-center justify-center p-4">
         <div class="bg-[#1c2541] border border-slate-800 w-full max-w-md p-8 rounded-2xl shadow-2xl flex flex-col items-center">
             <div class="h-16 w-16 bg-blue-600/10 rounded-full flex items-center justify-center mb-4 border border-blue-500/20">
@@ -101,7 +94,6 @@
         </div>
     </div>
 
-    <!-- HEADER / MENU DE ABAS -->
     <header id="app-header" class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-800 hidden">
         <div class="flex flex-col items-center md:items-start">
             <h1 class="text-2xl font-black tracking-wider text-blue-400 text-center md:text-left">BOLÃO DO MAURINHO</h1>
@@ -124,18 +116,15 @@
         </div>
     </header>
 
-    <!-- SPINNER DE PROCESSAMENTO -->
+    <!-- SPINNER DE CARREGAMENTO -->
     <div id="loading-overlay" class="fixed inset-0 bg-[#0b132b]/80 z-40 flex flex-col items-center justify-center hidden">
         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
         <p class="text-blue-300 font-medium text-sm">Carregando dados do bolão...</p>
     </div>
 
-    <!-- CONTEÚDO DA APLICAÇÃO -->
     <main id="app-content" class="max-w-7xl mx-auto px-4 mt-6 hidden">
 
-        <!-- ========================================== -->
-        <!-- SEÇÃO: MEUS PALPITES -->
-        <!-- ========================================== -->
+        <!-- MEUS PALPITES -->
         <section id="aba-palpites" class="block">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
@@ -143,7 +132,7 @@
                     <p class="text-xs text-slate-400 font-medium">Os palpites são bloqueados 5 minutos antes de cada partida.</p>
                 </div>
                 
-                <!-- Botão Alternador de Visualização -->
+                <!-- Seletores Dinâmicos de Filtro -->
                 <div class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full sm:w-auto overflow-x-auto no-scrollbar">
                     <button id="btn-view-grupos" onclick="mudarModoExibicao('grupo')" class="px-3 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md whitespace-nowrap">
                         POR GRUPOS
@@ -159,40 +148,39 @@
 
             <!-- Grelha Dinâmica de Palpites -->
             <div id="grid-jogos-palpites" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Preenchido dinamicamente -->
+                <!-- Injetado dinamicamente -->
             </div>
 
-            <!-- ESTRUTURA VISUAL MATA-MATA -->
             <div id="container-matamata" class="hidden w-full overflow-x-auto pb-6 no-scrollbar">
-                <div class="flex gap-6 min-w-[1300px] justify-between items-start p-4 bg-slate-950/20 rounded-2xl border border-slate-900">
+                <div class="flex gap-6 p-4 bg-slate-950/20 rounded-2xl border border-slate-900 w-max">
                     
-                    <!-- 32-Equipes -->
-                    <div class="flex-1 space-y-4">
+                    <!-- Fase de 32 Equipes -->
+                    <div class="flex-shrink-0 w-[290px] sm:w-[320px] space-y-4">
                         <h4 class="text-xs font-black text-blue-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">32-Equipes (1.2x)</h4>
                         <div id="fase-16avos" class="space-y-3"></div>
                     </div>
 
-                    <!-- Oitavas de final -->
-                    <div class="flex-1 space-y-4 self-center">
+                    <!-- Oitavas de Final -->
+                    <div class="flex-shrink-0 w-[290px] sm:w-[320px] space-y-4 self-center">
                         <h4 class="text-xs font-black text-purple-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Oitavas (1.5x)</h4>
                         <div id="fase-oitavas" class="space-y-6"></div>
                     </div>
 
-                    <!-- Quartas de final -->
-                    <div class="flex-1 space-y-4 self-center">
+                    <!-- Quartas de Final -->
+                    <div class="flex-shrink-0 w-[290px] sm:w-[320px] space-y-4 self-center">
                         <h4 class="text-xs font-black text-pink-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Quartas (2.0x)</h4>
                         <div id="fase-quartas" class="space-y-12"></div>
                     </div>
 
                     <!-- Semifinais -->
-                    <div class="flex-1 space-y-4 self-center">
+                    <div class="flex-shrink-0 w-[290px] sm:w-[320px] space-y-4 self-center">
                         <h4 class="text-xs font-black text-amber-500 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Semifinais (2.5x)</h4>
                         <div id="fase-semis" class="space-y-24"></div>
                     </div>
 
-                    <!-- Decisão e Grande Final -->
-                    <div class="flex-1 space-y-4 self-center">
-                        <h4 class="text-xs font-black text-emerald-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Decisão de Finais (3.0x)</h4>
+                    <!-- Finais (Decisão 3º Lugar & Grande Final) -->
+                    <div class="flex-shrink-0 w-[290px] sm:w-[320px] space-y-4 self-center">
+                        <h4 class="text-xs font-black text-emerald-400 uppercase tracking-wider text-center border-b border-slate-800 pb-2">Decisões de Finais (3.0x)</h4>
                         <div id="fase-final" class="space-y-4"></div>
                     </div>
 
@@ -200,9 +188,6 @@
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- SEÇÃO: RANKING GERAL -->
-        <!-- ========================================== -->
         <section id="aba-ranking" class="hidden">
             <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-3 sm:p-6 shadow-2xl">
                 <div class="mb-6">
@@ -226,9 +211,6 @@
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- SEÇÃO: REGULAMENTO -->
-        <!-- ========================================== -->
         <section id="aba-regras" class="hidden">
             <div class="max-w-4xl mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-2xl space-y-6">
                 <div class="border-b border-slate-800 pb-4">
@@ -286,6 +268,7 @@
                     </div>
                 </div>
 
+                <!-- Multiplicadores de Fases -->
                 <div>
                     <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
                         <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Multiplicadores do Mata-Mata
@@ -321,9 +304,6 @@
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- SEÇÃO: MINHA CONTA -->
-        <!-- ========================================== -->
         <section id="aba-conta" class="hidden">
             <div class="max-w-md mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-8 shadow-2xl">
                 <div class="border-b border-slate-800 pb-4 mb-6 flex flex-col items-center">
@@ -355,7 +335,7 @@
         </section>
     </main>
 
-    <!-- BOTÃO FLUTUANTE DE SALVAR PALPITES (MOBILE) -->
+    <!-- BOTÃO FLUTUANTE DE SALVAR PALPITES -->
     <button id="btn-salvar-flutuante" onclick="guardarMeusPalpites()" class="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-6 py-4 rounded-full shadow-2xl hover:shadow-emerald-900/40 transition-all transform active:scale-95 flex items-center gap-2 border border-emerald-500/30 hidden">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -363,7 +343,7 @@
         <span class="text-xs sm:text-sm tracking-wide">SALVAR MEUS PALPITES</span>
     </button>
 
-    <!-- MODAL: AUDITORIA DE PALPITES (RANKING) -->
+    <!-- MODAL: AUDITORIA DE PALPITES -->
     <div id="modal-auditoria" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-[#1c2541] border border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
@@ -641,9 +621,9 @@
                 }
             });
 
-            const timesArr = Object.values(tabela);
+            const teamsArr = Object.values(tabela);
 
-            timesArr.sort((a, b) => {
+            teamsArr.sort((a, b) => {
                 if (b.pontos !== a.pontos) return b.pontos - a.pontos;
                 if (b.sg !== a.sg) return b.sg - a.sg;
                 if (b.gp !== a.gp) return b.gp - a.gp;
@@ -656,7 +636,7 @@
                 return a.time.localeCompare(b.time);
             });
 
-            return timesArr;
+            return teamsArr;
         }
 
         function resolverNomeEquipeMataMata(nomeOriginal) {
@@ -792,32 +772,31 @@
             const inputDisabled = isLocked ? "disabled" : "";
             const cursorClass = isLocked ? "cursor-not-allowed opacity-80" : "";
 
-            let inputsVisual = `
-                <div class="bloco-placar flex items-center justify-center gap-1.5 bg-slate-900 border border-slate-700/60 p-1.5 rounded-xl ${cursorClass} min-w-[130px] sm:min-w-[155px] flex-shrink-0">
-                    ${!isLocked ? `<button type="button" onclick="alterarGolsInput('${jogo.id}', 'a', -1)" class="w-6 h-6 bg-slate-800 hover:bg-slate-700 active:scale-90 text-white font-black text-xs rounded-lg transition-all flex items-center justify-center">-</button>` : ''}
-                    <input type="number" 
-                           id="palpite-a-${jogo.id}" 
-                           placeholder="-" 
-                           value="${pA}" 
-                           ${inputDisabled}
-                           class="input-palpite-a w-7 h-7 sm:w-8 sm:h-8 text-center bg-transparent text-white font-extrabold text-sm sm:text-base outline-none focus:ring-0" />
-                    <span class="text-xs text-slate-500 font-extrabold px-0.5">x</span>
-                    <input type="number" 
-                           id="palpite-b-${jogo.id}" 
-                           placeholder="-" 
-                           value="${pB}" 
-                           ${inputDisabled}
-                           class="input-palpite-b w-7 h-7 sm:w-8 sm:h-8 text-center bg-transparent text-white font-extrabold text-sm sm:text-base outline-none focus:ring-0" />
-                    ${!isLocked ? `<button type="button" onclick="alterarGolsInput('${jogo.id}', 'a', 1)" class="w-6 h-6 bg-slate-800 hover:bg-slate-700 active:scale-90 text-white font-black text-xs rounded-lg transition-all flex items-center justify-center">+</button>` : ''}
-                </div>
-            `;
-
+            let inputsVisual = "";
             if (isLocked) {
                 inputsVisual = `
-                    <div class="bloco-placar flex items-center justify-center gap-2 bg-slate-950/40 border border-slate-800 p-1.5 rounded-xl min-w-[90px] sm:min-w-[110px] flex-shrink-0">
-                        <span class="text-sm font-black text-blue-400 font-mono">${pA !== "" ? pA : '—'}</span>
+                    <div class="flex items-center justify-center gap-1.5 bg-slate-950/40 border border-slate-800 p-1.5 rounded-xl min-w-[70px] sm:min-w-[90px] h-9 sm:h-10">
+                        <span class="text-xs sm:text-sm font-black text-blue-400 font-mono">${pA !== "" ? pA : '—'}</span>
                         <span class="text-[10px] text-slate-600 font-bold">x</span>
-                        <span class="text-sm font-black text-blue-400 font-mono">${pB !== "" ? pB : '—'}</span>
+                        <span class="text-xs sm:text-sm font-black text-blue-400 font-mono">${pB !== "" ? pB : '—'}</span>
+                    </div>
+                `;
+            } else {
+                inputsVisual = `
+                    <div class="flex items-center justify-center gap-1 bg-slate-900 border border-slate-700/60 px-2 py-1 rounded-lg ${cursorClass} min-w-[70px] sm:min-w-[90px] h-9 sm:h-10">
+                        <input type="number" 
+                               id="palpite-a-${jogo.id}" 
+                               placeholder="-" 
+                               value="${pA}" 
+                               ${inputDisabled}
+                               class="input-palpite-a w-7 h-7 sm:w-8 sm:h-8 text-center bg-transparent text-white font-extrabold text-xs sm:text-sm outline-none focus:ring-0 p-0" />
+                        <span class="text-[10px] text-slate-500 font-extrabold">x</span>
+                        <input type="number" 
+                               id="palpite-b-${jogo.id}" 
+                               placeholder="-" 
+                               value="${pB}" 
+                               ${inputDisabled}
+                               class="input-palpite-b w-7 h-7 sm:w-8 sm:h-8 text-center bg-transparent text-white font-extrabold text-xs sm:text-sm outline-none focus:ring-0 p-0" />
                     </div>
                 `;
             }
@@ -838,13 +817,13 @@
                     const pctB = Math.round((vitB / total) * 100);
 
                     barraTendenciaHTML = `
-                        <div class="w-full mt-2.5 pt-2 border-t border-slate-800/60">
+                        <div class="w-full mt-2 pt-2 border-t border-slate-850">
                             <div class="flex justify-between text-[8px] sm:text-[9px] text-slate-400 font-black uppercase mb-1">
                                 <span class="text-blue-400">Vit ${jogo.time_a}: ${pctA}%</span>
                                 <span class="text-slate-400">Empate: ${pctE}%</span>
                                 <span class="text-red-400">Vit ${jogo.time_b}: ${pctB}%</span>
                             </div>
-                            <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden flex">
+                            <div class="w-full bg-slate-950 rounded-full h-1 flex">
                                 <div class="bg-blue-500 h-full transition-all duration-500" style="width: ${pctA}%"></div>
                                 <div class="bg-slate-600 h-full transition-all duration-500" style="width: ${pctE}%"></div>
                                 <div class="bg-red-500 h-full transition-all duration-500" style="width: ${pctB}%"></div>
@@ -859,12 +838,21 @@
             return `
                 <div class="linha-jogo flex flex-col p-3 rounded-xl border border-slate-800/80 my-1 ${cardBg}" data-jogo-id="${jogo.id}">
                     <div class="flex items-center justify-between gap-1 w-full">
-                        <span class="text-right text-[11px] sm:text-xs font-bold text-slate-200 truncate w-[35%] tracking-wide" title="${timeAExibido}">${timeAExibido}</span>
-                        <div class="flex flex-col items-center justify-center w-[30%]">
-                            ${inputsVisual}
-                            ${isFinalizado ? `<span class="text-[9px] bg-emerald-950/80 text-emerald-400 border border-emerald-500/15 px-1.5 py-0.5 rounded font-black mt-1 font-mono">Oficial: ${jogo.gols_a_oficial} x ${jogo.gols_b_oficial}</span>` : ''}
+                        <!-- Equipe Mandante -->
+                        <div class="text-right text-[11px] sm:text-xs font-bold text-slate-200 truncate w-[38%] pr-1" title="${timeAExibido}">
+                            ${timeAExibido}
                         </div>
-                        <span class="text-left text-[11px] sm:text-xs font-bold text-slate-200 truncate w-[35%] tracking-wide" title="${timeBExibido}">${timeBExibido}</span>
+                        
+                        <!-- Bloco Central do Placar -->
+                        <div class="flex flex-col items-center justify-center w-[24%] flex-shrink-0">
+                            ${inputsVisual}
+                            ${isFinalizado ? `<span class="text-[8px] sm:text-[9px] bg-emerald-950/80 text-emerald-400 border border-emerald-500/15 px-1 sm:px-1.5 py-0.5 rounded font-black mt-1 font-mono whitespace-nowrap">Oficial: ${jogo.gols_a_oficial} x ${jogo.gols_b_oficial}</span>` : ''}
+                        </div>
+                        
+                        <!-- Equipe Visitante -->
+                        <div class="text-left text-[11px] sm:text-xs font-bold text-slate-200 truncate w-[38%] pl-1" title="${timeBExibido}">
+                            ${timeBExibido}
+                        </div>
                     </div>
                     ${barraTendenciaHTML}
                 </div>
@@ -946,7 +934,7 @@
                     const infoDia = diasMap[diaNome];
                     const dataGrupoObj = infoDia.dataObj;
                     const jogosDoDia = infoDia.jogos;
-                    const isDiaPassado = dataGrupoObj < hojeLimiar;
+                    const isDiaPassado = infoDia.diaYMD < '2026-06-18';
                     const isHoje = infoDia.diaYMD === '2026-06-18';
 
                     let htmlJogosDia = "";
@@ -985,25 +973,6 @@
             }
         }
 
-        function alterarGolsInput(jogoId, timeExt, delta) {
-            const inputA = document.getElementById(`palpite-a-${jogoId}`);
-            const inputB = document.getElementById(`palpite-b-${jogoId}`);
-            
-            if (timeExt === 'a') {
-                let val = parseInt(inputA.value, 10);
-                if (isNaN(val)) val = 0;
-                val += delta;
-                if (val < 0) val = 0;
-                inputA.value = val;
-            } else {
-                let val = parseInt(inputB.value, 10);
-                if (isNaN(val)) val = 0;
-                val += delta;
-                if (val < 0) val = 0;
-                inputB.value = val;
-            }
-        }
-
         function renderizarArvoreMataMata(meusPalpitesMap) {
             const divsFases = {
                 'fase-16avos': [],
@@ -1021,7 +990,7 @@
                     ${gerarHTMLJogoIndividual(jogo, meusPalpitesMap, false)}
                 </div>`;
 
-                if (faseNormal.includes('32-equipes') || faseNormal.includes('32 equipes') || faseNormal.includes('trinta e duas') || faseNormal.includes('16-avos') || faseNormal.includes('16 avos')) {
+                if (faseNormal.includes('32-equipes') || faseNormal.includes('32 equipes')) {
                     divsFases['fase-16avos'].push(gameHtml);
                 } else if (faseNormal.includes('oitavas') || faseNormal.includes('oitavos')) {
                     divsFases['fase-oitavas'].push(gameHtml);
@@ -1418,7 +1387,6 @@
                         const saldoReal = jA - jB;
 
                         if (saldoPalpite === saldoReal) {
-                            pontosBase = rules.vencedorGols; // fallback
                             pontosBase = regras.vencedorGols;
                         } else {
                             pontosBase = regras.vencedorSimples;
