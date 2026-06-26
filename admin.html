@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bolão do Maurinho - Painel Admin</title>
-    <!-- Tailwind CSS para Estilização Premium -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- CDN do Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Personalização para o tema escuro premium */
         body {
             background-color: #0b132b;
             color: #f8fafc;
@@ -18,7 +15,6 @@
             background-color: #1c2541;
             border: 1px solid #2a3759;
         }
-        /* Esconde barras de scroll horizontais desnecessárias */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -30,15 +26,16 @@
 </head>
 <body class="min-h-screen font-sans antialiased pb-12">
 
-    <!-- CABEÇALHO / BARRA SUPERIOR E ABAS -->
     <header class="max-w-7xl mx-auto px-4 py-6 border-b border-slate-800">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4">
             <h1 class="text-3xl font-extrabold tracking-wider text-blue-400">BOLÃO DO MAURINHO ADMIN</h1>
             
-            <!-- Seletores de Abas -->
             <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-800">
                 <button id="btn-tab-jogos" onclick="mudarAba('jogos')" class="px-5 py-2 rounded-lg font-bold text-sm transition-all bg-blue-600 text-white shadow-md">
                     CONTROLE DE JOGOS
+                </button>
+                <button id="btn-tab-matamata" onclick="mudarAba('matamata')" class="px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-400 hover:text-white">
+                    MATA-MATA
                 </button>
                 <button id="btn-tab-users" onclick="mudarAba('users')" class="px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-400 hover:text-white">
                     GESTÃO DE UTILIZADORES
@@ -56,30 +53,34 @@
         </div>
     </header>
 
-    <!-- BANNER DE FEEDBACK / NOTIFICAÇÕES (Substitui os pop-ups de alerta bloqueantes) -->
     <div id="feedback-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4"></div>
 
-    <!-- ECRÃ DE CARREGAMENTO (SPINNER) -->
-    <div id="loading-overlay" class="fixed inset-0 bg-[#0b132b]/80 z-40 flex flex-col items-center justify-center transition-opacity duration-300">
+    <div id="loading-overlay" class="fixed inset-0 bg-[#0b132b]/80 z-40 flex flex-col items-center justify-center transition-opacity duration-300 hidden">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
         <p class="text-blue-300 font-medium text-sm">A carregar dados do Supabase...</p>
     </div>
 
-    <!-- CONTEÚDO PRINCIPAL (MUDANÇA DE ABAS) -->
     <main class="max-w-7xl mx-auto px-4 mt-8">
         
-        <!-- ========================================== -->
-        <!-- ABA 1: CONTROLE DE JOGOS -->
-        <!-- ========================================== -->
         <section id="aba-jogos" class="block">
-            <div id="grid-grupos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Os cartões dos grupos serão desenhados aqui dinamicamente -->
+            <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-900/40 p-4 rounded-xl border border-slate-800 gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Ações de Transição de Fase</h2>
+                    <p class="text-xs text-slate-400">Ao encerrar a fase de grupos, a classificação atual fixa as pontuações e injeta os cruzamentos do mata-mata.</p>
+                </div>
+                <button onclick="encerrarFaseGrupos()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-5 py-2.5 rounded-lg shadow-md text-xs transition-all flex items-center gap-2">
+                    🔒 ENCERRAR FASE DE GRUPOS
+                </button>
             </div>
+            <div id="grid-grupos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- ABA 2: GERENCIAMENTO DE USUÁRIOS -->
-        <!-- ========================================== -->
+        <section id="aba-matamata" class="hidden">
+            <div id="grid-matamata" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+        </section>
+
         <section id="aba-users" class="hidden">
             <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-6 shadow-2xl">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -95,7 +96,6 @@
                     </button>
                 </div>
 
-                <!-- Tabela de Utilizadores -->
                 <div class="overflow-x-auto rounded-xl border border-slate-800">
                     <table class="w-full text-left border-collapse bg-[#121b36]">
                         <thead>
@@ -108,17 +108,13 @@
                             </tr>
                         </thead>
                         <tbody id="tabela-usuarios-corpo" class="text-sm text-slate-300 divide-y divide-slate-800/50">
-                            <!-- Injetado dinamicamente -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- ========================================== -->
-    <!-- MODAL: AUDITORIA DE PALPITES -->
-    <!-- ========================================== -->
     <div id="modal-auditoria" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-[#1c2541] border border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
@@ -129,7 +125,6 @@
                 <button onclick="fecharModalAuditoria()" class="text-slate-400 hover:text-white transition-all text-xl">✕</button>
             </div>
             <div class="p-6 overflow-y-auto space-y-4 no-scrollbar">
-                <!-- Tabela/Grelha de palpites auditados -->
                 <div class="overflow-x-auto rounded-xl border border-slate-800">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -143,65 +138,49 @@
                             </tr>
                         </thead>
                         <tbody id="auditoria-tabela-corpo" class="text-xs text-slate-300 divide-y divide-slate-800/30">
-                            <!-- Injetado dinamicamente -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
-            </div>
-            <div class="p-4 bg-slate-900/30 border-t border-slate-800 text-right rounded-b-2xl">
-                <button onclick="fecharModalAuditoria()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-5 py-2 rounded-lg text-xs transition-all">
-                    Fechar Auditoria
-                </button>
             </div>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODAL: CRIAR / EDITAR UTILIZADOR -->
-    <!-- ========================================== -->
     <div id="modal-usuario" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-[#1c2541] border border-slate-700 w-full max-w-md rounded-xl shadow-2xl flex flex-col">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 rounded-t-xl">
-                <h3 id="modal-usuario-titulo" class="text-lg font-bold text-white">Criar Novo Utilizador</h3>
+                <h3 id="modal-usuario-titulo" class="text-lg font-bold text-white">Utilizador</h3>
                 <button onclick="fecharModalUsuario()" class="text-slate-400 hover:text-white transition-all">✕</button>
             </div>
             <div class="p-6 space-y-4">
                 <input type="hidden" id="modal-usuario-id" />
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nome Completo</label>
-                    <input type="text" id="modal-usuario-nome" placeholder="Ex: João Silva" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 outline-none text-sm" />
+                    <input type="text" id="modal-usuario-nome" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:border-blue-500 outline-none text-sm" />
                 </div>
-                <div id="modal-campo-senha" class="hidden">
+                <div id="modal-campo-senha">
                     <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Palavra-passe (Plana)</label>
-                    <input type="text" id="modal-usuario-senha" placeholder="Insira a nova palavra-passe" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 outline-none text-sm" />
+                    <input type="text" id="modal-usuario-senha" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:border-blue-500 outline-none text-sm" />
                 </div>
             </div>
             <div class="p-4 bg-slate-900/30 border-t border-slate-800 flex justify-end gap-2 rounded-b-xl">
-                <button onclick="fecharModalUsuario()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all">
-                    Cancelar
-                </button>
-                <button onclick="submeterFormularioUsuario()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg text-xs font-bold transition-all">
-                    Confirmar
-                </button>
+                <button onclick="fecharModalUsuario()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold">Cancelar</button>
+                <button onclick="submeterFormularioUsuario()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg text-xs font-bold">Confirmar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // =========================================================================
-        // CONFIGURAÇÃO DO SUPABASE (CHAVE PÚBLICA INTEGRADA)
-        // =========================================================================
         const SUPABASE_URL = "https://auwzjdjyaqvqvznpfvif.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1d3pqZGp5YXF2cXZ6bnBmdmlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDQ1MjMsImV4cCI6MjA5MTg4MDUyM30.GLjH9CjmDOujKYtO9-ZGtUXHkkenyS1CV1E-odMC4yQ"; 
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Memória local de dados
         let listaJogos = [];
+        let listaJogosMataMata = []; 
         let listaPalpites = [];
         let listaPerfis = [];
         let regrasPontuacao = {
-            placarExato: 25,       // Regras Oficiais do seu bolão (Base)
+            placarExato: 25,       
             vencedorGols: 18,
             vencedorSimples: 15,
             golParcial: 3,
@@ -209,54 +188,55 @@
         };
         let abaAtiva = 'jogos';
 
-        // Inicialização automática
         window.addEventListener('DOMContentLoaded', async () => {
             await carregarDadosDoBanco();
         });
 
-        /**
-         * Alterna entre as abas e ajusta os botões visuais
-         */
         function mudarAba(aba) {
             abaAtiva = aba;
             const btnJogos = document.getElementById('btn-tab-jogos');
+            const btnMata = document.getElementById('btn-tab-matamata');
             const btnUsers = document.getElementById('btn-tab-users');
+            
             const abaJogosEl = document.getElementById('aba-jogos');
+            const abaMataEl = document.getElementById('aba-matamata');
             const abaUsersEl = document.getElementById('aba-users');
             const btnAcaoTopo = document.getElementById('btn-acao-topo');
 
+            [btnJogos, btnMata, btnUsers].forEach(b => {
+                if(b) b.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-400 hover:text-white";
+            });
+            [abaJogosEl, abaMataEl, abaUsersEl].forEach(a => {
+                if(a) a.classList.add('hidden');
+            });
+
             if (aba === 'jogos') {
                 btnJogos.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all bg-blue-600 text-white shadow-md";
-                btnUsers.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-400 hover:text-white";
                 abaJogosEl.classList.remove('hidden');
-                abaUsersEl.classList.add('hidden');
+                btnAcaoTopo.classList.remove('hidden');
+            } else if (aba === 'matamata') {
+                btnMata.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all bg-blue-600 text-white shadow-md";
+                abaMataEl.classList.remove('hidden');
                 btnAcaoTopo.classList.remove('hidden');
             } else {
                 btnUsers.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all bg-blue-600 text-white shadow-md";
-                btnJogos.className = "px-5 py-2 rounded-lg font-bold text-sm transition-all text-slate-400 hover:text-white";
                 abaUsersEl.classList.remove('hidden');
-                abaJogosEl.classList.add('hidden');
                 btnAcaoTopo.classList.add('hidden');
             }
         }
 
-        /**
-         * Procura todos os registos necessários para carregar a página e efetuar cálculos
-         */
         async function carregarDadosDoBanco() {
             mostrarSpinner(true, "A aceder ao banco de dados...");
             try {
-                // 1. Carrega todos os jogos agendados
-                const { data: jogos, error: errJogos } = await supabaseClient
-                    .from('jogos')
-                    .select('*');
-
+                const { data: jogos, error: errJogos } = await supabaseClient.from('jogos').select('*');
                 if (errJogos) throw errJogos;
-                
-                // ORDENAÇÃO CRÍTICA POR DATA/HORA antes de qualquer processamento
                 listaJogos = (jogos || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
 
-                // 2. Carrega palpites e perfis de utilizadores
+                const { data: jogosMata, error: errMata } = await supabaseClient.from('jogos_mata_mata').select('*');
+                if (!errMata) {
+                    listaJogosMataMata = (jogosMata || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+                }
+
                 const { data: palpites, error: errPalpites } = await supabaseClient.from('palpites').select('*');
                 if (errPalpites) throw errPalpites;
                 listaPalpites = palpites || [];
@@ -265,30 +245,53 @@
                 if (errPerfis) throw errPerfis;
                 listaPerfis = perfis || [];
 
-                // Desenha as interfaces com base nos dados mais recentes
                 renderizarGrupos();
+                renderizarMataMata();
                 renderizarUsuariosTabela();
 
             } catch (error) {
-                console.error("Erro ao carregar dados:", error);
-                mostrarNotificacao(`Falha ao conectar ao Supabase: ${error.message}`, "danger");
+                console.error("Erro:", error);
+                mostrarNotificacao(`Falha ao conectar: ${error.message}`, "danger");
             } finally {
                 mostrarSpinner(false);
             }
         }
 
-        /**
-         * Desenha dinamicamente as tabelas de grupos mantendo o agrupamento, 
-         * mas exibindo-os na sequência cronológica exata de data/hora (Dentro de cada grupo).
-         */
+        function calcularClassificacaoGrupo(jogosDoGrupo) {
+            const tabela = {};
+            jogosDoGrupo.forEach(j => {
+                if (!tabela[j.time_a]) tabela[j.time_a] = { time: j.time_a, pts: 0, v: 0, sg: 0, gp: 0 };
+                if (!tabela[j.time_b]) tabela[j.time_b] = { time: j.time_b, pts: 0, v: 0, sg: 0, gp: 0 };
+
+                if (j.gols_a_oficial !== null && j.gols_b_oficial !== null) {
+                    const ga = parseInt(j.gols_a_oficial);
+                    const gb = parseInt(j.gols_b_oficial);
+                    tabela[j.time_a].gp += ga;
+                    tabela[j.time_b].gp += gb;
+                    tabela[j.time_a].sg += (ga - gb);
+                    tabela[j.time_b].sg += (gb - ga);
+
+                    if (ga > gb) {
+                        tabela[j.time_a].pts += 3;
+                        tabela[j.time_a].v += 1;
+                    } else if (gb > ga) {
+                        tabela[j.time_b].pts += 3;
+                        tabela[j.time_b].v += 1;
+                    } else {
+                        tabela[j.time_a].pts += 1;
+                        tabela[j.time_b].pts += 1;
+                    }
+                }
+            });
+
+            return Object.values(tabela).sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.v - a.v || b.gp - a.gp);
+        }
+
         function renderizarGrupos() {
             const grid = document.getElementById('grid-grupos');
             grid.innerHTML = "";
-
             const gruposMap = {};
             
-            // Como a 'listaJogos' já está ordenada por data_hora globalmente,
-            // ao mapeá-los para os seus grupos respetivos, a ordem cronológica mantém-se intacta.
             listaJogos.forEach(jogo => {
                 const grp = (jogo.fase || "GERAL").toUpperCase();
                 if (!gruposMap[grp]) gruposMap[grp] = [];
@@ -297,7 +300,6 @@
 
             Object.keys(gruposMap).sort().forEach(nomeGrupo => {
                 const jogosDoGrupo = gruposMap[nomeGrupo];
-                
                 const card = document.createElement('div');
                 card.className = "card-grupo rounded-xl p-5 flex flex-col justify-between shadow-xl transition-all duration-300";
 
@@ -305,11 +307,9 @@
                 jogosDoGrupo.forEach(jogo => {
                     const golsM = jogo.gols_a_oficial !== null && jogo.gols_a_oficial !== undefined ? jogo.gols_a_oficial : "";
                     const golsV = jogo.gols_b_oficial !== null && jogo.gols_b_oficial !== undefined ? jogo.gols_b_oficial : "";
-                    
                     const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
                     const statusClass = isFinalizado ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/30';
 
-                    // Formata a exibição de data e hora de forma elegante
                     const dataObj = new Date(jogo.data_hora);
                     const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
                     const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
@@ -321,30 +321,26 @@
                                 ${isFinalizado ? '<span class="text-[9px] bg-emerald-900 text-emerald-300 px-1.5 py-0.5 rounded font-bold">FIM</span>' : ''}
                             </div>
                             <div class="flex items-center justify-between gap-2">
-                                <!-- Equipa Mandante (time_a) -->
                                 <span class="w-1/3 text-right text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_a}</span>
-                                
-                                <!-- Inputs de Pontuação -->
                                 <div class="flex items-center gap-1 justify-center w-1/3">
-                                    <input type="number" 
-                                           placeholder="-" 
-                                           value="${golsM}" 
-                                           class="input-gols-mandante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                                    <input type="number" placeholder="-" value="${golsM}" class="input-gols-mandante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 outline-none text-xs" />
                                     <span class="text-xs text-slate-500 font-bold px-0.5">x</span>
-                                    <input type="number" 
-                                           placeholder="-" 
-                                           value="${golsV}" 
-                                           class="input-gols-visitante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                                    <input type="number" placeholder="-" value="${golsV}" class="input-gols-visitante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 outline-none text-xs" />
                                 </div>
-                                
-                                <!-- Equipa Visitante (time_b) -->
                                 <span class="w-1/3 text-left text-xs sm:text-sm font-semibold text-slate-300 truncate">${jogo.time_b}</span>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
 
-                const classificacaoHTML = calcularClassificacaoGrupo(jogosDoGrupo);
+                const classif = calcularClassificacaoGrupo(jogosDoGrupo);
+                let htmlClassif = `<div class="mt-4 pt-3 border-t border-slate-800 text-[11px] font-mono"><div class="grid grid-cols-12 text-slate-500 font-bold px-1 mb-1"><span class="col-span-6">Equipe</span><span class="col-span-2 text-center">P</span><span class="col-span-2 text-center">V</span><span class="col-span-2 text-center">SG</span></div>`;
+                classif.forEach((pos, index) => {
+                    let corColocacao = "text-slate-300";
+                    if (index === 0) corColocacao = "text-emerald-400 font-bold";
+                    if (index === 1) corColocacao = "text-blue-400 font-semibold";
+                    htmlClassif += `<div class="grid grid-cols-12 text-slate-400 px-1 py-0.5 hover:bg-slate-900/40 rounded"><span class="col-span-6 truncate font-sans ${corColocacao} font-medium">${index + 1}º ${pos.time}</span><span class="col-span-2 text-center font-bold text-blue-400">${pos.pts}</span><span class="col-span-2 text-center">${pos.v}</span><span class="col-span-2 text-center">${pos.sg > 0 ? '+' + pos.sg : pos.sg}</span></div>`;
+                });
+                htmlClassif += `</div>`;
 
                 card.innerHTML = `
                     <div>
@@ -353,83 +349,99 @@
                             ${htmlJogos}
                         </div>
                     </div>
-                    <!-- Tabela de Classificação do Grupo -->
-                    <div class="pt-4 border-t border-slate-800/80">
-                        <div class="text-[11px] uppercase font-bold text-slate-400 mb-2">Classificação Provisória</div>
-                        <div class="space-y-1">
-                            ${classificacaoHTML}
-                        </div>
-                    </div>
-                `;
-                
+                    <div class="pt-2">
+                        <div class="text-[11px] uppercase font-bold text-slate-400 mb-2">CLASSIFICAÇÃO PROVISÓRIA</div>
+                        ${htmlClassif}
+                    </div>`;
                 grid.appendChild(card);
             });
         }
 
-        /**
-         * Calcula dinamicamente a tabela do grupo baseado nos golos introduzidos
-         */
-        function calcularClassificacaoGrupo(jogos) {
-            const tabela = {};
+        function renderizarMataMata() {
+            const grid = document.getElementById('grid-matamata');
+            if (!grid) return;
+            grid.innerHTML = "";
 
-            jogos.forEach(j => {
-                if (!tabela[j.time_a]) tabela[j.time_a] = { pontos: 0, time: j.time_a };
-                if (!tabela[j.time_b]) tabela[j.time_b] = { pontos: 0, time: j.time_b };
+            const mataMap = {};
+            listaJogosMataMata.forEach((jogo, index) => {
+                const fase = jogo.fase || "MATA-MATA";
+                if (!mataMap[fase]) mataMap[fase] = [];
+                // Definição da numeração oficial correta iniciando no Jogo 73
+                jogo.numero_exibicao = 73 + index; 
+                mataMap[fase].push(jogo);
+            });
 
-                if (j.gols_a_oficial !== null && j.gols_b_oficial !== null && j.gols_a_oficial !== undefined && j.gols_b_oficial !== undefined) {
-                    const gM = parseInt(j.gols_a_oficial);
-                    const gV = parseInt(j.gols_b_oficial);
+            const ordemFases = ['16-avos', 'Oitavas', 'Quartas', 'Semifinais', 'Terceiro Lugar', 'Final'];
+            
+            ordemFases.forEach(nomeFase => {
+                if (!mataMap[nomeFase]) return;
+                const jogosDaFase = mataMap[nomeFase];
+                const card = document.createElement('div');
+                card.className = "card-grupo rounded-xl p-5 flex flex-col justify-start shadow-xl border-purple-900/40";
+
+                let htmlJogos = "";
+                jogosDaFase.forEach(jogo => {
+                    const golsM = jogo.gols_a_oficial !== null && jogo.gols_a_oficial !== undefined ? jogo.gols_a_oficial : "";
+                    const golsV = jogo.gols_b_oficial !== null && jogo.gols_b_oficial !== undefined ? jogo.gols_b_oficial : "";
+                    const vencedor = jogo.vencedor || "";
                     
-                    if (gM > gV) {
-                        tabela[j.time_a].pontos += 3;
-                    } else if (gM < gV) {
-                        tabela[j.time_b].pontos += 3;
-                    } else {
-                        tabela[j.time_a].pontos += 1;
-                        tabela[j.time_b].pontos += 1;
-                    }
-                }
+                    const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
+                    const statusClass = isFinalizado ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/30';
+                    const isEmpate = isFinalizado && parseInt(golsM) === parseInt(golsV);
+
+                    const dataObj = new Date(jogo.data_hora);
+                    const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+                    const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+                    htmlJogos += `
+                        <div class="linha-jogo-mata flex flex-col py-2 border-b border-slate-800 last:border-b-0 gap-1 ${statusClass} rounded px-2 my-1" data-jogo-id="${jogo.id}">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-purple-400 font-mono font-bold">Jogo ${jogo.numero_exibicao} — ${dataFormatada} às ${horaFormatada}</span>
+                                ${isFinalizado ? '<span class="text-[9px] bg-emerald-900 text-emerald-300 px-1.5 py-0.5 rounded font-bold">FIM</span>' : ''}
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <input type="text" value="${jogo.time_a || ''}" class="input-time-a w-1/3 bg-transparent text-right text-xs font-semibold text-slate-300 border-b border-transparent focus:border-blue-500 outline-none truncate" placeholder="A definir" />
+                                <div class="flex items-center gap-1 justify-center w-1/3">
+                                    <input type="number" placeholder="-" value="${golsM}" class="input-gols-mandante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 outline-none text-xs" />
+                                    <span class="text-xs text-slate-500 font-bold px-0.5">x</span>
+                                    <input type="number" placeholder="-" value="${golsV}" class="input-gols-visitante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 outline-none text-xs" />
+                                </div>
+                                <input type="text" value="${jogo.time_b || ''}" class="input-time-b w-1/3 bg-transparent text-left text-xs font-semibold text-slate-300 border-b border-transparent focus:border-blue-500 outline-none truncate" placeholder="A definir" />
+                            </div>
+                            ${isEmpate ? `
+                            <div class="flex flex-col gap-1 mt-1 p-1.5 bg-slate-950/50 rounded border border-amber-500/30">
+                                <span class="text-[10px] text-amber-400 font-bold text-center">Empate! Quem passou?</span>
+                                <div class="flex justify-center gap-2">
+                                    <button onclick="definirVencedorEmpate('${jogo.id}', '${jogo.time_a}')" class="px-2 py-1 text-[11px] font-bold rounded transition-all ${vencedor === jogo.time_a ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'} truncate">${jogo.time_a || 'Mandante'}</button>
+                                    <button onclick="definirVencedorEmpate('${jogo.id}', '${jogo.time_b}')" class="px-2 py-1 text-[11px] font-bold rounded transition-all ${vencedor === jogo.time_b ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'} truncate">${jogo.time_b || 'Visitante'}</button>
+                                </div>
+                            </div>` : ''}
+                        </div>`;
+                });
+
+                card.innerHTML = `
+                    <div>
+                        <h2 class="text-lg font-extrabold text-purple-400 mb-4 tracking-wide pb-1 border-b border-purple-500/20">${nomeFase.toUpperCase()}</h2>
+                        <div class="flex flex-col gap-1.5 mb-2">${htmlJogos}</div>
+                    </div>`;
+                grid.appendChild(card);
             });
-
-            const ordenados = Object.values(tabela).sort((a, b) => b.pontos - a.pontos);
-
-            let htmlClassificacao = "";
-            ordenados.forEach((equipe, index) => {
-                let corColocacao = "text-slate-400";
-                if (index === 0) corColocacao = "text-emerald-400 font-bold";
-                if (index === 1) corColocacao = "text-blue-400 font-semibold";
-
-                htmlClassificacao += `
-                    <div class="flex justify-between items-center text-xs py-0.5 px-1 hover:bg-slate-800/30 rounded">
-                        <span class="${corColocacao}">${index + 1}º ${equipe.time}</span>
-                        <span class="font-mono font-bold text-slate-300">${equipe.pontos}pt</span>
-                    </div>
-                `;
-            });
-
-            return htmlClassificacao;
         }
 
-        /**
-         * Desenha e mapeia a lista de utilizadores cadastrados no sistema
-         */
         function renderizarUsuariosTabela() {
             const tbody = document.getElementById('tabela-usuarios-corpo');
+            if(!tbody) return;
             tbody.innerHTML = "";
 
-            // Ordena utilizadores por ordem alfabética de nome
             const ordenados = [...listaPerfis].sort((a, b) => a.nome_completo.localeCompare(b.nome_completo));
 
             ordenados.forEach(user => {
-                // MODIFICAÇÃO: Cria máscara de asteriscos para ocultar a palavra-passe original
-                const senhaMascarada = user.senha_plana ? '*'.repeat(user.senha_plana.length) : "---";
-
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-800/20 transition-all";
                 tr.innerHTML = `
                     <td class="p-4 font-semibold text-white">${user.nome_completo}</td>
                     <td class="p-4 text-slate-400 font-mono text-xs">${user.usuario_login}</td>
-                    <td class="p-4 font-mono text-slate-300 text-xs tracking-wider">${senhaMascarada}</td>
+                    <td class="p-4 font-mono text-slate-300 text-xs tracking-wider">******</td>
                     <td class="p-4 text-center">
                         <span class="bg-blue-950 text-blue-400 px-3 py-1 rounded-full font-bold text-xs border border-blue-500/20">
                             ${user.pontos_total || 0} pts
@@ -447,591 +459,294 @@
                                 Apagar
                             </button>
                         </div>
-                    </td>
-                `;
+                    </td>`;
                 tbody.appendChild(tr);
             });
         }
 
-        /**
-         * Recolhe os golos e atualiza o banco de dados de forma sequencial (Zero Deadlocks!)
-         */
-        async function guardarTodosResultados() {
-            mostrarSpinner(true, "A registar resultados oficiais...");
-            
-            const linhas = document.querySelectorAll('.linha-jogo');
-            const atualizacoes = [];
-
-            for (const linha of linhas) {
-                const jogoId = linha.getAttribute('data-jogo-id');
-                const inputM = inlineQuerySelectorSafe(linha, '.input-gols-mandante');
-                const inputV = inlineQuerySelectorSafe(linha, '.input-gols-visitante');
-
-                if (!inputM || !inputV) continue;
-
-                if (!jogoId || jogoId === "undefined" || jogoId === "null") {
-                    console.warn("Registo ignorado: Falta ID do jogo.");
-                    continue;
-                }
-
-                if (inputM.value === "" || inputV.value === "") {
-                    continue; 
-                }
-
-                const golsM = parseInt(inputM.value, 10);
-                const golsV = parseInt(inputV.value, 10);
-
-                if (isNaN(golsM) || isNaN(golsV)) {
-                    continue;
-                }
-
-                // Otimização: Só atualiza se o valor na UI for diferente do armazenado em listaJogos
-                const jogoOriginal = listaJogos.find(j => j.id == jogoId);
-                if (jogoOriginal && (jogoOriginal.gols_a_oficial !== golsM || jogoOriginal.gols_b_oficial !== golsV)) {
-                    atualizacoes.push({ id: jogoId, gols_a_oficial: golsM, gols_b_oficial: golsV });
-                }
-            }
-
-            if (atualizacoes.length === 0) {
-                mostrarSpinner(false);
-                mostrarNotificacao("Nenhum resultado novo detetado para guardar.", "warning");
-                return;
-            }
-
+        async function encerrarFaseGrupos() {
+            if (!confirm("Deseja congelar as pontuações da fase de grupos e habilitar o chaveamento do mata-mata?")) return;
+            mostrarSpinner(true, "A fixar pontuações da família...");
             try {
-                // Executa sequencialmente para prevenir concorrência agressiva de transações
-                for (const item of atualizacoes) {
-                    const { error } = await supabaseClient
-                        .from('jogos')
-                        .update({
-                            gols_a_oficial: item.gols_a_oficial,
-                            gols_b_oficial: item.gols_b_oficial
-                        })
-                        .eq('id', item.id);
-                    if (error) throw error;
+                for (const perfil of listaPerfis) {
+                    await supabaseClient.from('perfis').update({ pontos_grupo: perfil.pontos_total }).eq('id', perfil.id);
                 }
+                mostrarNotificacao("Fase de grupos encerrada com sucesso!", "success");
+                await carregarDadosDoBanco();
+            } catch (err) {
+                mostrarNotificacao("Erro ao processar transição.", "danger");
+            } finally {
+                mostrarSpinner(false);
+            }
+        }
 
-                mostrarNotificacao("Resultados oficiais guardados com sucesso!", "success");
-                
+        async function definirVencedorEmpate(jogoId, nomeTime) {
+            try {
+                const { error } = await supabaseClient.from('jogos_mata_mata').update({ vencedor: nomeTime }).eq('id', jogoId);
+                if (error) throw error;
+                mostrarNotificacao(`${nomeTime} classificado!`, "success");
+                await progredirTimeNaArvore(jogoId, nomeTime);
+                await carregarDadosDoBanco();
+            } catch (err) {
+                mostrarNotificacao(err.message, "danger");
+            }
+        }
+
+        async function progredirTimeNaArvore(jogoId, vencedor) {
+            const jogoAtual = listaJogosMataMata.find(j => j.id === jogoId);
+            if (!jogoAtual || !jogoAtual.jogo_destino_id) return;
+
+            const jogoDestino = listaJogosMataMata.find(j => j.id === jogoAtual.jogo_destino_id);
+            if (!jogoDestino) return;
+
+            if (jogoDestino.time_a && (jogoDestino.time_a.includes("3º Gp") || jogoDestino.time_a.includes("3º colocado"))) return;
+            if (jogoDestino.time_b && (jogoDestino.time_b.includes("3º Gp") || jogoDestino.time_b.includes("3º colocado"))) return;
+
+            let camposUpdate = {};
+            if (!jogoDestino.time_a || jogoDestino.time_a.startsWith("J") || jogoDestino.time_a.includes("Venc.")) {
+                camposUpdate.time_a = vencedor;
+            } else {
+                camposUpdate.time_b = vencedor;
+            }
+
+            await supabaseClient.from('jogos_mata_mata').update(camposUpdate).eq('id', jogoAtual.jogo_destino_id);
+
+            if (jogoAtual.fase === "Semifinais") {
+                const perdedor = vencedor === jogoAtual.time_a ? jogoAtual.time_b : jogoAtual.time_a;
+                const jogo3Lugar = listaJogosMataMata.find(j => j.fase === "Terceiro Lugar" || j.eh_terceiro_lugar === true);
+                if (jogo3Lugar) {
+                    let update3 = {};
+                    if (!jogo3Lugar.time_a || jogo3Lugar.time_a.startsWith("J")) update3.time_a = perdedor;
+                    else update3.time_b = perdedor;
+                    await supabaseClient.from('jogos_mata_mata').update(update3).eq('id', jogo3Lugar.id);
+                }
+            }
+        }
+
+        async function guardarTodosResultados() {
+            mostrarSpinner(true, "A guardar alterações...");
+            try {
+                if (abaAtiva === 'jogos') {
+                    const lines = document.querySelectorAll('.linha-jogo');
+                    for (let div of lines) {
+                        const id = div.getAttribute('data-jogo-id');
+                        const gA = div.querySelector('.input-gols-mandante').value;
+                        const gB = div.querySelector('.input-gols-visitante').value;
+
+                        if (gA !== "" && gB !== "") {
+                            await supabaseClient.from('jogos').update({
+                                gols_a_oficial: parseInt(gA),
+                                gols_b_oficial: parseInt(gB)
+                            }).eq('id', id);
+                        }
+                    }
+                } else if (abaAtiva === 'matamata') {
+                    const linhasMata = document.querySelectorAll('.linha-jogo-mata');
+                    for (let div of linhasMata) {
+                        const id = div.getAttribute('data-jogo-id');
+                        const tA = div.querySelector('.input-time-a').value;
+                        const tB = div.querySelector('.input-time-b').value;
+                        const gA = div.querySelector('.input-gols-mandante').value;
+                        const gB = div.querySelector('.input-gols-visitante').value;
+
+                        let updateData = { time_a: tA, time_b: tB };
+                        if (gA !== "" && gB !== "") {
+                            updateData.gols_a_oficial = parseInt(gA);
+                            updateData.gols_b_oficial = parseInt(gB);
+                            if (parseInt(gA) > parseInt(gB)) updateData.vencedor = tA;
+                            else if (parseInt(gB) > parseInt(gA)) updateData.vencedor = tB;
+                        }
+
+                        await supabaseClient.from('jogos_mata_mata').update(updateData).eq('id', id);
+
+                        if (updateData.vencedor) {
+                            await progredirTimeNaArvore(id, updateData.vencedor);
+                        }
+                    }
+                }
+                mostrarNotificacao("Alterações guardadas com sucesso!", "success");
                 await carregarDadosDoBanco();
                 await recalcularPontosGerais();
-
-            } catch (error) {
-                console.error("Erro ao guardar dados:", error);
-                mostrarNotificacao(`Erro crítico: ${error.message}`, "danger");
+            } catch (err) {
+                mostrarNotificacao(err.message, "danger");
+            } finally {
                 mostrarSpinner(false);
             }
         }
 
-        function inlineQuerySelectorSafe(parent, selector) {
-            try {
-                return parent.querySelector(selector);
-            } catch (e) {
-                return null;
-            }
-        }
-
-        /**
-         * Retorna o fator multiplicador oficial com base no nome ou identificação da fase do mata-mata
-         */
         function obterMultiplicadorFase(fase) {
             if (!fase) return 1.0;
-            const faseNormalizada = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            
-            if (faseNormalizada.includes("16-avos") || faseNormalizada.includes("16 avos") || faseNormalizada.includes("dezasseis")) {
-                return 1.2;
-            }
-            if (faseNormalizada.includes("oitavas") || faseNormalizada.includes("oitavos")) {
-                return 1.5;
-            }
-            if (faseNormalizada.includes("quartas") || faseNormalizada.includes("quartos")) {
-                return 2.0;
-            }
-            if (faseNormalizada.includes("semifinal") || faseNormalizada.includes("semifinais") || faseNormalizada.includes("meia") || faseNormalizada.includes("meias")) {
-                return 2.5;
-            }
-            if (faseNormalizada.includes("final") || faseNormalizada.includes("finais")) {
-                // Previne conflitos de fases compostas
-                if (faseNormalizada.includes("oitava") || faseNormalizada.includes("quarta") || faseNormalizada.includes("semi")) {
-                    if (faseNormalizada.includes("semi")) return 2.5;
-                    if (faseNormalizada.includes("quarta")) return 2.0;
-                    if (faseNormalizada.includes("oitava")) return 1.5;
-                }
-                return 3.0;
-            }
-            return 1.0; // Padrão: Fase de Grupos
+            const f = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            if (f.includes("16-avos")) return 1.2;
+            if (f.includes("oitavas")) return 1.5;
+            if (f.includes("quartas")) return 2.0;
+            if (f.includes("semifinal") || f.includes("semifinais")) return 2.5;
+            if (f.includes("final")) return 3.0;
+            return 1.0;
         }
 
-        /**
-         * Processador inteligente que reconstrói a pontuação de todos os utilizadores a partir do zero
-         * IMUNE A DEADLOCKS E PROTEGIDO CONTRA PALPITES DUPLICADOS NA BASE DE DADOS
-         */
         async function recalcularPontosGerais() {
-            mostrarSpinner(true, "A recalcular o ranking geral com proteção de integridade...");
             try {
-                // 1. Inicializa o mapa com 0 pontos para todos os perfis
                 const mapaPontosNovos = {};
-                listaPerfis.forEach(user => {
-                    mapaPontosNovos[user.id] = 0; 
-                });
+                listaPerfis.forEach(user => { mapaPontosNovos[user.id] = 0; });
 
-                // Considera apenas jogos cujos golos oficiais já estejam preenchidos no banco de dados
                 const jogosFinalizados = listaJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
                 const mapaJogos = new Map(jogosFinalizados.map(j => [j.id, j]));
 
-                const palpitesParaAtualizar = [];
-                
-                // Conjunto de chaves para rastrear e deduplicar palpites em tempo de execução
                 const processados = new Set();
-                let palpitesDuplicadosIgnorados = 0;
-
-                // 2. Avalia os palpites apenas contra os jogos finalizados atuais na memória
                 for (const palpite of listaPalpites) {
                     if (!palpite.user_id || !palpite.jogo_id) continue;
-
-                    // CORREÇÃO DO ERRO DO INCREMENTO IRREAL:
-                    // Se o utilizador tiver mais de um palpite gravado na tabela para o mesmo jogo,
-                    // nós processamos apenas o primeiro registo e ignoramos os restantes.
                     const chaveUnica = `${palpite.user_id}_${palpite.jogo_id}`;
-                    if (processados.has(chaveUnica)) {
-                        palpitesDuplicadosIgnorados++;
-                        continue; // Salta registos redundantes (lixo histórico de tabelas sem restrição única)
-                    }
+                    if (processados.has(chaveUnica)) continue;
                     processados.add(chaveUnica);
 
                     const jogo = mapaJogos.get(palpite.jogo_id);
                     if (!jogo) continue; 
 
-                    const pontosDoPalpite = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
+                    const pM = parseInt(palpite.palpite_a);
+                    const pV = parseInt(palpite.palpite_b);
+                    const jM = parseInt(jogo.gols_a_oficial);
+                    const jV = parseInt(jogo.gols_b_oficial);
 
-                    // OTIMIZAÇÃO CRÍTICA: Só adiciona para gravar na DB se o valor calculado for diferente do armazenado!
-                    if (Number(palpite.pontos_obtidos) !== pontosDoPalpite) {
-                        palpitesParaAtualizar.push({
-                            id: palpite.id,
-                            pontos_obtidos: pontosDoPalpite
-                        });
-                    }
+                    let pontosBase = 0;
+                    if (pM === jM && pV === jV) pontosBase = regrasPontuacao.placarExato;
+                    else if ((pM > pV && jM > jV) || (pM < pV && jM < jV) || (pM === pV && jM === jV)) {
+                        if (jM !== jV && (pM - pV) === (jM - jV)) pontosBase = regrasPontuacao.vencedorGols;
+                        else pontosBase = regrasPontuacao.vencedorSimples;
+                    } else if (pM === jM || pV === jV) pontosBase = regrasPontuacao.golParcial;
 
+                    const mult = obterMultiplicadorFase(jogo.fase);
                     if (mapaPontosNovos[palpite.user_id] !== undefined) {
-                        mapaPontosNovos[palpite.user_id] += pontosDoPalpite;
+                        mapaPontosNovos[palpite.user_id] += Math.floor(pontosBase * mult);
                     }
                 }
 
-                // 3. Executa as atualizações de palpites modificados de forma sequencial (Zero Deadlocks!)
-                if (palpitesParaAtualizar.length > 0) {
-                    mostrarSpinner(true, `A atualizar palpites modificados (${palpitesParaAtualizar.length} registos)...`);
-                    for (const item of palpitesParaAtualizar) {
-                        try {
-                            await supabaseClient
-                                .from('palpites')
-                                .update({ pontos_obtidos: item.pontos_obtidos })
-                                .eq('id', item.id);
-                        } catch (e) {
-                            console.warn("Erro ao atualizar pontos_obtidos do palpite:", item.id, e);
-                        }
+                for (const item of listaPerfis) {
+                    const novosPts = mapaPontosNovos[item.id] || 0;
+                    if (item.pontos_total !== novosPts) {
+                        await supabaseClient.from('perfis').update({ pontos_total: novosPts }).eq('id', item.id);
                     }
                 }
-
-                // 4. Identifica quais os perfis que necessitam de atualização na coluna 'pontos_total'
-                const perfisParaAtualizar = [];
-                listaPerfis.forEach(user => {
-                    const novosPontos = mapaPontosNovos[user.id] || 0;
-                    const pontosAtuais = Number(user.pontos_total) || 0;
-                    if (pontosAtuais !== novosPontos) {
-                        perfisParaAtualizar.push({
-                            id: user.id,
-                            pontos_total: novosPontos
-                        });
-                    }
-                });
-
-                // 5. Atualiza os perfis modificados de forma sequencial na base de dados
-                if (perfisParaAtualizar.length > 0) {
-                    mostrarSpinner(true, `A atualizar classificações dos utilizadores (${perfisParaAtualizar.length} registos)...`);
-                    for (const item of perfisParaAtualizar) {
-                        const { error } = await supabaseClient
-                            .from('perfis')
-                            .update({ pontos_total: item.pontos_total })
-                            .eq('id', item.id);
-                        if (error) throw error;
-                    }
-                }
-
-                // Exibe aviso amigável no log informando se limpou redundâncias
-                let mensagemSucesso = "Ranking e pontuações recalculados com sucesso!";
-                if (palpitesDuplicadosIgnorados > 0) {
-                    mensagemSucesso += ` (${palpitesDuplicadosIgnorados} palpites duplicados ignorados e limpos no cálculo)`;
-                }
-
-                mostrarNotificacao(mensagemSucesso, "success");
-                await carregarDadosDoBanco();
-
-            } catch (error) {
-                console.error("Erro no recálculo geral:", error);
-                mostrarNotificacao(`Erro no recálculo: ${error.message}`, "danger");
-            } finally {
-                mostrarSpinner(false);
-            }
-        }
-
-        /**
-         * Motor de Regras Oficiais do Bolão (Conforme o print fornecido pelo utilizador, com multiplicadores de fase)
-         */
-        function avaliarRegrasPalpite(palpite, jogo, regras) {
-            const pM = parseInt(palpite.palpite_a);
-            const pV = parseInt(palpite.palpite_b);
-            const jM = parseInt(jogo.gols_a_oficial);
-            const jV = parseInt(jogo.gols_b_oficial);
-
-            if (isNaN(pM) || isNaN(pV) || isNaN(jM) || isNaN(jV)) return 0;
-
-            const multiplicador = obterMultiplicadorFase(jogo.fase);
-            let pontosBase = 0;
-
-            // REGRA 1: Placar Exato (Acertou em cheio) -> 25 Pts
-            if (pM === jM && pV === jV) {
-                pontosBase = regras.placarExato; // 25
-            } else {
-                const vencedorPalpite = pM > pV ? 1 : (pM < pV ? 2 : 0);
-                const vencedorReal = jM > jV ? 1 : (jM < jV ? 2 : 0);
-
-                // Verifica se acertou a tendência do jogo (Vencedor ou Empate)
-                if (vencedorPalpite === vencedorReal) {
-                    if (vencedorReal === 0) {
-                        // Foi empate, mas não foi exato (ex: apostou 1x1, acabou 2x2)
-                        pontosBase = regras.vencedorSimples; // 15
-                    } else {
-                        // Acertou o vencedor do jogo
-                        const saldoPalpite = pM - pV;
-                        const saldoReal = jM - jV;
-
-                        // REGRA 2: Acertou o Vencedor e o Saldo de Gols -> 18 Pts
-                        if (saldoPalpite === saldoReal) {
-                            pontosBase = regras.vencedorGols; // 18
-                        } else {
-                            // REGRA 3: Acertou Vencedor/Empate, mas Errou o saldo -> 15 Pts
-                            pontosBase = regras.vencedorSimples; // 15
-                        }
-                    }
-                } else {
-                    // Errou a tendência (vencedor ou empate real foi diferente do palpite)
-                    // REGRA 4: Errou a tendência, mas acertou os gols de 1 dos 2 times -> 3 Pts
-                    if (pM === jM || pV === jV) {
-                        pontosBase = regras.golParcial; // 3
-                    } else {
-                        pontosBase = regras.erro; // 0
-                    }
-                }
-            }
-
-            // Arredonda para baixo os multiplicadores de mata-mata que dão valores decimais (.5)
-            return Math.floor(pontosBase * multiplicador);
-        }
-
-        /**
-         * Função utilitária para gerar UUID v4 no lado do cliente
-         * Evita o erro de restrição de ID nulo no Supabase quando a tabela não possui autogeração ativa
-         */
-        function gerarUUID() {
-            try {
-                return crypto.randomUUID();
             } catch (e) {
-                // Fallback robusto para navegadores mais antigos ou contextos de rede inseguros
-                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-                    return v.toString(16);
-                });
+                console.error("Erro no recálculo automático: ", e);
             }
         }
 
-        // =========================================================================
-        // GERENCIAMENTO DE UTILIZADORES (C.R.U.D.)
-        // =========================================================================
-
-        function abrirModalCriarUsuario() {
-            document.getElementById('modal-usuario-titulo').textContent = "Criar Novo Utilizador";
-            document.getElementById('modal-usuario-id').value = "";
-            document.getElementById('modal-usuario-nome').value = "";
-            document.getElementById('modal-campo-senha').classList.add('hidden'); // Criação usa password automática (123456)
-            document.getElementById('modal-usuario').classList.remove('hidden');
-        }
-
-        function abrirModalEditarUsuario(userId) {
-            const user = listaPerfis.find(u => u.id === userId);
-            if (!user) return;
-
-            document.getElementById('modal-usuario-titulo').textContent = "Editar Utilizador";
-            document.getElementById('modal-usuario-id').value = user.id;
-            document.getElementById('modal-usuario-nome').value = user.nome_completo;
-            document.getElementById('modal-usuario-senha').value = user.senha_plana || "123456";
-            document.getElementById('modal-campo-senha').classList.remove('hidden'); // Edição permite alterar password
-            document.getElementById('modal-usuario').classList.remove('hidden');
-        }
-
-        function fecharModalUsuario() {
-            document.getElementById('modal-usuario').classList.add('hidden');
-        }
-
-        /**
-         * Executa a submissão de dados do utilizador (Criação e Edição)
-         */
-        async function submeterFormularioUsuario() {
-            const id = document.getElementById('modal-usuario-id').value;
-            const nome = document.getElementById('modal-usuario-nome').value.trim();
-            const senha = document.getElementById('modal-usuario-senha').value.trim();
-
-            if (!nome) {
-                mostrarNotificacao("Por favor, insira o nome completo do utilizador.", "warning");
-                return;
-            }
-
-            mostrarSpinner(true, "A gravar dados do utilizador...");
-            try {
-                if (id) {
-                    // Modo Edição
-                    const { error } = await supabaseClient
-                        .from('perfis')
-                        .update({
-                            nome_completo: nome,
-                            senha_plana: senha || "123456"
-                        })
-                        .eq('id', id);
-
-                    if (error) throw error;
-                    mostrarNotificacao("Utilizador atualizado com sucesso!", "success");
-                } else {
-                    // Modo Criação (Senha padrão: 123456)
-                    const novoId = gerarUUID();
-                    const loginLimpo = nome
-                        .toLowerCase()
-                        .normalize("NFD")
-                        .replace(/[\u0300-\u036f]/g, "")
-                        .replace(/\s+/g, "");
-
-                    const { error } = await supabaseClient
-                        .from('perfis')
-                        .insert([{
-                            id: novoId, // Injeta o UUID gerado
-                            nome_completo: nome,
-                            usuario_login: loginLimpo,
-                            senha_plana: "123456",
-                            pontos_total: 0
-                        }]);
-
-                    if (error) throw error;
-                    mostrarNotificacao("Utilizador criado com sucesso com a senha padrão '123456'!", "success");
-                }
-
-                fecharModalUsuario();
-                await carregarDadosDoBanco();
-
-            } catch (error) {
-                console.error("Erro ao gravar utilizador:", error);
-                mostrarNotificacao(`Falha ao gravar utilizador: ${error.message}`, "danger");
-            } finally {
-                mostrarSpinner(false);
-            }
-        }
-
-        /**
-         * Remove com segurança o registo do utilizador
-         */
-        async function removerUsuario(userId, nome) {
-            const confirmacao = confirm(`Tem certeza absoluta de que deseja apagar o utilizador "${nome}"? Isto apagará permanentemente o seu histórico.`);
-            if (!confirmacao) return;
-
-            mostrarSpinner(true, "A apagar utilizador...");
-            try {
-                const { error } = await supabaseClient
-                    .from('perfis')
-                    .delete()
-                    .eq('id', userId);
-
-                if (error) throw error;
-
-                mostrarNotificacao("Utilizador apagado com sucesso!", "success");
-                await carregarDadosDoBanco();
-
-            } catch (error) {
-                console.error("Erro ao apagar utilizador:", error);
-                mostrarNotificacao(`Não foi possível apagar: ${error.message}`, "danger");
-            } finally {
-                mostrarSpinner(false);
-            }
-        }
-
-        // =========================================================================
-        // MOTOR DE AUDITORIA DE PALPITES
-        // =========================================================================
-
-        /**
-         * Abre o painel e processa em tempo real a auditoria de cada aposta do utilizador selecionado
-         */
         function abrirAuditoria(userId) {
             const user = listaPerfis.find(u => u.id === userId);
             if (!user) return;
 
             document.getElementById('auditoria-titulo-user').textContent = `Auditoria de Palpites: ${user.nome_completo}`;
-            document.getElementById('auditoria-resumo-pts').textContent = `Pontuação geral calculada: ${user.pontos_total || 0} pts`;
+            document.getElementById('auditoria-resumo-pts').textContent = `Pontuação total: ${user.pontos_total || 0} pts`;
 
             const tbody = document.getElementById('auditoria-tabela-corpo');
             tbody.innerHTML = "";
 
             const palpitesUser = listaPalpites.filter(p => p.user_id === userId);
-
-            if (palpitesUser.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-500 italic">Este utilizador ainda não efetuou palpites.</td></tr>`;
-                document.getElementById('modal-auditoria').classList.remove('hidden');
-                return;
-            }
-
             const mapaPalpites = new Map(palpitesUser.map(p => [p.jogo_id, p]));
 
             listaJogos.forEach(jogo => {
                 const palpite = mapaPalpites.get(jogo.id);
                 if (!palpite) return; 
 
-                const pM = palpite.palpite_a;
-                const pV = palpite.palpite_b;
-                const jM = jogo.gols_a_oficial;
-                const jV = jogo.gols_b_oficial;
-
-                const isFinalizado = jM !== null && jV !== null;
-                const pontosGanho = isFinalizado ? avaliarRegrasPalpite(palpite, jogo, regrasPontuacao) : 0;
-                const multiplicador = obterMultiplicadorFase(jogo.fase);
-
-                let badgeClass = "bg-slate-800 text-slate-400";
-                let metaRegraNome = "Sem Resultado Oficial";
-
-                if (isFinalizado) {
-                    // Identificação retroativa da regra base para fins visuais
-                    const vencedorPalpite = pM > pV ? 1 : (pM < pV ? 2 : 0);
-                    const vencedorReal = jM > jV ? 1 : (jM < jV ? 2 : 0);
-
-                    let rawRule = "";
-                    if (pM === jM && pV === jV) {
-                        rawRule = "Placar Exato";
-                    } else if (vencedorPalpite === vencedorReal) {
-                        if (vencedorReal === 0) {
-                            rawRule = "Vencedor/Empate Simples";
-                        } else {
-                            const saldoPalpite = pM - pV;
-                            const saldoReal = jM - jV;
-                            if (saldoPalpite === saldoReal) {
-                                rawRule = "Vencedor + Saldo";
-                            } else {
-                                rawRule = "Vencedor/Empate Simples";
-                            }
-                        }
-                    } else if (pM === jM || pV === jV) {
-                        rawRule = "Golo Parcial";
-                    } else {
-                        rawRule = "Errou";
-                    }
-
-                    // Define estilo da badge com base na regra de pontuação correspondente
-                    if (rawRule === "Placar Exato") {
-                        badgeClass = "bg-emerald-950 text-emerald-400 border border-emerald-500/30";
-                        metaRegraNome = `Placar Exato (+${pontosGanho})`;
-                    } else if (rawRule === "Vencedor + Saldo") {
-                        badgeClass = "bg-teal-950 text-teal-400 border border-teal-500/30";
-                        metaRegraNome = `Venc. + Saldo (+${pontosGanho})`;
-                    } else if (rawRule === "Vencedor/Empate Simples") {
-                        badgeClass = "bg-blue-950 text-blue-400 border border-blue-500/30";
-                        metaRegraNome = `Venc/Empate Simples (+${pontosGanho})`;
-                    } else if (rawRule === "Golo Parcial") {
-                        badgeClass = "bg-slate-900 text-amber-500 border border-amber-500/20";
-                        metaRegraNome = `Golo Parcial (+${pontosGanho})`;
-                    } else {
-                        badgeClass = "bg-red-950/50 text-red-400 border border-red-500/10";
-                        metaRegraNome = `Errou Tudo (0)`;
-                    }
-                }
-
+                const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
                 const dataObj = new Date(jogo.data_hora);
-                const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
-                const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+                const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' }) + ' ' + dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-800/10 transition-all border-b border-slate-800/50";
                 tr.innerHTML = `
                     <td class="p-3 text-slate-400 font-semibold uppercase tracking-wide text-[10px]">${jogo.fase || "Geral"}</td>
-                    <td class="p-3 text-[10px] text-slate-500 font-mono">${dataFormatada} - ${horaFormatada}</td>
+                    <td class="p-3 text-[10px] text-slate-500 font-mono">${dataFormatada}</td>
                     <td class="p-3 font-semibold text-slate-300">${jogo.time_a} x ${jogo.time_b}</td>
-                    <td class="p-3 text-center font-mono font-bold text-white text-xs">${isFinalizado ? `${jM} - ${jV}` : '—'}</td>
-                    <td class="p-3 text-center font-mono font-bold text-blue-400 text-xs">${pM} - ${pV}</td>
-                    <td class="p-3 text-center">
-                        <div class="flex flex-col gap-1 items-center">
-                            <span class="px-2.5 py-1 rounded text-[10px] font-bold ${badgeClass}">
-                                ${metaRegraNome}
-                            </span>
-                            ${multiplicador > 1 ? `<span class="text-[9px] text-slate-400 italic">Multiplicador: x${multiplicador}</span>` : ''}
-                        </div>
-                    </td>
-                `;
+                    <td class="p-3 text-center font-mono font-bold text-white text-xs">${isFinalizado ? `${jogo.gols_a_oficial} - ${jogo.gols_b_oficial}` : '—'}</td>
+                    <td class="p-3 text-center font-mono font-bold text-blue-400 text-xs">${palpite.palpite_a} - ${palpite.palpite_b}</td>
+                    <td class="p-3 text-center font-bold text-emerald-400 font-mono">${palpite.pontos_obtidos || 0} pts</td>`;
                 tbody.appendChild(tr);
             });
 
             document.getElementById('modal-auditoria').classList.remove('hidden');
         }
 
-        function fecharModalAuditoria() {
-            document.getElementById('modal-auditoria').classList.add('hidden');
+        function fecharModalAuditoria() { document.getElementById('modal-auditoria').classList.add('hidden'); }
+        
+        function abrirModalCriarUsuario() {
+            document.getElementById('modal-usuario-id').value = "";
+            document.getElementById('modal-usuario-nome').value = "";
+            document.getElementById('modal-usuario-senha').value = "";
+            document.getElementById('modal-campo-senha').classList.remove('hidden');
+            document.getElementById('modal-usuario-titulo').textContent = "Criar Novo Utilizador";
+            document.getElementById('modal-usuario').classList.remove('hidden');
         }
+        
+        function abrirModalEditarUsuario(userId) {
+            const user = listaPerfis.find(u => u.id === userId);
+            if (!user) return;
+            document.getElementById('modal-usuario-id').value = user.id;
+            document.getElementById('modal-usuario-nome').value = user.nome_completo;
+            document.getElementById('modal-usuario-senha').value = user.senha_plana || "";
+            document.getElementById('modal-campo-senha').classList.remove('hidden');
+            document.getElementById('modal-usuario-titulo').textContent = "Editar Utilizador";
+            document.getElementById('modal-usuario').classList.remove('hidden');
+        }
+        
+        function fecharModalUsuario() { document.getElementById('modal-usuario').classList.add('hidden'); }
 
-        /**
-         * Controla o painel visual de carregamento
-         */
-        function mostrarSpinner(visivel, mensagem = "A carregar...") {
-            const overlay = document.getElementById('loading-overlay');
-            const texto = overlay.querySelector('p');
-            texto.textContent = messageFallback(mensagem, "A carregar...");
+        async function submeterFormularioUsuario() {
+            const id = document.getElementById('modal-usuario-id').value;
+            const nome = document.getElementById('modal-usuario-nome').value.trim();
+            const senha = document.getElementById('modal-usuario-senha').value.trim();
 
-            if (visivel) {
-                overlay.classList.remove('hidden');
-                overlay.classList.add('flex');
-            } else {
-                overlay.classList.add('hidden');
-                overlay.classList.remove('flex');
+            if (!nome) return;
+            mostrarSpinner(true, "A salvar...");
+            try {
+                if (id) {
+                    await supabaseClient.from('perfis').update({ nome_completo: nome, senha_plana: senha }).eq('id', id);
+                } else {
+                    const login = nome.toLowerCase().replace(/\s+/g, "");
+                    await supabaseClient.from('perfis').insert([{ id: crypto.randomUUID(), nome_completo: nome, usuario_login: login, senha_plana: senha || "123456", pontos_total: 0 }]);
+                }
+                fecharModalUsuario();
+                await carregarDadosDoBanco();
+            } catch (e) {
+                mostrarNotificacao("Erro ao salvar utilizador", "danger");
+            } finally {
+                mostrarSpinner(false);
             }
         }
 
-        function messageFallback(val, defaultVal) {
-            return val !== undefined ? val : defaultVal;
+        async function removerUsuario(userId, nome) {
+            if (!confirm(`Deseja apagar permanentemente o utilizador "${nome}"?`)) return;
+            mostrarSpinner(true, "A apagar...");
+            try {
+                await supabaseClient.from('perfis').delete().eq('id', userId);
+                await carregarDadosDoBanco();
+                mostrarNotificacao("Utilizador removido!", "success");
+            } catch (e) {
+                mostrarNotificacao("Erro ao remover", "danger");
+            } finally {
+                mostrarSpinner(false);
+            }
         }
 
-        /**
-         * Cria caixas de alerta dinâmicas de feedback visual na tela (Substitui alert() nativo)
-         */
+        function mostrarSpinner(visivel) {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.classList.toggle('hidden', !visivel);
+            }
+        }
+
         function mostrarNotificacao(mensagem, tipo = 'info') {
             const container = document.getElementById('feedback-container');
             const alertBox = document.createElement('div');
-            
             let classesTipo = 'bg-blue-600 border-blue-500 text-white';
-            if (tipo === 'success') classesTipo = 'bg-emerald-800/95 border-emerald-500 text-emerald-200';
-            if (tipo === 'warning') classesTipo = 'bg-amber-800/95 border-amber-500 text-amber-200';
-            if (tipo === 'danger') classesTipo = 'bg-red-900/95 border-red-600 text-red-200';
+            if (tipo === 'success') classesTipo = 'bg-emerald-800 border-emerald-500 text-emerald-200';
+            if (tipo === 'danger') classesTipo = 'bg-red-900 border-red-600 text-red-200';
 
-            alertBox.className = `p-4 rounded-xl border shadow-2xl flex justify-between items-center transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto ${classesTipo}`;
-            alertBox.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <span class="font-medium text-xs sm:text-sm">${mensagem}</span>
-                </div>
-                <button onclick="this.parentElement.remove()" class="text-white hover:text-slate-300 font-bold ml-4 text-xs">✕</button>
-            `;
-
-            container.appendChild(alertBox);
-
-            setTimeout(() => {
-                alertBox.classList.remove('translate-y-2', 'opacity-0');
-            }, 10);
-
-            setTimeout(() => {
-                alertBox.classList.add('translate-y-2', 'opacity-0');
-                setTimeout(() => {
-                    alertBox.remove();
-                }, 300);
-            }, 5000);
+            alertBox.className = `p-4 rounded-xl border shadow-2xl flex justify-between items-center ${classesTipo}`;
+            alertBox.innerHTML = `<span>${mensagem}</span><button onclick="this.parentElement.remove()" class="text-white ml-4 font-bold">✕</button>`;
+            if(container) container.appendChild(alertBox);
+            setTimeout(() => alertBox.remove(), 4000);
         }
     </script>
 </body>
