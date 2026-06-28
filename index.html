@@ -914,43 +914,69 @@
         function fecharModalAuditoria() { document.getElementById('modal-auditoria').classList.add('hidden'); }
 
         async function guardarMeusPalpites() {
-            if (!currentUser) return;
-            mostrarSpinner(true, "A gravar os seus palpites...");
-            try {
-                if (abaAtiva === 'palpites') {
-                    const linhas = document.querySelectorAll('.linha-jogo');
-                    const upserts = [];
-                    for (let l of linhas) {
-                        const jId = l.getAttribute('data-jogo-id');
-                        const vA = l.querySelector('input:nth-of-type(1)').value.trim();
-                        const vB = l.querySelector('input:nth-of-type(2)').value.trim();
-                        if (vA !== "" && vB !== "") {
-                            upserts.push({ user_id: currentUser.id, jogo_id: jId, palpite_a: parseInt(vA, 10), palpite_b: parseInt(vB, 10) });
-                        }
+    if (!currentUser) return;
+    mostrarSpinner(true, "A gravar os seus palpites...");
+    try {
+        if (abaAtiva === 'palpites') {
+            const linhas = document.querySelectorAll('.linha-jogo');
+            const upserts = [];
+            for (let l of linhas) {
+                const jId = l.getAttribute('data-jogo-id');
+                const inpA = l.querySelector('input:nth-of-type(1)');
+                const inpB = l.querySelector('input:nth-of-type(2)');
+                
+                if (inpA && inpB) {
+                    const vA = inpA.value.trim();
+                    const vB = inpB.value.trim();
+                    if (vA !== "" && vB !== "") {
+                        upserts.push({ 
+                            user_id: currentUser.id, 
+                            jogo_id: jId, 
+                            palpite_a: parseInt(vA, 10), 
+                            palpite_b: parseInt(vB, 10) 
+                        });
                     }
-                    if(upserts.length > 0) await supabaseClient.from('palpites').upsert(upserts, { onConflict: 'user_id,jogo_id' });
-                } else if (abaAtiva === 'matamata') {
-                    const linhasMata = document.querySelectorAll('.linha-jogo-mata');
-                    const upsertsMata = [];
-                    for (let l of linhasMata) {
-                        const jId = l.getAttribute('data-jogo-id');
-                        const vA = l.querySelector('.input-palpite-mata-a').value.trim();
-                        const vB = l.querySelector('.input-palpite-mata-b').value.trim();
-                        if (vA !== "" && vB !== "") {
-                            upsertsMata.push({ user_id: currentUser.id, jogo_id: jId, palpite_a: parseInt(vA, 10), palpite_b: parseInt(vB, 10) });
-                        }
-                    }
-                    if(upsertsMata.length > 0) await supabaseClient.from('palpites_mata_mata').upsert(upsertsMata, { onConflict: 'user_id,jogo_id' });
                 }
-                mostrarNotificacao("Palpites salvos com sucesso!", "success");
-                await carregarDadosDoBanco();
-            } catch (e) {
-                console.error(e);
-                mostrarNotificacao("Erro ao salvar palpites.", "danger");
-            } finally {
-                mostrarSpinner(false);
+            }
+            if (upserts.length > 0) {
+                const { error } = await supabaseClient.from('palpites').upsert(upserts, { onConflict: 'user_id,jogo_id' });
+                if (error) throw error;
+            }
+        } else if (abaAtiva === 'matamata') {
+            const linhasMata = document.querySelectorAll('.linha-jogo-mata');
+            const upsertsMata = [];
+            for (let l of linhasMata) {
+                const jId = l.getAttribute('data-jogo-id');
+                const inpMataA = l.querySelector('.input-palpite-mata-a');
+                const inpMataB = l.querySelector('.input-palpite-mata-b');
+                
+                if (inpMataA && inpMataB) {
+                    const vA = inpMataA.value.trim();
+                    const vB = inpMataB.value.trim();
+                    if (vA !== "" && vB !== "") {
+                        upsertsMata.push({ 
+                            user_id: currentUser.id, 
+                            jogo_id: jId, 
+                            palpite_a: parseInt(vA, 10), 
+                            palpite_b: parseInt(vB, 10) 
+                        });
+                    }
+                }
+            }
+            if (upsertsMata.length > 0) {
+                const { error } = await supabaseClient.from('palpites_mata_mata').upsert(upsertsMata, { onConflict: 'user_id,jogo_id' });
+                if (error) throw error;
             }
         }
+        mostrarNotificacao("Palpites salvos com sucesso!", "success");
+        await carregarDadosDoBanco();
+    } catch (e) {
+        console.error("Erro detalhado ao salvar palpites:", e);
+        mostrarNotificacao("Erro ao salvar os palpites no banco de dados.", "danger");
+    } finally {
+        mostrarSpinner(false);
+    }
+}
 
         async function atualizarSenhaPropria() {
             const s = document.getElementById('conta-nova-senha').value.trim();
