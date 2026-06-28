@@ -57,7 +57,7 @@
 
     <div id="loading-overlay" class="fixed inset-0 bg-[#0b132b]/80 z-40 flex flex-col items-center justify-center transition-opacity duration-300 hidden">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
-        <p class="text-blue-300 font-medium text-sm">A carregar dados do Supabase...</p>
+        <p class="text-blue-300 font-medium text-sm">A processar dados...</p>
     </div>
 
     <main class="max-w-7xl mx-auto px-4 mt-8">
@@ -65,20 +65,18 @@
         <section id="aba-jogos" class="block">
             <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-900/40 p-4 rounded-xl border border-slate-800 gap-4">
                 <div>
-                    <h2 class="text-lg font-bold text-white">Ações de Transição de Fase</h2>
-                    <p class="text-xs text-slate-400">Ao encerrar a fase de grupos, a classificação atual fixa as pontuações e injeta os cruzamentos do mata-mata.</p>
+                    <h2 class="text-lg font-bold text-white">Certificação da Fase de Grupos</h2>
+                    <p class="text-xs text-slate-400">Recalcula todos os jogos, trava o 'pontos_grupo' e sincroniza o ranking para o Mata-Mata.</p>
                 </div>
-                <button onclick="encerrarFaseGrupos()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-5 py-2.5 rounded-lg shadow-md text-xs transition-all flex items-center gap-2">
-                    🔒 ENCERRAR FASE DE GRUPOS
+                <button onclick="encerrarFaseGruposECertificarPontos()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-5 py-2.5 rounded-lg shadow-md text-xs transition-all flex items-center gap-2">
+                    🔒 ENCERRAR FASE DE GRUPOS & CERTIFICAR PONTOS
                 </button>
             </div>
-            <div id="grid-grupos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                </div>
+            <div id="grid-grupos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </section>
 
         <section id="aba-matamata" class="hidden">
-            <div id="grid-matamata" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                </div>
+            <div id="grid-matamata" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </section>
 
         <section id="aba-users" class="hidden">
@@ -107,8 +105,7 @@
                                 <th class="p-4 text-center">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="tabela-usuarios-corpo" class="text-sm text-slate-300 divide-y divide-slate-800/50">
-                            </tbody>
+                        <tbody id="tabela-usuarios-corpo" class="text-sm text-slate-300 divide-y divide-slate-800/50"></tbody>
                     </table>
                 </div>
             </div>
@@ -137,8 +134,7 @@
                                 <th class="p-3 text-center">Pontos Obtidos</th>
                             </tr>
                         </thead>
-                        <tbody id="auditoria-tabela-corpo" class="text-xs text-slate-300 divide-y divide-slate-800/30">
-                            </tbody>
+                        <tbody id="auditoria-tabela-corpo" class="text-xs text-slate-300 divide-y divide-slate-800/30"></tbody>
                     </table>
                 </div>
             </div>
@@ -226,7 +222,7 @@
         }
 
         async function carregarDadosDoBanco() {
-            mostrarSpinner(true, "A aceder ao banco de dados...");
+            mostrarSpinner(true);
             try {
                 const { data: jogos, error: errJogos } = await supabaseClient.from('jogos').select('*');
                 if (errJogos) throw errJogos;
@@ -252,6 +248,47 @@
             } catch (error) {
                 console.error("Erro:", error);
                 mostrarNotificacao(`Falha ao conectar: ${error.message}`, "danger");
+            } finally {
+                mostrarSpinner(false);
+            }
+        }
+
+        // --- LÓGICA DE PONTUAÇÃO (CENTRALIZADA) ---
+        function avaliarRegrasPalpite(palpite, jogo, regras) {
+            const pM = parseInt(palpite.palpite_a), pV = parseInt(palpite.palpite_b);
+            const jM = parseInt(jogo.gols_a_oficial), jV = parseInt(jogo.gols_b_oficial);
+            if (isNaN(pM) || isNaN(pV) || isNaN(jM) || isNaN(jV)) return 0;
+            if (pM === jM && pV === jV) return regras.placarExato;
+            if ((pM > pV && jM > jV) || (pM < pV && jM < jV) || (pM === pV && jM === jV)) {
+                return (jM !== jV && (pM - pV) === (jM - jV)) ? regras.vencedorGols : regras.vencedorSimples;
+            }
+            return (pM === jM || pV === jV) ? regras.golParcial : 0;
+        }
+
+        // --- NOVA FUNÇÃO DE CERTIFICAÇÃO ---
+        async function encerrarFaseGruposECertificarPontos() {
+            if (!confirm("⚠️ ATENÇÃO: Esta ação irá recalcular todos os jogos da Fase de Grupos, salvar o resultado final no campo 'pontos_grupo' e consolidar o ranking. Confirmar?")) return;
+            mostrarSpinner(true);
+            try {
+                for (const user of listaPerfis) {
+                    let totalGrupos = 0;
+                    for (const jogo of listaJogos) {
+                        if (jogo.gols_a_oficial !== null) { 
+                            const palpite = listaPalpites.find(p => p.user_id === user.id && p.jogo_id === jogo.id);
+                            if (palpite) {
+                                totalGrupos += avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
+                            }
+                        }
+                    }
+                    await supabaseClient.from('perfis')
+                        .update({ pontos_grupo: totalGrupos, pontos_total: totalGrupos })
+                        .eq('id', user.id);
+                }
+                mostrarNotificacao("Fase de Grupos Certificada com sucesso!", "success");
+                await carregarDadosDoBanco();
+            } catch (e) {
+                console.error(e);
+                mostrarNotificacao("Erro na certificação.", "danger");
             } finally {
                 mostrarSpinner(false);
             }
@@ -283,7 +320,6 @@
                     }
                 }
             });
-
             return Object.values(tabela).sort((a, b) => b.pts - a.pts || b.sg - a.sg || b.v - a.v || b.gp - a.gp);
         }
 
@@ -366,7 +402,6 @@
             listaJogosMataMata.forEach((jogo, index) => {
                 const fase = jogo.fase || "MATA-MATA";
                 if (!mataMap[fase]) mataMap[fase] = [];
-                // Definição da numeração oficial correta iniciando no Jogo 73
                 jogo.numero_exibicao = 73 + index; 
                 mataMap[fase].push(jogo);
             });
@@ -433,7 +468,7 @@
             if(!tbody) return;
             tbody.innerHTML = "";
 
-            const ordenados = [...listaPerfis].sort((a, b) => a.nome_completo.localeCompare(b.nome_completo));
+            const ordenados = [...listaPerfis].sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
 
             ordenados.forEach(user => {
                 const tr = document.createElement('tr');
@@ -462,22 +497,6 @@
                     </td>`;
                 tbody.appendChild(tr);
             });
-        }
-
-        async function encerrarFaseGrupos() {
-            if (!confirm("Deseja congelar as pontuações da fase de grupos e habilitar o chaveamento do mata-mata?")) return;
-            mostrarSpinner(true, "A fixar pontuações da família...");
-            try {
-                for (const perfil of listaPerfis) {
-                    await supabaseClient.from('perfis').update({ pontos_grupo: perfil.pontos_total }).eq('id', perfil.id);
-                }
-                mostrarNotificacao("Fase de grupos encerrada com sucesso!", "success");
-                await carregarDadosDoBanco();
-            } catch (err) {
-                mostrarNotificacao("Erro ao processar transição.", "danger");
-            } finally {
-                mostrarSpinner(false);
-            }
         }
 
         async function definirVencedorEmpate(jogoId, nomeTime) {
@@ -524,7 +543,7 @@
         }
 
         async function guardarTodosResultados() {
-            mostrarSpinner(true, "A guardar alterações...");
+            mostrarSpinner(true);
             try {
                 if (abaAtiva === 'jogos') {
                     const lines = document.querySelectorAll('.linha-jogo');
@@ -581,43 +600,41 @@
             if (f.includes("oitavas")) return 1.5;
             if (f.includes("quartas")) return 2.0;
             if (f.includes("semifinal") || f.includes("semifinais")) return 2.5;
-            if (f.includes("final")) return 3.0;
+            if (f.includes("final") || f.includes("terceiro") || f.includes("3")) return 3.0;
             return 1.0;
         }
 
+        // --- RECÁLCULO MODIFICADO PARA SOMAR MATA-MATA AO CHECKPOINT ---
         async function recalcularPontosGerais() {
             try {
                 const mapaPontosNovos = {};
-                listaPerfis.forEach(user => { mapaPontosNovos[user.id] = 0; });
+                // Começamos o cálculo com o que foi fixado (Check-point)
+                listaPerfis.forEach(user => { mapaPontosNovos[user.id] = user.pontos_grupo || 0; });
 
-                const jogosFinalizados = listaJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
-                const mapaJogos = new Map(jogosFinalizados.map(j => [j.id, j]));
+                const jogosMataFinalizados = listaJogosMataMata.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
+                const mapaJogosMata = new Map(jogosMataFinalizados.map(j => [j.id, j]));
 
-                const processados = new Set();
-                for (const palpite of listaPalpites) {
-                    if (!palpite.user_id || !palpite.jogo_id) continue;
-                    const chaveUnica = `${palpite.user_id}_${palpite.jogo_id}`;
-                    if (processados.has(chaveUnica)) continue;
-                    processados.add(chaveUnica);
+                // Traz os palpites da nova fase para somar
+                const { data: palpitesMata } = await supabaseClient.from('palpites_mata_mata').select('*');
 
-                    const jogo = mapaJogos.get(palpite.jogo_id);
-                    if (!jogo) continue; 
+                if (palpitesMata) {
+                    const processados = new Set();
+                    for (const palpite of palpitesMata) {
+                        if (!palpite.user_id || !palpite.jogo_id) continue;
+                        
+                        const chaveUnica = `${palpite.user_id}_${palpite.jogo_id}`;
+                        if (processados.has(chaveUnica)) continue;
+                        processados.add(chaveUnica);
 
-                    const pM = parseInt(palpite.palpite_a);
-                    const pV = parseInt(palpite.palpite_b);
-                    const jM = parseInt(jogo.gols_a_oficial);
-                    const jV = parseInt(jogo.gols_b_oficial);
+                        const jogo = mapaJogosMata.get(palpite.jogo_id);
+                        if (!jogo) continue; 
 
-                    let pontosBase = 0;
-                    if (pM === jM && pV === jV) pontosBase = regrasPontuacao.placarExato;
-                    else if ((pM > pV && jM > jV) || (pM < pV && jM < jV) || (pM === pV && jM === jV)) {
-                        if (jM !== jV && (pM - pV) === (jM - jV)) pontosBase = regrasPontuacao.vencedorGols;
-                        else pontosBase = regrasPontuacao.vencedorSimples;
-                    } else if (pM === jM || pV === jV) pontosBase = regrasPontuacao.golParcial;
-
-                    const mult = obterMultiplicadorFase(jogo.fase);
-                    if (mapaPontosNovos[palpite.user_id] !== undefined) {
-                        mapaPontosNovos[palpite.user_id] += Math.floor(pontosBase * mult);
+                        const pontosBase = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
+                        const mult = obterMultiplicadorFase(jogo.fase);
+                        
+                        if (mapaPontosNovos[palpite.user_id] !== undefined) {
+                            mapaPontosNovos[palpite.user_id] += Math.floor(pontosBase * mult);
+                        }
                     }
                 }
 
@@ -661,7 +678,7 @@
                     <td class="p-3 font-semibold text-slate-300">${jogo.time_a} x ${jogo.time_b}</td>
                     <td class="p-3 text-center font-mono font-bold text-white text-xs">${isFinalizado ? `${jogo.gols_a_oficial} - ${jogo.gols_b_oficial}` : '—'}</td>
                     <td class="p-3 text-center font-mono font-bold text-blue-400 text-xs">${palpite.palpite_a} - ${palpite.palpite_b}</td>
-                    <td class="p-3 text-center font-bold text-emerald-400 font-mono">${palpite.pontos_obtidos || 0} pts</td>`;
+                    <td class="p-3 text-center font-bold text-emerald-400 font-mono">+ ${avaliarRegrasPalpite(palpite, jogo, regrasPontuacao)} pts</td>`;
                 tbody.appendChild(tr);
             });
 
@@ -698,7 +715,7 @@
             const senha = document.getElementById('modal-usuario-senha').value.trim();
 
             if (!nome) return;
-            mostrarSpinner(true, "A salvar...");
+            mostrarSpinner(true);
             try {
                 if (id) {
                     await supabaseClient.from('perfis').update({ nome_completo: nome, senha_plana: senha }).eq('id', id);
@@ -717,7 +734,7 @@
 
         async function removerUsuario(userId, nome) {
             if (!confirm(`Deseja apagar permanentemente o utilizador "${nome}"?`)) return;
-            mostrarSpinner(true, "A apagar...");
+            mostrarSpinner(true);
             try {
                 await supabaseClient.from('perfis').delete().eq('id', userId);
                 await carregarDadosDoBanco();
