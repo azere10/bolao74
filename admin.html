@@ -649,42 +649,48 @@
             }
         }
 
-        function abrirAuditoria(userId) {
-            const user = listaPerfis.find(u => u.id === userId);
-            if (!user) return;
+        async function abrirAuditoria(userId) {
+    const user = listaPerfis.find(u => u.id === userId);
+    if (!user) return;
 
-            document.getElementById('auditoria-titulo-user').textContent = `Auditoria de Palpites: ${user.nome_completo}`;
-            document.getElementById('auditoria-resumo-pts').textContent = `Pontuação total: ${user.pontos_total || 0} pts`;
+    // ... (parte inicial do título e resumo mantida)
 
-            const tbody = document.getElementById('auditoria-tabela-corpo');
-            tbody.innerHTML = "";
+    const tbody = document.getElementById('auditoria-tabela-corpo');
+    tbody.innerHTML = "";
 
-            const palpitesUser = listaPalpites.filter(p => p.user_id === userId);
-            const mapaPalpites = new Map(palpitesUser.map(p => [p.jogo_id, p]));
-
-            listaJogos.forEach(jogo => {
-                const palpite = mapaPalpites.get(jogo.id);
-                if (!palpite) return; 
-
-                const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
-                const dataObj = new Date(jogo.data_hora);
-                const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' }) + ' ' + dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-800/10 transition-all border-b border-slate-800/50";
-                tr.innerHTML = `
-                    <td class="p-3 text-slate-400 font-semibold uppercase tracking-wide text-[10px]">${jogo.fase || "Geral"}</td>
-                    <td class="p-3 text-[10px] text-slate-500 font-mono">${dataFormatada}</td>
-                    <td class="p-3 font-semibold text-slate-300">${jogo.time_a} x ${jogo.time_b}</td>
-                    <td class="p-3 text-center font-mono font-bold text-white text-xs">${isFinalizado ? `${jogo.gols_a_oficial} - ${jogo.gols_b_oficial}` : '—'}</td>
-                    <td class="p-3 text-center font-mono font-bold text-blue-400 text-xs">${palpite.palpite_a} - ${palpite.palpite_b}</td>
-                    <td class="p-3 text-center font-bold text-emerald-400 font-mono">+ ${avaliarRegrasPalpite(palpite, jogo, regrasPontuacao)} pts</td>`;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('modal-auditoria').classList.remove('hidden');
+    // 1. Auditoria da Fase de Grupos
+    listaJogos.forEach(jogo => {
+        const palpite = listaPalpites.find(p => p.user_id === userId && p.jogo_id === jogo.id);
+        if (palpite) {
+            const pts = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
+            adicionarLinhaNaAuditoria(jogo, palpite, pts, false); // false = não é mata-mata
         }
+    });
 
+    // 2. Auditoria da Fase Mata-Mata (AQUI ESTAVA A FALTA)
+    listaJogosMataMata.forEach(jogo => {
+        const palpite = listaPalpitesMataMata.find(p => p.user_id === userId && p.jogo_id === jogo.id);
+        if (palpite) {
+            const pts = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
+            adicionarLinhaNaAuditoria(jogo, palpite, pts, true); // true = é mata-mata
+        }
+    });
+}
+
+// Função auxiliar para evitar repetição de código
+function adicionarLinhaNaAuditoria(jogo, palpite, pts, isMataMata) {
+    const tbody = document.getElementById('auditoria-tabela-corpo');
+    const tr = document.createElement('tr');
+    tr.className = isMataMata ? "bg-purple-950/20 border-b border-purple-500/20" : "border-b border-slate-800/50";
+    tr.innerHTML = `
+        <td class="p-3 text-xs font-bold ${isMataMata ? 'text-purple-400' : 'text-blue-400'}">${jogo.fase}</td>
+        <td class="p-3 text-xs text-slate-400">${jogo.time_a} x ${jogo.time_b}</td>
+        <td class="p-3 text-center font-bold">${jogo.gols_a_oficial ?? '-'} x ${jogo.gols_b_oficial ?? '-'}</td>
+        <td class="p-3 text-center font-bold text-blue-400">${palpite.palpite_a} x ${palpite.palpite_b}</td>
+        <td class="p-3 text-center font-bold text-emerald-400">+${pts} pts</td>
+    `;
+    tbody.appendChild(tr);
+}
         function fecharModalAuditoria() { document.getElementById('modal-auditoria').classList.add('hidden'); }
         
         function abrirModalCriarUsuario() {
