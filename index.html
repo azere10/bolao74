@@ -110,7 +110,7 @@
                     <h2 class="text-xl font-extrabold text-white">Preencha os Seus Palpites</h2>
                     <p class="text-xs text-slate-400">Edição encerrada 5 minutos antes de cada jogo.</p>
                 </div>
-                <div class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full sm:w-auto">
+                <div class="flex flex-col sm:flex-row bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full sm:w-auto">
                     <button id="btn-view-grupos" onclick="mudarModoExibicao('grupo')" class="flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md">
                         POR GRUPOS
                     </button>
@@ -177,7 +177,7 @@
                         </svg>
                     </div>
                     <div>
-                        <span class="block text-sm font-bold text-amber-300">Aviso sobre a Atualização de Classification</span>
+                        <span class="block text-sm font-bold text-amber-300">Aviso sobre a Atualização de Classificação</span>
                         <span class="block text-xs text-slate-400 mt-1 leading-relaxed">
                             O ranking de classificação e os palpites individuais <strong>só serão processados e atualizados no sistema após o administrador lançar e confirmar o resultado oficial</strong> do respetivo jogo.
                         </span>
@@ -185,7 +185,7 @@
                 </div>
                 <div>
                     <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                        <span class="h-2 w-2 rounded-full bg-blue-500"></span> Regras de Pontuação Base (Por Jolo)
+                        <span class="h-2 w-2 rounded-full bg-blue-500"></span> Regras de Pontuação Base (Por Jogo)
                     </h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="bg-[#121b36] border border-slate-800 p-4 rounded-xl flex justify-between items-center">
@@ -442,9 +442,10 @@
                 if (errJogos) throw errJogos;
                 listaJogos = (jogos || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
 
-                const { data: jogosMata, error: errMata } = await supabaseClient.from('jogos_mata_mata').select('*');
+                // CORREÇÃO: Garante o carregamento e ordenação segura pela coluna estrutural 'numero_jogo'
+                const { data: jogosMata, error: errMata } = await supabaseClient.from('jogos_mata_mata').select('*').order('numero_jogo', { ascending: true });
                 if (!errMata) {
-                    listaJogosMataMata = (jogosMata || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+                    listaJogosMataMata = jogosMata || [];
                 }
 
                 const { data: palpites, error: errPalpites } = await supabaseClient.from('palpites').select('*');
@@ -522,11 +523,21 @@
                 </div>
                 <div class="bg-blue-950/40 border border-blue-500/20 p-3 rounded-xl flex flex-col justify-center">
                     <span class="text-[10px] uppercase font-black text-blue-400 tracking-wider">⭐ Situação do Torneio</span>
-                    <span class="text-xs text-slate-300 mt-1 italic">Atualizações de pontos consolidadas nativamente pelo admin.</span>
+                    <span class="text-xs text-slate-300 mt-1 italic">Acompanhe a sua evolução na classificação e garanta a sua vaga.</span>
                 </div>`;
 
             document.getElementById('resenha-destaques').innerHTML = htmlDestaques;
             document.getElementById('painel-resenha').classList.remove('hidden');
+        }
+
+        function formatarHoraFusoExibicao(isoString) {
+            if (!isoString) return "—";
+            const d = new Date(isoString);
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const hora = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return `${dia}/${mes} às ${hora}:${min}`;
         }
 
         function calcularEstatisticasPalpites(jogoId) {
@@ -623,7 +634,7 @@
                         htmlJogos += `
                             <div class="linha-jogo flex flex-col py-2 border-b border-slate-800/60 last:border-b-0 gap-1" data-jogo-id="${jogo.id}">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-[9px] text-slate-500 font-mono">${new Date(jogo.data_hora).toLocaleDateString('pt-PT')} às ${new Date(jogo.data_hora).toLocaleTimeString('pt-PT', {hour:'2-digit', minute:'2-digit'})}</span>
+                                    <span class="text-[9px] text-slate-500 font-mono">📅 ${formatarHoraFusoExibicao(jogo.data_hora)}</span>
                                     ${isFinalizado ? `<span class="text-[9px] text-slate-400 font-bold bg-slate-900/50 px-1.5 py-0.5 rounded">Oficial: ${jogo.gols_a_oficial} x ${jogo.gols_b_oficial}</span>` : ''}
                                 </div>
                                 <div class="flex items-center justify-between gap-1">
@@ -675,7 +686,6 @@
                         const valB = palpite ? palpite.palpite_b : "";
                         const isBloqueado = isJogoBloqueado(jogo.data_hora);
                         const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
-                        const horaFormatada = new Date(jogo.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
                         let htmlEstatisticas = "";
                         if (isBloqueado) {
@@ -696,7 +706,7 @@
                         htmlJogosDia += `
                             <div class="linha-jogo flex flex-col py-2.5 border-b border-slate-800 last:border-b-0 gap-1" data-jogo-id="${jogo.id}">
                                 <div class="flex justify-between text-[9px] text-slate-500 font-mono">
-                                    <span>${horaFormatada} — ${jogo.fase || "Geral"}</span>
+                                    <span>📅 ${formatarHoraFusoExibicao(jogo.data_hora)} — ${jogo.fase || "Geral"}</span>
                                     ${isFinalizado ? `<span class="text-slate-400 font-bold bg-slate-900/50 px-1 rounded">Oficial: ${jogo.gols_a_oficial}x${jogo.gols_b_oficial}</span>` : ''}
                                 </div>
                                 <div class="flex items-center justify-between gap-1">
@@ -740,22 +750,19 @@
             const meusPalpitesMataMap = new Map(listaPalpitesMataMata.filter(p => p.user_id === currentUser.id).map(p => [p.jogo_id, p]));
             const fasesMap = {};
 
-            listaJogosMataMata.forEach((jogo, index) => {
+            listaJogosMataMata.forEach((jogo) => {
                 let faseOriginal = jogo.fase || "MATA-MATA";
                 let chaveFase = faseOriginal;
                 
-                // Agrupamento robusto tratando "3º Lugar" do Banco de Dados
                 const fNorm = faseOriginal.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                if (fNorm.includes("terceiro") || fNorm.includes("3º") || fNorm.includes("3o")) {
+                if (fNorm.includes("terceiro") || fNorm.includes("3")) {
                     chaveFase = "3º Lugar";
                 }
 
                 if (!fasesMap[chaveFase]) fasesMap[chaveFase] = [];
-                jogo.numero_exibicao = 73 + index; 
                 fasesMap[chaveFase].push(jogo);
             });
 
-            // Sequência Cronológica de Exibição
             const ordemFases = ['16-avos', 'Oitavas', 'Quartas', 'Semifinais', '3º Lugar', 'Final'];
 
             ordemFases.forEach(nomeFase => {
@@ -773,16 +780,16 @@
                     const valB = palpite ? palpite.palpite_b : "";
                     const isBloqueado = isJogoBloqueado(jogo.data_hora);
                     const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
-                    const dObj = new Date(jogo.data_hora);
 
                     const inputClass = isBloqueado 
                         ? "w-9 h-8 text-center bg-slate-900/50 text-slate-500 font-bold rounded border border-slate-800/40 cursor-not-allowed opacity-50 text-xs"
                         : "w-9 h-8 text-center bg-slate-800 text-white font-bold rounded border border-slate-700 focus:border-purple-500 outline-none text-xs";
 
+                    // CORREÇÃO: Exibe o 'jogo.numero_jogo' vindo de forma fixa e correta do banco de dados
                     htmlJogos += `
                         <div class="linha-jogo-mata flex flex-col py-3 border-b border-slate-800/60 last:border-b-0 gap-1.5" data-jogo-id="${jogo.id}">
                             <div class="flex items-center justify-between text-[10px] font-mono">
-                                <span class="text-purple-400 font-bold">Jogo ${jogo.numero_exibicao} — ${dObj.toLocaleDateString('pt-PT')} às ${dObj.toLocaleTimeString('pt-PT', {hour:'2-digit', minute:'2-digit'})}</span>
+                                <span class="text-purple-400 font-bold">Jogo ${jogo.numero_jogo || '—'} — 📅 ${formatarHoraFusoExibicao(jogo.data_hora)}</span>
                                 ${isFinalizado ? `<span class="bg-emerald-950 text-emerald-400 font-bold px-1.5 py-0.5 rounded">Oficial: ${jogo.gols_a_oficial}x${jogo.gols_b_oficial}</span>` : ''}
                             </div>
                             <div class="flex items-center justify-between gap-2">
@@ -813,8 +820,7 @@
 
         function renderizarRankingGeral() {
             const tbody = document.getElementById('tabela-ranking-corpo');
-            if(!tbody) return;
-            tbody.innerHTML = "";
+            if(!tbody) return; tbody.innerHTML = "";
             const ordenados = [...listaPerfis].sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
 
             ordenados.forEach((user, index) => {
@@ -876,7 +882,7 @@
                 tr.className = "border-b border-slate-800/40 hover:bg-slate-900/20";
                 tr.innerHTML = `
                     <td class="p-2 font-bold text-blue-400 uppercase text-[9px]">${j.fase}</td>
-                    <td class="p-2 text-slate-500 font-mono text-[9px]">${new Date(j.data_hora).toLocaleDateString('pt-PT')}</td>
+                    <td class="p-2 text-slate-500 font-mono text-[9px]">${formatarHoraFusoExibicao(j.data_hora)}</td>
                     <td class="p-2 font-medium text-slate-300 truncate max-w-[110px]">${j.time_a} x ${j.time_b}</td>
                     <td class="p-2 text-center font-mono font-bold">${oficial}</td>
                     <td class="p-2 text-center font-mono text-blue-400 font-bold">${p.palpite_a}x${p.palpite_b}</td>
@@ -894,7 +900,7 @@
                 tr.className = "border-b border-slate-800/40 bg-purple-950/10 hover:bg-purple-900/20";
                 tr.innerHTML = `
                     <td class="p-2 font-bold text-purple-400 uppercase text-[9px]">${j.fase}</td>
-                    <td class="p-2 text-slate-500 font-mono text-[9px]">${new Date(j.data_hora).toLocaleDateString('pt-PT')}</td>
+                    <td class="p-2 text-slate-500 font-mono text-[9px]">${formatarHoraFusoExibicao(j.data_hora)}</td>
                     <td class="p-2 font-medium text-purple-200 truncate max-w-[110px]">${j.time_a || 'A definir'} x ${j.time_b || 'A definir'}</td>
                     <td class="p-2 text-center font-mono font-bold">${oficial}</td>
                     <td class="p-2 text-center font-mono text-purple-400 font-bold">${p.palpite_a}x${p.palpite_b}</td>
@@ -908,6 +914,7 @@
         function fecharModalAuditoria() { document.getElementById('modal-auditoria').classList.add('hidden'); }
 
         async function guardarMeusPalpites() {
+            if (!currentUser) return;
             mostrarSpinner(true, "A gravar os seus palpites...");
             try {
                 if (abaAtiva === 'palpites') {
@@ -938,6 +945,7 @@
                 mostrarNotificacao("Palpites salvos com sucesso!", "success");
                 await carregarDadosDoBanco();
             } catch (e) {
+                console.error(e);
                 mostrarNotificacao("Erro ao salvar palpites.", "danger");
             } finally {
                 mostrarSpinner(false);
@@ -949,7 +957,7 @@
             if(!s) return; mostrarSpinner(true, "A processar...");
             try {
                 await supabaseClient.from('perfis').update({ senha_plana: s }).eq('id', currentUser.id);
-                mostrarNotificacao("Palavra-passe alterada!", "success");
+                mostrarNotificacao("Palavra-passe altered!", "success");
                 document.getElementById('conta-nova-senha').value = "";
             } catch(e) { mostrarNotificacao("Erro ao processar.", "danger"); }
             finally { mostrarSpinner(false); }
@@ -967,7 +975,7 @@
             let pontosBase = 0;
             if (pM === jM && pV === jV) pontosBase = regras.placarExato || 25;
             else if ((pM > pV && jM > jV) || (pM < pV && jM < jV) || (pM === pV && jM === jV)) {
-                if (jM !== jV && (pM - pV) === (jM - jV)) pontosBase = regras.vencedorGols || 18;
+                if (jM !== jV && (pM - pV) === (jM - jV)) pontosBase = rules.vencedorGols || 18;
                 else pontosBase = regras.vencedorSimples || 15;
             } else if (pM === jM || pV === jV) pontosBase = regras.golParcial || 3;
 
@@ -993,7 +1001,11 @@
         function mostrarNotificacao(mensagem, tipo = 'info') {
             const container = document.getElementById('feedback-container');
             const alertBox = document.createElement('div');
-            alertBox.className = `p-4 rounded-xl text-xs font-bold border bg-slate-900 text-white shadow-lg transition-all`;
+            let classesTipo = 'bg-slate-900 border-slate-700 text-white';
+            if (tipo === 'success') classesTipo = 'bg-emerald-800 border-emerald-500 text-emerald-200';
+            if (tipo === 'danger') classesTipo = 'bg-red-900 border-red-600 text-red-200';
+            
+            alertBox.className = `p-4 rounded-xl text-xs font-bold border shadow-lg transition-all ${classesTipo}`;
             alertBox.innerHTML = `<span>${mensagem}</span>`;
             if(container) container.appendChild(alertBox);
             setTimeout(() => alertBox.remove(), 4000);
