@@ -7,21 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body {
-            background-color: #0b132b;
-            color: #f8fafc;
-        }
-        .card-grupo {
-            background-color: #1c2541;
-            border: 1px solid #2a3759;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        body { background-color: #0b132b; color: #f8fafc; }
+        .card-grupo { background-color: #1c2541; border: 1px solid #2a3759; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="min-h-screen font-sans antialiased pb-12">
@@ -174,6 +163,7 @@
         let listaJogos = [];
         let listaJogosMataMata = []; 
         let listaPalpites = [];
+        let listaPalpitesMataMata = []; 
         let listaPerfis = [];
         let regrasPontuacao = {
             placarExato: 25,       
@@ -237,6 +227,11 @@
                 if (errPalpites) throw errPalpites;
                 listaPalpites = palpites || [];
 
+                const { data: palpitesMata, error: errPalpitesMata } = await supabaseClient.from('palpites_mata_mata').select('*');
+                if (!errPalpitesMata) {
+                    listaPalpitesMataMata = palpitesMata || [];
+                }
+
                 const { data: perfis, error: errPerfis } = await supabaseClient.from('perfis').select('*');
                 if (errPerfis) throw errPerfis;
                 listaPerfis = perfis || [];
@@ -253,7 +248,6 @@
             }
         }
 
-        // --- LÓGICA DE PONTUAÇÃO (CENTRALIZADA) ---
         function avaliarRegrasPalpite(palpite, jogo, regras) {
             const pM = parseInt(palpite.palpite_a), pV = parseInt(palpite.palpite_b);
             const jM = parseInt(jogo.gols_a_oficial), jV = parseInt(jogo.gols_b_oficial);
@@ -265,7 +259,6 @@
             return (pM === jM || pV === jV) ? regras.golParcial : 0;
         }
 
-        // --- NOVA FUNÇÃO DE CERTIFICAÇÃO ---
         async function encerrarFaseGruposECertificarPontos() {
             if (!confirm("⚠️ ATENÇÃO: Esta ação irá recalcular todos os jogos da Fase de Grupos, salvar o resultado final no campo 'pontos_grupo' e consolidar o ranking. Confirmar?")) return;
             mostrarSpinner(true);
@@ -347,8 +340,8 @@
                     const statusClass = isFinalizado ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-slate-800 bg-slate-900/30';
 
                     const dataObj = new Date(jogo.data_hora);
-                    const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
-                    const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+                    const dataFormatada = isNaN(dataObj) ? "" : dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+                    const horaFormatada = isNaN(dataObj) ? "" : dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
                     htmlJogos += `
                         <div class="linha-jogo flex flex-col py-2 border-b border-slate-800 last:border-b-0 gap-1 ${statusClass} rounded px-2 my-1 transition-all" data-jogo-id="${jogo.id}">
@@ -425,8 +418,8 @@
                     const isEmpate = isFinalizado && parseInt(golsM) === parseInt(golsV);
 
                     const dataObj = new Date(jogo.data_hora);
-                    const dataFormatada = dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
-                    const horaFormatada = dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+                    const dataFormatada = isNaN(dataObj) ? "" : dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+                    const horaFormatada = isNaN(dataObj) ? "" : dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
                     htmlJogos += `
                         <div class="linha-jogo-mata flex flex-col py-2 border-b border-slate-800 last:border-b-0 gap-1 ${statusClass} rounded px-2 my-1" data-jogo-id="${jogo.id}">
@@ -542,6 +535,7 @@
             }
         }
 
+        // --- FUNÇÃO DE GUARDAR AJUSTADA PARA PERMITIR VOLTAR AO NULO ---
         async function guardarTodosResultados() {
             mostrarSpinner(true);
             try {
@@ -552,12 +546,14 @@
                         const gA = div.querySelector('.input-gols-mandante').value;
                         const gB = div.querySelector('.input-gols-visitante').value;
 
+                        let updateData = {};
                         if (gA !== "" && gB !== "") {
-                            await supabaseClient.from('jogos').update({
-                                gols_a_oficial: parseInt(gA),
-                                gols_b_oficial: parseInt(gB)
-                            }).eq('id', id);
+                            updateData = { gols_a_oficial: parseInt(gA), gols_b_oficial: parseInt(gB) };
+                        } else {
+                            // Se estiver vazio, define explicitamente como null
+                            updateData = { gols_a_oficial: null, gols_b_oficial: null };
                         }
+                        await supabaseClient.from('jogos').update(updateData).eq('id', id);
                     }
                 } else if (abaAtiva === 'matamata') {
                     const linhasMata = document.querySelectorAll('.linha-jogo-mata');
@@ -574,6 +570,11 @@
                             updateData.gols_b_oficial = parseInt(gB);
                             if (parseInt(gA) > parseInt(gB)) updateData.vencedor = tA;
                             else if (parseInt(gB) > parseInt(gA)) updateData.vencedor = tB;
+                        } else {
+                            // Se estiver vazio, define explícitamente como null para apagar resultados passados
+                            updateData.gols_a_oficial = null;
+                            updateData.gols_b_oficial = null;
+                            updateData.vencedor = null;
                         }
 
                         await supabaseClient.from('jogos_mata_mata').update(updateData).eq('id', id);
@@ -604,17 +605,14 @@
             return 1.0;
         }
 
-        // --- RECÁLCULO MODIFICADO PARA SOMAR MATA-MATA AO CHECKPOINT ---
         async function recalcularPontosGerais() {
             try {
                 const mapaPontosNovos = {};
-                // Começamos o cálculo com o que foi fixado (Check-point)
                 listaPerfis.forEach(user => { mapaPontosNovos[user.id] = user.pontos_grupo || 0; });
 
                 const jogosMataFinalizados = listaJogosMataMata.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
                 const mapaJogosMata = new Map(jogosMataFinalizados.map(j => [j.id, j]));
 
-                // Traz os palpites da nova fase para somar
                 const { data: palpitesMata } = await supabaseClient.from('palpites_mata_mata').select('*');
 
                 if (palpitesMata) {
@@ -649,32 +647,31 @@
             }
         }
 
-        // --- FUNÇÃO PARA ABRIR AUDITORIA (QUE ESTAVA FALTANDO) ---
         function abrirAuditoria(userId) {
             const user = listaPerfis.find(u => u.id === userId);
             if (!user) return;
 
-            document.getElementById('auditoria-titulo-user').textContent = `Auditoria: ${user.nome_completo}`;
-            document.getElementById('auditoria-resumo-pts').textContent = `Pontos Totais: ${user.pontos_total || 0}`;
+            document.getElementById('auditoria-titulo-user').textContent = `Auditoria de Palpites: ${user.nome_completo}`;
+            document.getElementById('auditoria-resumo-pts').textContent = `Pontuação total: ${user.pontos_total || 0} pts`;
 
             const tbody = document.getElementById('auditoria-tabela-corpo');
             tbody.innerHTML = "";
 
-            // 1. Auditoria Fase Grupos
             listaJogos.forEach(jogo => {
                 const palpite = listaPalpites.find(p => p.user_id === userId && p.jogo_id === jogo.id);
                 if (palpite) {
-                    const pts = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
+                    const pts = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao); 
                     adicionarLinhaAuditoria(jogo, palpite, pts, false);
                 }
             });
 
-            // 2. Auditoria Mata-Mata
             listaJogosMataMata.forEach(jogo => {
                 const palpite = listaPalpitesMataMata.find(p => p.user_id === userId && p.jogo_id === jogo.id);
                 if (palpite) {
-                    const pts = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
-                    adicionarLinhaAuditoria(jogo, palpite, pts, true);
+                    const ptsBase = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
+                    const mult = obterMultiplicadorFase(jogo.fase);
+                    const ptsFinais = Math.floor(ptsBase * mult); 
+                    adicionarLinhaAuditoria(jogo, palpite, ptsFinais, true);
                 }
             });
 
@@ -684,19 +681,23 @@
         function adicionarLinhaAuditoria(jogo, palpite, pts, isMataMata) {
             const tbody = document.getElementById('auditoria-tabela-corpo');
             const tr = document.createElement('tr');
+            tr.className = isMataMata ? "bg-purple-950/20 border-b border-purple-500/20 hover:bg-slate-800/20 transition-all" : "border-b border-slate-800/50 hover:bg-slate-800/20 transition-all";
+            
+            const dataObj = new Date(jogo.data_hora);
+            const dataFormatada = isNaN(dataObj) ? "" : (dataObj.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' }) + ' ' + dataObj.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }));
+
             tr.innerHTML = `
-                <td class="p-3 text-xs font-bold ${isMataMata ? 'text-purple-400' : 'text-blue-400'}">${jogo.fase}</td>
-                <td class="p-3 text-xs text-slate-400">${jogo.time_a} x ${jogo.time_b}</td>
-                <td class="p-3 text-center">${jogo.gols_a_oficial ?? '-'} x ${jogo.gols_b_oficial ?? '-'}</td>
-                <td class="p-3 text-center text-blue-400 font-bold">${palpite.palpite_a} x ${palpite.palpite_b}</td>
-                <td class="p-3 text-center text-emerald-400 font-bold">+${pts} pts</td>
+                <td class="p-3 text-[10px] uppercase font-bold tracking-wide ${isMataMata ? 'text-purple-400' : 'text-blue-400'}">${jogo.fase || "Geral"}</td>
+                <td class="p-3 text-[10px] text-slate-500 font-mono">${dataFormatada}</td>
+                <td class="p-3 font-semibold text-slate-300">${jogo.time_a || '—'} x ${jogo.time_b || '—'}</td>
+                <td class="p-3 text-center font-mono font-bold text-white text-xs">${(jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null) ? `${jogo.gols_a_oficial} - ${jogo.gols_b_oficial}` : '—'}</td>
+                <td class="p-3 text-center font-mono font-bold text-blue-400 text-xs">${palpite.palpite_a || '0'} - ${palpite.palpite_b || '0'}</td>
+                <td class="p-3 text-center font-bold text-emerald-400 font-mono">+${pts || 0} pts</td>
             `;
             tbody.appendChild(tr);
         }
 
-        function fecharModalAuditoria() {
-            document.getElementById('modal-auditoria').classList.add('hidden');
-        }
+        function fecharModalAuditoria() { document.getElementById('modal-auditoria').classList.add('hidden'); }
         
         function abrirModalCriarUsuario() {
             document.getElementById('modal-usuario-id').value = "";
