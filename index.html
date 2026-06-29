@@ -102,54 +102,23 @@
 
     <!-- CONTEÚDO DA APLICAÇÃO -->
     <main id="app-content" class="max-w-7xl mx-auto px-4 mt-6">
-
-    <!-- PAINEL DA RESENHA (Agora dentro da estrutura principal) -->
     <div id="painel-resenha" class="bg-gradient-to-r from-blue-950/60 to-slate-900/80 rounded-2xl border border-blue-500/20 p-5 mb-6 shadow-xl">
-        <div class="flex items-center gap-2 mb-3">
-            <span class="text-xl">🎙️</span>
-            <h3 class="text-sm font-extrabold uppercase tracking-wider text-blue-400">A Resenha do Maurinho</h3>
-        </div>
-        <p id="resenha-texto" class="text-xs sm:text-sm text-slate-300 leading-relaxed italic">Carregando análise...</p>
-        <div id="resenha-destaques" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800/60"></div>
+        <h3 class="text-blue-400 font-bold text-sm mb-2">🎙️ A Resenha do Maurinho</h3>
+        <p id="resenha-texto" class="text-xs sm:text-sm text-slate-300 italic">Carregando...</p>
     </div>
 
-    <!-- SEÇÃO: MATA-MATA (Definida como ABA ATIVA/INICIAL) -->
     <section id="aba-matamata" class="block">
-        <div class="mb-6">
-            <h2 class="text-xl font-extrabold text-white">Jogos Eliminatórios</h2>
-            <p class="text-xs text-slate-400">Palpites para o mata-mata. Multiplicadores aplicados automaticamente.</p>
-        </div>
+        <h2 class="text-xl font-bold text-white mb-4">Jogos Eliminatórios</h2>
         <div id="grid-jogos-matamata" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </section>
 
-    <!-- SEÇÃO: PALPITES (Movida para ser carregada apenas sob demanda) -->
     <section id="aba-palpites" class="hidden">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-                <h2 class="text-xl font-extrabold text-white">Preencha os Seus Palpites</h2>
-                <p class="text-xs text-slate-400">Fase de Grupos Encerrada.</p>
-            </div>
-            <!-- Botões de visualização mantidos dentro da seção de palpites -->
-            <div class="flex flex-col sm:flex-row bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full sm:w-auto">
-                <button id="btn-view-grupos" onclick="mudarModoExibicao('grupo')" class="px-4 py-1.5 rounded-lg font-bold text-xs bg-blue-600 text-white">POR GRUPOS</button>
-                <button id="btn-view-dias" onclick="mudarModoExibicao('dia')" class="px-4 py-1.5 rounded-lg font-bold text-xs text-slate-400">POR DIA</button>
-            </div>
-        </div>
         <div id="grid-jogos-palpites" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </section>
 
-    <!-- SEÇÃO: RANKING GERAL -->
     <section id="aba-ranking" class="hidden">
-        <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-3 sm:p-6 shadow-2xl">
-            <h2 class="text-xl font-bold text-white mb-6">Ranking Geral de Participantes</h2>
-            <div id="tabela-ranking" class="overflow-x-auto rounded-xl border border-slate-800">
-                <table class="w-full text-left border-collapse bg-[#121b36]">
-                    <tbody id="tabela-ranking-corpo"></tbody>
-                </table>
-            </div>
-        </div>
+        <div id="tabela-ranking" class="overflow-x-auto"></div>
     </section>
-
 </main>
     <!-- BOTÃO FLUTUANTE DE SALVAR PALPITES -->
     <button id="btn-salvar-flutuante" onclick="guardarMeusPalpites()" class="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-6 py-4 rounded-full shadow-2xl flex items-center gap-2 border border-emerald-500/30 hidden">
