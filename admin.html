@@ -395,7 +395,7 @@
             const mataMap = {};
     
             // Usamos o numero_exibicao para garantir que a ordem respeite o chaveamento
-            const jogosOrdenados = [...listaJogosMataMata].sort((a, b) => a.numero_exibicao - b.numero_exibicao);
+            const jogosOrdenados = [...listaJogosMataMata].sort((a, b) => (a.numero_jogo || 0) - (b.numero_jogo || 0));
 
             jogosOrdenados.forEach((jogo) => {
                 const fase = jogo.fase || "MATA-MATA";
@@ -425,7 +425,7 @@
                     htmlJogos += `
                         <div class="linha-jogo-mata flex flex-col py-2 border-b border-slate-800 gap-1 ${isFinalizado ? 'bg-emerald-950/20' : 'bg-slate-900/30'} rounded px-2 my-1" data-jogo-id="${jogo.id}">
                             <div class="flex items-center justify-between">
-                                <span class="text-[10px] text-purple-400 font-mono font-bold">Jogo ${jogo.numero_exibicao}</span>
+                                <span class="text-[10px] text-purple-400 font-mono font-bold">Jogo ${jogo.numero_jogo} ...</span>
                             </div>
                             <div class="flex items-center justify-between gap-2">
                                 <input type="text" value="${jogo.time_a || ''}" class="input-time-a w-1/3 bg-transparent text-right text-xs font-semibold text-slate-300 outline-none truncate" />
