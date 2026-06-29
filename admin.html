@@ -515,11 +515,8 @@
             let logs = [];
 
             try {
-                // 1. Identifica o contexto: qual aba está ativa para definir a tabela e o container
                 const tabelaAlvo = abaAtiva === 'jogos' ? 'jogos' : 'jogos_mata_mata';
                 const containerId = abaAtiva === 'jogos' ? 'aba-jogos' : 'aba-matamata';
-        
-                // 2. Busca todos os jogos APENAS da aba visível usando o atributo de ID
                 const linhasJogo = document.querySelectorAll(`#${containerId} [data-jogo-id]`);
         
                 if (linhasJogo.length === 0) {
@@ -533,35 +530,102 @@
                     const gA = div.querySelector('.input-gols-mandante').value;
                     const gB = div.querySelector('.input-gols-visitante').value;
 
-                    console.log(`Processando Jogo ID: ${id} para a tabela: ${tabelaAlvo}`);
+                    // Se o placar não estiver preenchido, pula para o próximo jogo
+                    if (gA === "" || gB === "") continue;
+
+                    const intGA = parseInt(gA);
+                    const intGB = parseInt(gB);
 
                     const payload = {
-                        gols_a_oficial: gA !== "" ? parseInt(gA) : null,
-                        gols_b_oficial: gB !== "" ? parseInt(gB) : null
+                        gols_a_oficial: intGA,
+                        gols_b_oficial: intGB
                     };
 
-                    // 3. Utilizamos UPDATE em vez de UPSERT para garantir a integridade dos outros dados (times, datas, fase)
-                    const { data, error } = await supabaseClient
+                    // Lógica de avanço de fase exclusiva para a estrutura de mata-mata
+                    if (tabelaAlvo === 'jogos_mata_mata' && typeof listaJogosMataMata !== 'undefined') {
+                        const jogoOriginal = listaJogosMataMata.find(j => j.id === id);
+                
+                        if (jogoOriginal) {
+                            let vencedor = null;
+                    
+                            if (intGA > intGB) {
+                                vencedor = jogoOriginal.time_a;
+                            } else if (intGB > intGA) {
+                                vencedor = jogoOriginal.time_b;
+                            } else {
+                                // Resolução de empates na fase eliminatória (Pênaltis)
+                                const seletorPenalidades = div.querySelector('.select-vencedor-penalidades') || div.querySelector('.select-vencedor');
+                                if (seletorPenalidades && seletorPenalidades.value) {
+                                    vencedor = seletorPenalidades.value;
+                                } else {
+                                    vencedor = prompt(`O jogo ${jogoOriginal.numero_jogo} (${jogoOriginal.time_a} x ${jogoOriginal.time_b}) empatou. Digite o nome exato do vencedor dos pênaltis:`, jogoOriginal.time_a);
+                                }
+                            }
+
+                            if (vencedor) {
+                                payload.vencedor = vencedor;
+
+                                // Se houver um jogo de destino mapeado, injeta o vencedor nele
+                                if (jogoOriginal.jogo_destino_id && jogoOriginal.jogo_destino_id !== 'null') {
+                                    const { data: jogoDestino, error: errDest } = await supabaseClient
+                                        .from('jogos_mata_mata')
+                                        .select('time_a, time_b')
+                                        .eq('id', jogoOriginal.jogo_destino_id)
+                                        .single();
+
+                                    if (!errDest && jogoDestino) {
+                                        let updateDestino = {};
+                                        const termoBusca = `J${jogoOriginal.numero_jogo}`;
+
+                                        // Verifica em qual das duas colunas o placeholder do jogo anterior se encontra
+                                        if (jogoDestino.time_a && jogoDestino.time_a.includes(termoBusca)) {
+                                            updateDestino.time_a = vencedor;
+                                        } else if (jogoDestino.time_b && jogoDestino.time_b.includes(termoBusca)) {
+                                            updateDestino.time_b = vencedor;
+                                        }
+
+                                        if (Object.keys(updateDestino).length > 0) {
+                                            const { error: errUpDest } = await supabaseClient
+                                                .from('jogos_mata_mata')
+                                                .update(updateDestino)
+                                                .eq('id', jogoOriginal.jogo_destino_id);
+                                    
+                                            if (errUpDest) {
+                                                logs.push(`Erro ao injetar vencedor no jogo destino: ${errUpDest.message}`);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Salva os dados do jogo corrente
+                    const { error } = await supabaseClient
                         .from(tabelaAlvo)
                         .update(payload)
-                        .eq('id', id)
-                        .select();
+                        .eq('id', id);
 
                     if (error) {
-                        console.error("ERRO NO SUPABASE:", error);
                         logs.push(`Erro no jogo ${id}: ${error.message}`);
                     }
                 }
 
                 if (logs.length > 0) {
-                    mostrarNotificacao("Concluído com alguns erros. Verifique o console.", "danger");
+                    mostrarNotificacao("Dados processados com alguns erros de consistência.", "danger");
+                    console.error("Erros detectados:", logs);
                 } else {
-                    mostrarNotificacao("Resultados guardados com sucesso!", "success");
-                    // 4. Recarrega os dados para atualizar o visual da interface (ex: bordas verdes de jogos finalizados)
+                    mostrarNotificacao("Resultados e chaves atualizadas! Atualizando pontuações...", "success");
+            
+                    // Executa o recálculo focado apenas no mata-mata somando ao checkpoint fixo
+                    await recalcularPontosGerais();
+            
+                    // Atualiza a árvore visual do sistema
                     await carregarDadosDoBanco();
+                    mostrarNotificacao("Processo completo concluído com sucesso!", "success");
                 }
             } catch (err) {
-                mostrarNotificacao("Erro crítico: " + err.message, "danger");
+                mostrarNotificacao("Falha crítica no motor de salvamento: " + err.message, "danger");
             } finally {
                 mostrarSpinner(false);
             }
