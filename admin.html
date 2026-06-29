@@ -391,63 +391,45 @@
             if (!grid) return;
             grid.innerHTML = "";
 
-            // 1. Criar e organizar a lista SEM depender da data original do banco
-            const mataMap = {};
-    
-            // Usamos o numero_exibicao para garantir que a ordem respeite o chaveamento
             const jogosOrdenados = [...listaJogosMataMata].sort((a, b) => (a.numero_jogo || 0) - (b.numero_jogo || 0));
-
-            jogosOrdenados.forEach((jogo) => {
-                const fase = jogo.fase || "MATA-MATA";
+            const mataMap = {};
+            jogosOrdenados.forEach(j => {
+                const fase = j.fase || "MATA-MATA";
                 if (!mataMap[fase]) mataMap[fase] = [];
-                mataMap[fase].push(jogo);
+                mataMap[fase].push(j);
             });
 
-            // 2. Ordem fixa das fases
             const ordemFases = ['16-avos', 'Oitavas', 'Quartas', 'Semifinais', 'Terceiro Lugar', 'Final'];
-    
             ordemFases.forEach(nomeFase => {
                 if (!mataMap[nomeFase]) return;
-                const jogosDaFase = mataMap[nomeFase];
-        
-                // (O restante da renderização dos cards permanece igual...)
                 const card = document.createElement('div');
-                card.className = "card-grupo rounded-xl p-5 flex flex-col justify-start shadow-xl border-purple-900/40";
-
+                card.className = "card-grupo rounded-xl p-5 border border-purple-900/40 bg-slate-900/30";
+        
                 let htmlJogos = "";
-                jogosDaFase.forEach(jogo => {
-                    // ... (Lógica de renderização dos inputs de gols e times)
-                    const golsM = jogo.gols_a_oficial ?? "";
-                    const golsV = jogo.gols_b_oficial ?? "";
-                    const vencedor = jogo.vencedor || "";
+                mataMap[nomeFase].forEach(jogo => {
                     const isFinalizado = jogo.gols_a_oficial !== null && jogo.gols_b_oficial !== null;
-            
+                    // Conversão segura de data
+                    const dataObj = new Date(jogo.data_hora);
+                    const dataExibicao = !isNaN(dataObj) ? `${dataObj.getDate()}/${dataObj.getMonth()+1} ${dataObj.getHours()}:${String(dataObj.getMinutes()).padStart(2, '0')}` : "Data indefinida";
+
                     htmlJogos += `
-                        <div class="linha-jogo-mata flex flex-col py-2 border-b border-slate-800 gap-1 ${isFinalizado ? 'bg-emerald-950/20' : 'bg-slate-900/30'} rounded px-2 my-1" data-jogo-id="${jogo.id}">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] text-purple-400 font-mono font-bold">Jogo ${jogo.numero_jogo} ...</span>
-                            </div>
-                            <div class="flex items-center justify-between gap-2">
-                                <input type="text" value="${jogo.time_a || ''}" class="input-time-a w-1/3 bg-transparent text-right text-xs font-semibold text-slate-300 outline-none truncate" />
-                                <div class="flex items-center gap-1 justify-center w-1/3">
-                                    <input type="number" value="${golsM}" class="input-gols-mandante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded text-xs" />
-                                    <span class="text-xs text-slate-500 font-bold">x</span>
-                                    <input type="number" value="${golsV}" class="input-gols-visitante w-10 h-8 text-center bg-slate-800 text-white font-bold rounded text-xs" />
+                        <div class="p-3 border-b border-slate-800 ${isFinalizado ? 'bg-emerald-950/20' : ''}" data-jogo-id="${jogo.id}">
+                            <p class="text-[10px] text-purple-400 font-bold mb-1">JOGO ${jogo.numero_jogo} — ${dataExibicao}</p>
+                            <div class="flex justify-between items-center">
+                                <input type="text" value="${jogo.time_a || ''}" class="input-time-a w-[40%] bg-transparent text-right text-xs font-bold outline-none" />
+                                <div class="flex gap-1 items-center px-2">
+                                    <input type="number" value="${jogo.gols_a_oficial ?? ''}" class="input-gols-mandante w-8 text-center bg-slate-800 rounded text-xs" />
+                                    <span class="font-bold">x</span>
+                                    <input type="number" value="${jogo.gols_b_oficial ?? ''}" class="input-gols-visitante w-8 text-center bg-slate-800 rounded text-xs" />
                                 </div>
-                                <input type="text" value="${jogo.time_b || ''}" class="input-time-b w-1/3 bg-transparent text-left text-xs font-semibold text-slate-300 outline-none truncate" />
+                                <input type="text" value="${jogo.time_b || ''}" class="input-time-b w-[40%] bg-transparent text-left text-xs font-bold outline-none" />
                             </div>
                         </div>`;
                 });
-
-                card.innerHTML = `
-                    <div>
-                        <h2 class="text-lg font-extrabold text-purple-400 mb-4 border-b border-purple-500/20">${nomeFase.toUpperCase()}</h2>
-                        <div class="flex flex-col gap-1.5">${htmlJogos}</div>
-                    </div>`;
+                card.innerHTML = `<h2 class="font-bold text-purple-400 mb-3 border-b border-purple-900 pb-1">${nomeFase.toUpperCase()}</h2>` + htmlJogos;
                 grid.appendChild(card);
             });
         }
-
         function renderizarUsuariosTabela() {
             const tbody = document.getElementById('tabela-usuarios-corpo');
             if(!tbody) return;
@@ -531,23 +513,7 @@
         async function guardarTodosResultados() {
             mostrarSpinner(true);
             try {
-                if (abaAtiva === 'jogos') {
-                    const lines = document.querySelectorAll('.linha-jogo');
-                    for (let div of lines) {
-                        const id = div.getAttribute('data-jogo-id');
-                        const gA = div.querySelector('.input-gols-mandante').value;
-                        const gB = div.querySelector('.input-gols-visitante').value;
-
-                        let updateData = {};
-                        if (gA !== "" && gB !== "") {
-                            updateData = { gols_a_oficial: parseInt(gA), gols_b_oficial: parseInt(gB) };
-                        } else {
-                            // Se estiver vazio, define explicitamente como null
-                            updateData = { gols_a_oficial: null, gols_b_oficial: null };
-                        }
-                        await supabaseClient.from('jogos').update(updateData).eq('id', id);
-                    }
-                } else if (abaAtiva === 'matamata') {
+                if (abaAtiva === 'matamata') {
                     const linhasMata = document.querySelectorAll('.linha-jogo-mata');
                     for (let div of linhasMata) {
                         const id = div.getAttribute('data-jogo-id');
@@ -557,28 +523,26 @@
                         const gB = div.querySelector('.input-gols-visitante').value;
 
                         let updateData = { time_a: tA, time_b: tB };
+                
+                        // Lógica de vencedor automático
                         if (gA !== "" && gB !== "") {
                             updateData.gols_a_oficial = parseInt(gA);
                             updateData.gols_b_oficial = parseInt(gB);
                             if (parseInt(gA) > parseInt(gB)) updateData.vencedor = tA;
                             else if (parseInt(gB) > parseInt(gA)) updateData.vencedor = tB;
-                        } else {
-                            // Se estiver vazio, define explícitamente como null para apagar resultados passados
-                            updateData.gols_a_oficial = null;
-                            updateData.gols_b_oficial = null;
-                            updateData.vencedor = null;
+                            else updateData.vencedor = null; // Empate precisa de decisão manual
                         }
 
                         await supabaseClient.from('jogos_mata_mata').update(updateData).eq('id', id);
 
+                        // Dispara a progressão se tiver um vencedor definido
                         if (updateData.vencedor) {
                             await progredirTimeNaArvore(id, updateData.vencedor);
                         }
                     }
                 }
-                mostrarNotificacao("Alterações guardadas com sucesso!", "success");
+                mostrarNotificacao("Dados guardados e progressão executada!", "success");
                 await carregarDadosDoBanco();
-                await recalcularPontosGerais();
             } catch (err) {
                 mostrarNotificacao(err.message, "danger");
             } finally {
