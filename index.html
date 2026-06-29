@@ -475,17 +475,32 @@
 
         function processarCalculosEstatisticosEranking() {
             cacheDesviosRanking = {};
-            const jogosFinalizados = listaJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
+    
+            // 1. Criar uma lista única de todos os jogos (Fase de grupos + Mata-mata)
+            const todosOsJogos = [...listaJogos, ...listaJogosMataMata];
+    
+            // 2. Filtrar apenas os que possuem resultado oficial
+            const jogosFinalizados = todosOsJogos.filter(j => 
+                j.gols_a_oficial !== null && j.gols_b_oficial !== null
+            );
+
             if (jogosFinalizados.length === 0) {
                 document.getElementById('painel-resenha').classList.add('hidden');
                 return;
             }
 
+            // 3. Ordenar por data/hora para garantir que o "último" é o mais recente de verdade
+            jogosFinalizados.sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
             const ultimoJogo = jogosFinalizados[jogosFinalizados.length - 1];
-            const rankingAtual = [...listaPerfis].sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
+
+            // 4. Identificar em qual lista de palpites buscar (agora precisamos saber de onde veio o ultimoJogo)
+            const ehMataMata = listaJogosMataMata.some(j => j.id === ultimoJogo.id);
+            const palpitesDoUltimoJogo = ehMataMata ? listaPalpitesMataMata : listaPalpites;
+
+            // ... (restante do seu código continua a partir daqui)            const rankingAtual = [...listaPerfis].sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
 
             const rankingAnteriorList = listaPerfis.map(user => {
-                const pReg = listaPalpites.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
+                const pReg = palpitesDoUltimoJogo.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
                 let pUlt = 0;
                 if (pReg && ultimoJogo.gols_a_oficial !== null) pUlt = avaliarRegrasPalpite(pReg, ultimoJogo, regrasPontuacao);
                 return { id: user.id, pts: (user.pontos_total || 0) - pUlt };
@@ -500,8 +515,8 @@
                 const posAnterior = dictPosAnterior[user.id] || posAtual;
                 cacheDesviosRanking[user.id] = { posAtual, diff: posAnterior - posAtual };
 
-                const palpiteUltimo = listaPalpites.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
-    
+                // Use a variável palpitesDoUltimoJogo que você definiu lá no início da função!
+                const palpiteUltimo = palpitesDoUltimoJogo.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);    
                 // CORREÇÃO: Converter para Number para garantir comparação correta
                 if (palpiteUltimo !== undefined && 
                     Number(palpiteUltimo.palpite_a) === Number(ultimoJogo.gols_a_oficial) && 
