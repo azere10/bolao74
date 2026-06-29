@@ -101,150 +101,56 @@
     </div>
 
     <!-- CONTEÚDO DA APLICAÇÃO -->
-    <main id="app-content" class="max-w-7xl mx-auto px-4 mt-6 hidden">
+    <main id="app-content" class="max-w-7xl mx-auto px-4 mt-6">
 
-        <!-- SEÇÃO: MEUS PALPITES -->
-        <section id="aba-palpites" class="block">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div>
-                    <h2 class="text-xl font-extrabold text-white">Preencha os Seus Palpites</h2>
-                    <p class="text-xs text-slate-400">Edição encerrada 5 minutos antes de cada jogo.</p>
-                </div>
-                <div class="flex flex-col sm:flex-row bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full sm:w-auto">
-                    <button id="btn-view-grupos" onclick="mudarModoExibicao('grupo')" class="flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all bg-blue-600 text-white shadow-md">
-                        POR GRUPOS
-                    </button>
-                    <button id="btn-view-dias" onclick="mudarModoExibicao('dia')" class="flex-1 sm:flex-initial px-4 py-1.5 rounded-lg font-bold text-xs transition-all text-slate-400 hover:text-white">
-                        POR DIA
-                    </button>
-                </div>
-            </div>
-            <div id="grid-jogos-palpites" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        </section>
-
-        <!-- SEÇÃO: MATA-MATA -->
-        <section id="aba-matamata" class="hidden">
-            <div class="mb-6">
-                <h2 class="text-xl font-extrabold text-white">Jogos Eliminatórios</h2>
-                <p class="text-xs text-slate-400">Palpites para o mata-mata. Multiplicadores crescentes aplicados automaticamente.</p>
-            </div>
-            <div id="grid-jogos-matamata" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        </section>
-
-        <!-- SEÇÃO: RANKING GERAL -->
-<section id="aba-ranking" class="hidden">
-    <!-- Removido o 'hidden' da div abaixo para a resenha aparecer -->
+    <!-- PAINEL DA RESENHA (Agora dentro da estrutura principal) -->
     <div id="painel-resenha" class="bg-gradient-to-r from-blue-950/60 to-slate-900/80 rounded-2xl border border-blue-500/20 p-5 mb-6 shadow-xl">
         <div class="flex items-center gap-2 mb-3">
             <span class="text-xl">🎙️</span>
             <h3 class="text-sm font-extrabold uppercase tracking-wider text-blue-400">A Resenha do Maurinho</h3>
         </div>
-        <p id="resenha-texto" class="text-xs sm:text-sm text-slate-300 leading-relaxed italic">A carregar análise...</p>
+        <p id="resenha-texto" class="text-xs sm:text-sm text-slate-300 leading-relaxed italic">Carregando análise...</p>
         <div id="resenha-destaques" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800/60"></div>
     </div>
 
-    <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-3 sm:p-6 shadow-2xl">
+    <!-- SEÇÃO: MATA-MATA (Definida como ABA ATIVA/INICIAL) -->
+    <section id="aba-matamata" class="block">
         <div class="mb-6">
-            <h2 class="text-xl font-bold text-white">Ranking Geral de Participantes</h2>
-            <p class="text-xs text-slate-400 mt-1">Confronte os palpites de outros participantes para os jogos que já iniciaram.</p>
+            <h2 class="text-xl font-extrabold text-white">Jogos Eliminatórios</h2>
+            <p class="text-xs text-slate-400">Palpites para o mata-mata. Multiplicadores aplicados automaticamente.</p>
         </div>
-        <div class="overflow-x-auto rounded-xl border border-slate-800">
-            <table class="w-full text-left border-collapse bg-[#121b36]">
-                <thead>
-                    <tr class="border-b border-slate-800 text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-slate-900/80">
-                        <th class="p-2 sm:p-4 text-center w-12">Pos</th>
-                        <th class="p-2 sm:p-4">Participante</th>
-                        <th class="p-2 sm:p-4 text-center w-24">Pontos</th>
-                        <th class="p-2 sm:p-4 text-center w-16 sm:w-28">Auditar</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-ranking-corpo" class="text-xs sm:text-sm text-slate-300 divide-y divide-slate-800/50"></tbody>
-            </table>
+        <div id="grid-jogos-matamata" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- SEÇÃO: PALPITES (Movida para ser carregada apenas sob demanda) -->
+    <section id="aba-palpites" class="hidden">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+                <h2 class="text-xl font-extrabold text-white">Preencha os Seus Palpites</h2>
+                <p class="text-xs text-slate-400">Fase de Grupos Encerrada.</p>
+            </div>
+            <!-- Botões de visualização mantidos dentro da seção de palpites -->
+            <div class="flex flex-col sm:flex-row bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full sm:w-auto">
+                <button id="btn-view-grupos" onclick="mudarModoExibicao('grupo')" class="px-4 py-1.5 rounded-lg font-bold text-xs bg-blue-600 text-white">POR GRUPOS</button>
+                <button id="btn-view-dias" onclick="mudarModoExibicao('dia')" class="px-4 py-1.5 rounded-lg font-bold text-xs text-slate-400">POR DIA</button>
+            </div>
         </div>
-    </div>
-</section>
+        <div id="grid-jogos-palpites" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
 
-        <!-- SEÇÃO: REGULAMENTO -->
-        <section id="aba-regras" class="hidden">
-            <div class="max-w-4xl mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-2xl space-y-6">
-                <div class="border-b border-slate-800 pb-4">
-                    <h2 class="text-2xl font-black text-blue-400">REGULAMENTO DO BOLÃO DO MAURINHO</h2>
-                    <p class="text-xs text-slate-400 mt-1">Conheça os critérios de pontuação oficiais e garanta a sua classificação!</p>
-                </div>
-                <div class="bg-amber-950/40 border border-amber-500/30 rounded-xl p-4 flex gap-3 items-start">
-                    <div class="text-amber-400 mt-0.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <span class="block text-sm font-bold text-amber-300">Aviso sobre a Atualização de Classificação</span>
-                        <span class="block text-xs text-slate-400 mt-1 leading-relaxed">
-                            O ranking de classificação e os palpites individuais <strong>só serão processados e atualizados no sistema após o administrador lançar e confirmar o resultado oficial</strong> do respetivo jogo.
-                        </span>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                        <span class="h-2 w-2 rounded-full bg-blue-500"></span> Regras de Pontuação Base (Por Jogo)
-                    </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="bg-[#121b36] border border-slate-800 p-4 rounded-xl flex justify-between items-center">
-                            <div>
-                                <span class="block text-sm font-bold text-white">Placar Exato</span>
-                                <span class="text-xs text-slate-400">Acerto total do placar oficial da partida.</span>
-                            </div>
-                            <span class="text-emerald-400 font-black text-xl font-mono">+25 pts</span>
-                        </div>
-                        <div class="bg-[#121b36] border border-slate-800 p-4 rounded-xl flex justify-between items-center">
-                            <div>
-                                <span class="block text-sm font-bold text-white">Vencedor + Saldo Exato</span>
-                                <span class="text-xs text-slate-400">Acertou vencedor e saldo exato de golos.</span>
-                            </div>
-                            <span class="text-teal-400 font-black text-xl font-mono">+18 pts</span>
-                        </div>
-                        <div class="bg-[#121b36] border border-slate-800 p-4 rounded-xl flex justify-between items-center">
-                            <div>
-                                <span class="block text-sm font-bold text-white">Vencedor ou Empate Simples</span>
-                                <span class="text-xs text-slate-400">Acertou a tendência de vitória ou empate.</span>
-                            </div>
-                            <span class="text-blue-400 font-black text-xl font-mono">+15 pts</span>
-                        </div>
-                        <div class="bg-[#121b36] border border-slate-800 p-4 rounded-xl flex justify-between items-center">
-                            <div>
-                                <span class="block text-sm font-bold text-white">Acerto de Golo Parcial</span>
-                                <span class="text-xs text-slate-400">Errou a tendência, mas acertou os golos de 1 equipa.</span>
-                            </div>
-                            <span class="text-amber-500 font-black text-xl font-mono">+3 pts</span>
-                        </div>
-                    </div>
-                </div>
+    <!-- SEÇÃO: RANKING GERAL -->
+    <section id="aba-ranking" class="hidden">
+        <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-3 sm:p-6 shadow-2xl">
+            <h2 class="text-xl font-bold text-white mb-6">Ranking Geral de Participantes</h2>
+            <div id="tabela-ranking" class="overflow-x-auto rounded-xl border border-slate-800">
+                <table class="w-full text-left border-collapse bg-[#121b36]">
+                    <tbody id="tabela-ranking-corpo"></tbody>
+                </table>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- SEÇÃO: MINHA CONTA -->
-        <section id="aba-conta" class="hidden">
-            <div class="max-w-md mx-auto bg-slate-900/50 rounded-2xl border border-slate-800 p-8 shadow-2xl">
-                <div class="border-b border-slate-800 pb-4 mb-6 flex flex-col items-center">
-                    <div class="h-14 w-14 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-full flex items-center justify-center font-bold text-xl mb-3 font-mono">M</div>
-                    <h2 id="conta-user-nome" class="text-lg font-black text-white">Nome do Utilizador</h2>
-                    <p id="conta-user-login" class="text-xs text-slate-500 font-mono mt-0.5">login_utilizador</p>
-                </div>
-                <div class="space-y-4">
-                    <div>
-                        <h3 class="text-sm font-bold text-white mb-3">Alterar a Minha Palavra-passe</h3>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Nova Palavra-passe</label>
-                        <input type="password" id="conta-nova-senha" placeholder="Digite a nova senha" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 outline-none text-sm" />
-                    </div>
-                    <button onclick="atualizarSenhaPropria()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg text-xs">ATUALIZAR PALAVRA-PASSE</button>
-                    <div class="border-t border-slate-800 pt-6 mt-6">
-                        <button onclick="terminarSessao()" class="w-full bg-red-950/80 hover:bg-red-800 text-red-200 font-bold py-3 rounded-lg text-xs">TERMINAR SESSÃO / LOGOUT</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
+</main>
     <!-- BOTÃO FLUTUANTE DE SALVAR PALPITES -->
     <button id="btn-salvar-flutuante" onclick="guardarMeusPalpites()" class="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-6 py-4 rounded-full shadow-2xl flex items-center gap-2 border border-emerald-500/30 hidden">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -450,42 +356,57 @@
         }
 
         async function carregarDadosDoBanco() {
-            mostrarSpinner(true, "A atualizar dados do bolão...");
-            try {
-                const { data: jogos, error: errJogos } = await supabaseClient.from('jogos').select('*');
-                if (errJogos) throw errJogos;
-                listaJogos = (jogos || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+    mostrarSpinner(true, "A atualizar dados do bolão...");
+    try {
+        const { data: jogos, error: errJogos } = await supabaseClient.from('jogos').select('*');
+        if (errJogos) throw errJogos;
+        listaJogos = (jogos || []).sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
 
-                // CORREÇÃO: Garante o carregamento e ordenação segura pela coluna estrutural 'numero_jogo'
-                const { data: jogosMata, error: errMata } = await supabaseClient.from('jogos_mata_mata').select('*').order('numero_jogo', { ascending: true });
-                if (!errMata) {
-                    listaJogosMataMata = jogosMata || [];
-                }
-
-                const { data: palpites, error: errPalpites } = await supabaseClient.from('palpites').select('*');
-                if (errPalpites) throw errPalpites;
-                listaPalpites = palpites || [];
-
-                const { data: palpitesMata, error: errPMata } = await supabaseClient.from('palpites_mata_mata').select('*');
-                if (!errPMata) listaPalpitesMataMata = palpitesMata || [];
-
-                const { data: perfis, error: errPerfis } = await supabaseClient.from('perfis').select('*');
-                if (errPerfis) throw errPerfis;
-                listaPerfis = perfis || [];
-
-                const perfilAtualizado = listaPerfis.find(p => p.id === currentUser.id);
-                if (perfilAtualizado) {
-                    currentUser.pontos_total = perfilAtualizado.pontos_total;
-                    document.getElementById('header-user-pontos').textContent = currentUser.pontos_total || 0;
-                }
-
-                processarCalculosEstatisticosEranking();
-                renderizarMeusPalpites();
-                renderizarMataMata();
-                renderizarRankingGeral();
-            } catch (error) { console.error(error); }
-            finally { mostrarSpinner(false); }
+        const { data: jogosMata, error: errMata } = await supabaseClient.from('jogos_mata_mata').select('*').order('numero_jogo', { ascending: true });
+        if (!errMata) {
+            listaJogosMataMata = jogosMata || [];
         }
+
+        const { data: palpites, error: errPalpites } = await supabaseClient.from('palpites').select('*');
+        if (errPalpites) throw errPalpites;
+        listaPalpites = palpites || [];
+
+        const { data: palpitesMata, error: errPMata } = await supabaseClient.from('palpites_mata_mata').select('*');
+        if (!errPMata) listaPalpitesMataMata = palpitesMata || [];
+
+        const { data: perfis, error: errPerfis } = await supabaseClient.from('perfis').select('*');
+        if (errPerfis) throw errPerfis;
+        listaPerfis = perfis || [];
+
+        const perfilAtualizado = listaPerfis.find(p => p.id === currentUser.id);
+        if (perfilAtualizado) {
+            currentUser.pontos_total = perfilAtualizado.pontos_total;
+            document.getElementById('header-user-pontos').textContent = currentUser.pontos_total || 0;
+        }
+
+        // --- AJUSTES DE CORREÇÃO ---
+        
+        // 1. Processa estatísticas e ranking primeiro
+        processarCalculosEstatisticosEranking();
+        
+        // 2. Renderiza as abas
+        renderizarMeusPalpites();
+        renderizarMataMata();
+        renderizarRankingGeral();
+
+        // 3. FORÇA a aba inicial ser Mata-Mata e limpa vestígios de outras abas
+        // Isso resolve o problema de carregar a estrutura errada ao abrir a página
+        mudarAba('matamata');
+
+        // 4. Se tiver uma função para carregar o texto da resenha, chame aqui:
+        // Exemplo: carregarResenhaDoBanco(); 
+
+    } catch (error) { 
+        console.error("Erro ao carregar dados:", error); 
+    } finally { 
+        mostrarSpinner(false); 
+    }
+}
 
         function processarCalculosEstatisticosEranking() {
             cacheDesviosRanking = {};
