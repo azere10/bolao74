@@ -501,11 +501,15 @@
                 cacheDesviosRanking[user.id] = { posAtual, diff: posAnterior - posAtual };
 
                 const palpiteUltimo = listaPalpites.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
-                if (palpiteUltimo && palpiteUltimo.palpite_a === ultimoJogo.gols_a_oficial && palpiteUltimo.palpite_b === ultimoJogo.gols_b_oficial) {
+    
+                // CORREÇÃO: Converter para Number para garantir comparação correta
+                if (palpiteUltimo !== undefined && 
+                    Number(palpiteUltimo.palpite_a) === Number(ultimoJogo.gols_a_oficial) && 
+                    Number(palpiteUltimo.palpite_b) === Number(ultimoJogo.gols_b_oficial)) {
+        
                     profetas.push(user.nome_completo);
                 }
             });
-
             const piadasResenha = [
                 `A tabela tremeu! O último resultado de <strong>${ultimoJogo.time_a} x ${ultimoJogo.time_b}</strong> bagunçou o coreto da família inteira!`,
                 `Secadores ligados no limite máximo! Quem apostou com o coração deu-se muito mal.`,
@@ -528,8 +532,21 @@
 
             document.getElementById('resenha-destaques').innerHTML = htmlDestaques;
             document.getElementById('painel-resenha').classList.remove('hidden');
-        }
 
+            let mensagemPrincipal = piadasResenha[Math.floor(Math.random() * piadasResenha.length)];
+
+            // Se houve profetas, força uma mensagem especial
+            if (profetas.length > 0) {
+                mensagemPrincipal = `🔥 TEMOS VIDENTES NO GRUPO! ${profetas.join(', ')} acertaram o placar exato de ${ultimoJogo.time_a} x ${ultimoJogo.time_b}!`;
+            }
+
+            // Define o conteúdo apenas uma vez
+            document.getElementById('resenha-texto').innerHTML = mensagemPrincipal;
+
+            // Destaques e visibilidade
+            document.getElementById('resenha-destaques').innerHTML = htmlDestaques;
+            document.getElementById('painel-resenha').classList.remove('hidden');
+        }
         function formatarHoraFusoExibicao(isoString) {
             if (!isoString) return "—";
             const d = new Date(isoString);
