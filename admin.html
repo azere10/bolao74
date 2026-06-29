@@ -172,6 +172,39 @@
             golParcial: 3,
             erro: 0
         };
+        // Mapa estático de avanço da Copa do Mundo (Matriz: Jogo Origem -> Destino e Posição)
+const mapaAvancoFase = {
+    73: [{ destino: 90, slot: 'time_a' }],
+    74: [{ destino: 89, slot: 'time_a' }],
+    75: [{ destino: 90, slot: 'time_b' }],
+    76: [{ destino: 91, slot: 'time_a' }],
+    77: [{ destino: 89, slot: 'time_b' }],
+    78: [{ destino: 91, slot: 'time_b' }],
+    79: [{ destino: 92, slot: 'time_a' }],
+    80: [{ destino: 92, slot: 'time_b' }],
+    81: [{ destino: 94, slot: 'time_a' }],
+    82: [{ destino: 94, slot: 'time_b' }],
+    83: [{ destino: 93, slot: 'time_a' }],
+    84: [{ destino: 93, slot: 'time_b' }],
+    85: [{ destino: 96, slot: 'time_a' }],
+    86: [{ destino: 95, slot: 'time_a' }],
+    87: [{ destino: 96, slot: 'time_b' }],
+    88: [{ destino: 95, slot: 'time_b' }],
+    89: [{ destino: 97, slot: 'time_a' }],
+    90: [{ destino: 97, slot: 'time_b' }],
+    91: [{ destino: 99, slot: 'time_a' }],
+    92: [{ destino: 99, slot: 'time_b' }],
+    93: [{ destino: 98, slot: 'time_a' }],
+    94: [{ destino: 98, slot: 'time_b' }],
+    95: [{ destino: 100, slot: 'time_a' }],
+    96: [{ destino: 100, slot: 'time_b' }],
+    97: [{ destino: 101, slot: 'time_a' }],
+    98: [{ destino: 101, slot: 'time_b' }],
+    99: [{ destino: 102, slot: 'time_a' }],
+    100: [{ destino: 102, slot: 'time_b' }],
+    101: [{ destino: 104, slot: 'time_a' }, { destino: 103, slot: 'time_a', isPerdedor: true }],
+    102: [{ destino: 104, slot: 'time_b' }, { destino: 103, slot: 'time_b', isPerdedor: true }]
+};
         let abaAtiva = 'jogos';
 
         window.addEventListener('DOMContentLoaded', async () => {
@@ -511,125 +544,133 @@
 
         // --- FUNÇÃO DE GUARDAR AJUSTADA PARA PERMITIR VOLTAR AO NULO ---
         async function guardarTodosResultados() {
-            mostrarSpinner(true);
-            let logs = [];
+    mostrarSpinner(true);
+    let logs = [];
 
-            try {
-                const tabelaAlvo = abaAtiva === 'jogos' ? 'jogos' : 'jogos_mata_mata';
-                const containerId = abaAtiva === 'jogos' ? 'aba-jogos' : 'aba-matamata';
-                const linhasJogo = document.querySelectorAll(`#${containerId} [data-jogo-id]`);
+    try {
+        const tabelaAlvo = abaAtiva === 'jogos' ? 'jogos' : 'jogos_mata_mata';
+        const containerId = abaAtiva === 'jogos' ? 'aba-jogos' : 'aba-matamata';
+        const linhasJogo = document.querySelectorAll(`#${containerId} [data-jogo-id]`);
         
-                if (linhasJogo.length === 0) {
-                    mostrarNotificacao("Nenhum jogo encontrado para salvar nesta aba.", "danger");
-                    mostrarSpinner(false);
-                    return;
-                }
+        if (linhasJogo.length === 0) {
+            mostrarNotificacao("Nenhum jogo encontrado para salvar.", "danger");
+            mostrarSpinner(false);
+            return;
+        }
 
-                for (let div of linhasJogo) {
-                    const id = div.getAttribute('data-jogo-id');
-                    const gA = div.querySelector('.input-gols-mandante').value;
-                    const gB = div.querySelector('.input-gols-visitante').value;
+        for (let div of linhasJogo) {
+            const id = div.getAttribute('data-jogo-id');
+            const gA = div.querySelector('.input-gols-mandante').value;
+            const gB = div.querySelector('.input-gols-visitante').value;
 
-                    // Se o placar não estiver preenchido, pula para o próximo jogo
-                    if (gA === "" || gB === "") continue;
+            if ((gA === "" && gB !== "") || (gA !== "" && gB === "")) {
+                logs.push(`Jogo ${id} ignorado: placar incompleto.`);
+                continue;
+            }
 
-                    const intGA = parseInt(gA);
-                    const intGB = parseInt(gB);
+            const isReset = (gA === "" && gB === "");
+            const payload = {
+                gols_a_oficial: isReset ? null : parseInt(gA),
+                gols_b_oficial: isReset ? null : parseInt(gB)
+            };
 
-                    const payload = {
-                        gols_a_oficial: intGA,
-                        gols_b_oficial: intGB
-                    };
-
-                    // Lógica de avanço de fase exclusiva para a estrutura de mata-mata
-                    if (tabelaAlvo === 'jogos_mata_mata' && typeof listaJogosMataMata !== 'undefined') {
-                        const jogoOriginal = listaJogosMataMata.find(j => j.id === id);
+            if (tabelaAlvo === 'jogos_mata_mata' && typeof listaJogosMataMata !== 'undefined') {
+                const jogoOriginal = listaJogosMataMata.find(j => j.id === id);
                 
-                        if (jogoOriginal) {
-                            let vencedor = null;
-                    
-                            if (intGA > intGB) {
-                                vencedor = jogoOriginal.time_a;
-                            } else if (intGB > intGA) {
-                                vencedor = jogoOriginal.time_b;
-                            } else {
-                                // Resolução de empates na fase eliminatória (Pênaltis)
-                                const seletorPenalidades = div.querySelector('.select-vencedor-penalidades') || div.querySelector('.select-vencedor');
-                                if (seletorPenalidades && seletorPenalidades.value) {
-                                    vencedor = seletorPenalidades.value;
-                                } else {
-                                    vencedor = prompt(`O jogo ${jogoOriginal.numero_jogo} (${jogoOriginal.time_a} x ${jogoOriginal.time_b}) empatou. Digite o nome exato do vencedor dos pênaltis:`, jogoOriginal.time_a);
+                if (jogoOriginal) {
+                    if (isReset) {
+                        payload.vencedor = null;
+                        
+                        // Ao resetar, devolve o placeholder original para o próximo jogo
+                        const rotas = mapaAvancoFase[jogoOriginal.numero_jogo];
+                        if (rotas) {
+                            for (const rota of rotas) {
+                                const jogoDestino = listaJogosMataMata.find(j => j.numero_jogo == rota.destino);
+                                // Apenas restaura se o jogo destino ainda não tiver sido jogado
+                                if (jogoDestino && jogoDestino.gols_a_oficial === null && jogoDestino.gols_b_oficial === null) {
+                                    let updateDestino = {};
+                                    updateDestino[rota.slot] = rota.isPerdedor ? `Perdedor J${jogoOriginal.numero_jogo}` : `Vencedor J${jogoOriginal.numero_jogo}`;
+                                    await supabaseClient.from('jogos_mata_mata').update(updateDestino).eq('id', jogoDestino.id);
                                 }
                             }
-
+                        }
+                    } else {
+                        let vencedor = null;
+                        let perdedor = null;
+                        const intGA = parseInt(gA);
+                        const intGB = parseInt(gB);
+                        
+                        if (intGA > intGB) {
+                            vencedor = jogoOriginal.time_a;
+                            perdedor = jogoOriginal.time_b;
+                        } else if (intGB > intGA) {
+                            vencedor = jogoOriginal.time_b;
+                            perdedor = jogoOriginal.time_a;
+                        } else {
+                            const seletorPenalidades = div.querySelector('.select-vencedor-penalidades') || div.querySelector('.select-vencedor');
+                            if (seletorPenalidades && seletorPenalidades.value) {
+                                vencedor = seletorPenalidades.value;
+                            } else {
+                                vencedor = prompt(`O jogo ${jogoOriginal.numero_jogo} empatou. Digite o vencedor exato nos pênaltis:`, jogoOriginal.time_a);
+                            }
                             if (vencedor) {
-                                payload.vencedor = vencedor;
+                                perdedor = (vencedor === jogoOriginal.time_a) ? jogoOriginal.time_b : jogoOriginal.time_a;
+                            }
+                        }
 
-                                // Se houver um jogo de destino mapeado, injeta o vencedor nele
-                                if (jogoOriginal.jogo_destino_id && jogoOriginal.jogo_destino_id !== 'null') {
-                                    const { data: jogoDestino, error: errDest } = await supabaseClient
-                                        .from('jogos_mata_mata')
-                                        .select('time_a, time_b')
-                                        .eq('id', jogoOriginal.jogo_destino_id)
-                                        .single();
+                        if (vencedor) {
+                            payload.vencedor = vencedor;
 
-                                    if (!errDest && jogoDestino) {
+                            // Injeta o resultado na fase seguinte operando através do mapa fixo
+                            const rotas = mapaAvancoFase[jogoOriginal.numero_jogo];
+                            if (rotas) {
+                                for (const rota of rotas) {
+                                    const jogoDestino = listaJogosMataMata.find(j => j.numero_jogo == rota.destino);
+                                    if (jogoDestino) {
                                         let updateDestino = {};
-                                        const termoBusca = `J${jogoOriginal.numero_jogo}`;
+                                        updateDestino[rota.slot] = rota.isPerdedor ? perdedor : vencedor;
 
-                                        // Verifica em qual das duas colunas o placeholder do jogo anterior se encontra
-                                        if (jogoDestino.time_a && jogoDestino.time_a.includes(termoBusca)) {
-                                            updateDestino.time_a = vencedor;
-                                        } else if (jogoDestino.time_b && jogoDestino.time_b.includes(termoBusca)) {
-                                            updateDestino.time_b = vencedor;
-                                        }
-
-                                        if (Object.keys(updateDestino).length > 0) {
-                                            const { error: errUpDest } = await supabaseClient
-                                                .from('jogos_mata_mata')
-                                                .update(updateDestino)
-                                                .eq('id', jogoOriginal.jogo_destino_id);
-                                    
-                                            if (errUpDest) {
-                                                logs.push(`Erro ao injetar vencedor no jogo destino: ${errUpDest.message}`);
-                                            }
+                                        const { error: errUpDest } = await supabaseClient
+                                            .from('jogos_mata_mata')
+                                            .update(updateDestino)
+                                            .eq('id', jogoDestino.id);
+                                        
+                                        if (errUpDest) {
+                                            logs.push(`Erro ao avançar J${jogoOriginal.numero_jogo}: ${errUpDest.message}`);
                                         }
                                     }
                                 }
                             }
                         }
                     }
-
-                    // Salva os dados do jogo corrente
-                    const { error } = await supabaseClient
-                        .from(tabelaAlvo)
-                        .update(payload)
-                        .eq('id', id);
-
-                    if (error) {
-                        logs.push(`Erro no jogo ${id}: ${error.message}`);
-                    }
                 }
+            }
 
-                if (logs.length > 0) {
-                    mostrarNotificacao("Dados processados com alguns erros de consistência.", "danger");
-                    console.error("Erros detectados:", logs);
-                } else {
-                    mostrarNotificacao("Resultados e chaves atualizadas! Atualizando pontuações...", "success");
-            
-                    // Executa o recálculo focado apenas no mata-mata somando ao checkpoint fixo
-                    await recalcularPontosGerais();
-            
-                    // Atualiza a árvore visual do sistema
-                    await carregarDadosDoBanco();
-                    mostrarNotificacao("Processo completo concluído com sucesso!", "success");
-                }
-            } catch (err) {
-                mostrarNotificacao("Falha crítica no motor de salvamento: " + err.message, "danger");
-            } finally {
-                mostrarSpinner(false);
+            const { error } = await supabaseClient
+                .from(tabelaAlvo)
+                .update(payload)
+                .eq('id', id);
+
+            if (error) {
+                logs.push(`Erro no jogo ${id}: ${error.message}`);
             }
         }
+
+        if (logs.length > 0) {
+            mostrarNotificacao("Ação finalizada com alertas. Verifique o console.", "danger");
+            console.warn(logs);
+        } else {
+            mostrarNotificacao("Resultados e chaves atualizadas! Recalculando...", "success");
+            await recalcularPontosGerais();
+            await carregarDadosDoBanco();
+            mostrarNotificacao("Atualização concluída com sucesso!", "success");
+        }
+    } catch (err) {
+        mostrarNotificacao("Falha na gravação: " + err.message, "danger");
+    } finally {
+        mostrarSpinner(false);
+    }
+}
         function obterMultiplicadorFase(fase) {
             if (!fase) return 1.0;
             const f = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
