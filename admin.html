@@ -643,46 +643,59 @@
 
         async function recalcularPontosGerais() {
             try {
-                const mapaPontosNovos = {};
-                listaPerfis.forEach(user => { mapaPontosNovos[user.id] = user.pontos_grupo || 0; });
+                const { data: jogosMataBD } = await supabaseClient.from('jogos_mata_mata').select('*');
+                const { data: palpitesMata } = await supabaseClient.from('palpites_mata_mata').select('*');
+                const { data: perfisBD } = await supabaseClient.from('perfis').select('*');
 
-                const jogosMataFinalizados = listaJogosMataMata.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
+                if (!jogosMataBD || !palpitesMata || !perfisBD) return;
+
+                // Inicializa o mapa com o valor consolidado da fase de grupos (ponto de partida imutável)
+                const mapaPontosTotais = {};
+                perfisBD.forEach(user => {
+                    mapaPontosTotais[user.id] = Number(user.pontos_grupo) || 0;
+                });
+
+                // Filtra estritamente os jogos encerrados do mata-mata
+                const jogosMataFinalizados = jogosMataBD.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
                 const mapaJogosMata = new Map(jogosMataFinalizados.map(j => [j.id, j]));
 
-                const { data: palpitesMata } = await supabaseClient.from('palpites_mata_mata').select('*');
+                const processados = new Set();
+                for (const palpite of palpitesMata) {
+                    if (!palpite.user_id || !palpite.jogo_id) continue;
 
-                if (palpitesMata) {
-                    const processados = new Set();
-                    for (const palpite of palpitesMata) {
-                        if (!palpite.user_id || !palpite.jogo_id) continue;
-                        
-                        const chaveUnica = `${palpite.user_id}_${palpite.jogo_id}`;
-                        if (processados.has(chaveUnica)) continue;
-                        processados.add(chaveUnica);
+                    const chaveUnica = `${palpite.user_id}_${palpite.jogo_id}`;
+                    if (processados.has(chaveUnica)) continue;
+                    processados.add(chaveUnica);
 
-                        const jogo = mapaJogosMata.get(palpite.jogo_id);
-                        if (!jogo) continue; 
+                    const jogo = mapaJogosMata.get(palpite.jogo_id);
+                    if (!jogo) continue; // Pula palpites de jogos não finalizados
 
-                        const pontosBase = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
-                        const mult = obterMultiplicadorFase(jogo.fase);
-                        
-                        if (mapaPontosNovos[palpite.user_id] !== undefined) {
-                            mapaPontosNovos[palpite.user_id] += Math.floor(pontosBase * mult);
-                        }
+                    // Executa a conferência de regras matemáticas básicas
+                    const pontosBase = avaliarRegrasPalpite(palpite, jogo, regrasPontuacao);
+                    const mult = obterMultiplicadorFase(jogo.fase);
+
+                    if (mapaPontosTotais[palpite.user_id] !== undefined) {
+                        mapaPontosTotais[palpite.user_id] += Math.floor(pontosBase * mult);
                     }
                 }
 
-                for (const item of listaPerfis) {
-                    const novosPts = mapaPontosNovos[item.id] || 0;
-                    if (item.pontos_total !== novosPts) {
-                        await supabaseClient.from('perfis').update({ pontos_total: novosPts }).eq('id', item.id);
+                // Submete os dados consolidados para o banco de dados
+                for (const user of perfisBD) {
+                    const novosPts = mapaPontosTotais[user.id] || 0;
+            
+                    // Só atualiza se houver real modificação no valor para poupar operações de escrita
+                    if (Number(user.pontos_total) !== novosPts) {
+                        await supabaseClient
+                            .from('perfis')
+                            .update({ pontos_total: novosPts })
+                            .eq('id', user.id);
                     }
                 }
             } catch (e) {
-                console.error("Erro no recálculo automático: ", e);
+                console.error("Erro durante o processamento das pontuações eliminatórias: ", e);
+                throw e;
             }
         }
-
         function abrirAuditoria(userId) {
             const user = listaPerfis.find(u => u.id === userId);
             if (!user) return;
