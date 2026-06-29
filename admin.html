@@ -513,7 +513,20 @@
         async function guardarTodosResultados() {
             mostrarSpinner(true);
             try {
-                if (abaAtiva === 'matamata') {
+                if (abaAtiva === 'jogos') {
+                    const lines = document.querySelectorAll('.linha-jogo');
+                    for (let div of lines) {
+                        const id = div.getAttribute('data-jogo-id');
+                        const gA = div.querySelector('.input-gols-mandante').value;
+                        const gB = div.querySelector('.input-gols-visitante').value;
+                
+                        await supabaseClient.from('jogos').update({
+                            gols_a_oficial: gA !== "" ? parseInt(gA) : null,
+                            gols_b_oficial: gB !== "" ? parseInt(gB) : null
+                        }).eq('id', id);
+                    }
+                } 
+                else if (abaAtiva === 'matamata') {
                     const linhasMata = document.querySelectorAll('.linha-jogo-mata');
                     for (let div of linhasMata) {
                         const id = div.getAttribute('data-jogo-id');
@@ -524,32 +537,43 @@
 
                         let updateData = { time_a: tA, time_b: tB };
                 
-                        // Lógica de vencedor automático
                         if (gA !== "" && gB !== "") {
                             updateData.gols_a_oficial = parseInt(gA);
                             updateData.gols_b_oficial = parseInt(gB);
+                            // Lógica para definir vencedor e avançar
                             if (parseInt(gA) > parseInt(gB)) updateData.vencedor = tA;
                             else if (parseInt(gB) > parseInt(gA)) updateData.vencedor = tB;
-                            else updateData.vencedor = null; // Empate precisa de decisão manual
+                            else updateData.vencedor = null; 
+                        } else {
+                            updateData.gols_a_oficial = null;
+                            updateData.gols_b_oficial = null;
+                            updateData.vencedor = null;
                         }
 
-                        await supabaseClient.from('jogos_mata_mata').update(updateData).eq('id', id);
+                        // O COMANDO PRINCIPAL DE ENVIO AO SUPABASE
+                        const { error } = await supabaseClient.from('jogos_mata_mata')
+                            .update(updateData)
+                            .eq('id', id);
 
-                        // Dispara a progressão se tiver um vencedor definido
+                        if (error) throw new Error("Erro ao salvar jogo: " + error.message);
+
+                        // Se houver um vencedor, força a progressão na árvore
                         if (updateData.vencedor) {
                             await progredirTimeNaArvore(id, updateData.vencedor);
-                        }
+                       }
                     }
                 }
-                mostrarNotificacao("Dados guardados e progressão executada!", "success");
+        
+                mostrarNotificacao("Dados gravados com sucesso!", "success");
                 await carregarDadosDoBanco();
+                await recalcularPontosGerais();
             } catch (err) {
+                console.error(err);
                 mostrarNotificacao(err.message, "danger");
             } finally {
                 mostrarSpinner(false);
             }
         }
-
         function obterMultiplicadorFase(fase) {
             if (!fase) return 1.0;
             const f = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
