@@ -512,55 +512,43 @@
         // --- FUNÇÃO DE GUARDAR AJUSTADA PARA PERMITIR VOLTAR AO NULO ---
         async function guardarTodosResultados() {
     mostrarSpinner(true);
-    let errosEncontrados = [];
+    let logs = [];
 
     try {
-        if (abaAtiva === 'matamata') {
-            const linhasMata = document.querySelectorAll('.linha-jogo-mata');
-            
-            for (let div of linhasMata) {
-                const id = div.getAttribute('data-jogo-id');
-                if (!id) continue;
+        const linhasMata = document.querySelectorAll('.linha-jogo-mata');
+        
+        for (let div of linhasMata) {
+            const id = div.getAttribute('data-jogo-id');
+            const gA = div.querySelector('.input-gols-mandante').value;
+            const gB = div.querySelector('.input-gols-visitante').value;
 
-                // Captura dos valores (mesma lógica do index.html)
-                const tA = div.querySelector('.input-time-a').value;
-                const tB = div.querySelector('.input-time-b').value;
-                const gA = div.querySelector('.input-gols-mandante').value;
-                const gB = div.querySelector('.input-gols-visitante').value;
+            // 1. Verificar se o ID existe e imprimir
+            console.log("Processando Jogo ID:", id);
 
-                // Objeto de dados preparado para o Supabase
-                const payload = {
-                    id: id, // O upsert exige o ID aqui dentro
-                    time_a: tA,
-                    time_b: tB,
-                    gols_a_oficial: gA !== "" ? parseInt(gA) : null,
-                    gols_b_oficial: gB !== "" ? parseInt(gB) : null,
-                    vencedor: (gA !== "" && gB !== "") ? (parseInt(gA) > parseInt(gB) ? tA : (parseInt(gB) > parseInt(gA) ? tB : null)) : null
-                };
+            // 2. Tentar inserir ou atualizar (Upsert)
+            const payload = {
+                id: id,
+                gols_a_oficial: gA !== "" ? parseInt(gA) : null,
+                gols_b_oficial: gB !== "" ? parseInt(gB) : null
+            };
 
-                // Execução da gravação usando upsert (mais estável)
-                const { error } = await supabaseClient
-                    .from('jogos_mata_mata')
-                    .upsert(payload);
+            const { data, error } = await supabaseClient
+                .from('jogos_mata_mata')
+                .upsert(payload)
+                .select(); // O select força o Supabase a devolver o que foi gravado
 
-                if (error) {
-                    console.error("Erro ao salvar ID " + id, error);
-                    errosEncontrados.push(`Jogo ${id}: ${error.message}`);
-                } else {
-                    // Progressão automática
-                    if (payload.vencedor) {
-                        await progredirTimeNaArvore(id, payload.vencedor);
-                    }
-                }
+            if (error) {
+                console.error("ERRO NO SUPABASE:", error);
+                logs.push("Erro no jogo " + id + ": " + error.message);
+            } else {
+                console.log("Supabase respondeu com sucesso para o ID " + id, data);
             }
         }
 
-        if (errosEncontrados.length > 0) {
-            mostrarNotificacao("Alguns jogos falharam ao gravar: " + errosEncontrados.join(", "), "danger");
+        if (logs.length > 0) {
+            mostrarNotificacao("Erros: " + logs[0], "danger");
         } else {
-            mostrarNotificacao("Dados gravados com sucesso!", "success");
-            await carregarDadosDoBanco();
-            await recalcularPontosGerais();
+            mostrarNotificacao("Gravado! Verifique o Supabase agora.", "success");
         }
     } catch (err) {
         mostrarNotificacao("Erro crítico: " + err.message, "danger");
