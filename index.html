@@ -474,72 +474,77 @@
         }
 
         function processarCalculosEstatisticosEranking() {
-    cacheDesviosRanking = {};
+            cacheDesviosRanking = {};
 
-    // 1. Unificar listas (Grupos + Mata-mata) para garantir que a resenha enxergue todos os jogos
-    const todosJogos = [...listaJogos, ...listaJogosMataMata];
-    const jogosFinalizados = todosJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
+            // 1. Unificar listas (Grupos + Mata-mata) para garantir que a resenha enxergue todos os jogos
+            const todosJogos = [...listaJogos, ...listaJogosMataMata];
+            const jogosFinalizados = todosJogos.filter(j => j.gols_a_oficial !== null && j.gols_b_oficial !== null);
 
-    // 2. Se não houver jogos, esconde o painel e sai
-    const painelResenha = document.getElementById('painel-resenha');
-    if (!painelResenha) return; 
+            // 2. Se não houver jogos, esconde o painel e sai
+            const painelResenha = document.getElementById('painel-resenha');
+            if (!painelResenha) return; 
 
-    if (jogosFinalizados.length === 0) {
-        painelResenha.classList.add('hidden');
-        return;
-    }
+            if (jogosFinalizados.length === 0) {
+                painelResenha.classList.add('hidden');
+                return;
+            }
 
-    // 3. Garante que o painel esteja visível ANTES de processar
-    painelResenha.classList.remove('hidden');
+            // 3. Garante que o painel esteja visível ANTES de processar
+            painelResenha.classList.remove('hidden');
 
-    // 4. Identificar o último jogo cronológico
-    jogosFinalizados.sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
-    const ultimoJogo = jogosFinalizados[jogosFinalizados.length - 1];
+            // 4. Identificar o último jogo cronológico
+            jogosFinalizados.sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+            const ultimoJogo = jogosFinalizados[jogosFinalizados.length - 1];
 
-    // 5. Identificar a lista de palpites correta
-    const palpitesDoUltimoJogo = listaJogosMataMata.some(j => j.id === ultimoJogo.id) ? listaPalpitesMataMata : listaPalpites;
+            // 5. Identificar a lista de palpites correta
+            const palpitesDoUltimoJogo = listaJogosMataMata.some(j => j.id === ultimoJogo.id) ? listaPalpitesMataMata : listaPalpites;
 
-    // 6. Calcular ranking ATUAL para a resenha
-    const rankingAtual = [...listaPerfis].sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
+            // 6. Calcular ranking ATUAL para a resenha
+            const rankingAtual = [...listaPerfis].sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
 
-    // 7. Identificar "Profetas" (Cravadores)
-    const profetas = [];
-    rankingAtual.forEach((user) => {
-        const palpiteUltimo = palpitesDoUltimoJogo.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
+            // 7. Identificar "Profetas" e calcular Estatísticas da Rodada
+            const profetas = [];
+            let pontosDaRodada = [];
+
+            rankingAtual.forEach((user) => {
+                const palpiteUltimo = palpitesDoUltimoJogo.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
         
-        if (palpiteUltimo !== undefined && 
-            Number(palpiteUltimo.palpite_a) === Number(ultimoJogo.gols_a_oficial) && 
-            Number(palpiteUltimo.palpite_b) === Number(ultimoJogo.gols_b_oficial)) {
-            profetas.push(user.nome_completo);
+                // Verifica Profetas
+                if (palpiteUltimo !== undefined && 
+                    Number(palpiteUltimo.palpite_a) === Number(ultimoJogo.gols_a_oficial) && 
+                    Number(palpiteUltimo.palpite_b) === Number(ultimoJogo.gols_b_oficial)) {
+                    profetas.push(user.nome_completo);
+                }
+
+                // Calcula pontos apenas deste jogo
+                const pts = palpiteUltimo ? avaliarRegrasPalpite(palpiteUltimo, ultimoJogo, regrasPontuacao) : 0;
+                pontosDaRodada.push({ nome: user.nome_completo, pts: pts });
+            });
+
+            // Calcula estatísticas
+            const maxPts = Math.max(...pontosDaRodada.map(p => p.pts));
+            const melhorDaRodada = pontosDaRodada.filter(p => p.pts === maxPts).map(p => p.nome).join(', ');
+            const mediaRodada = (pontosDaRodada.reduce((a, b) => a + b.pts, 0) / pontosDaRodada.length).toFixed(1);
+
+            // 8. Mensagem Principal Dinâmica
+            let mensagemPrincipal = `O duelo <strong>${ultimoJogo.time_a} x ${ultimoJogo.time_b}</strong> movimentou a tabela! Média de ${mediaRodada} pontos por participante.`;
+            if (profetas.length > 0) {
+                mensagemPrincipal = `🔥 TEMOS VIDENTES! ${profetas.join(', ')} cravaram o placar exato de ${ultimoJogo.time_a} x ${ultimoJogo.time_b}!`;
+            }
+
+            document.getElementById('resenha-texto').innerHTML = mensagemPrincipal;
+
+            // 9. Atualizar destaques com as novas estatísticas
+            document.getElementById('resenha-destaques').innerHTML = `
+                <div class="bg-emerald-950/40 border border-emerald-500/20 p-3 rounded-xl flex flex-col justify-center">
+                    <span class="text-[10px] uppercase font-black text-emerald-400 tracking-wider">🎯 Cravaram o Placar</span>
+                    <span class="text-xs text-slate-300 mt-1">${profetas.length > 0 ? '<strong>' + profetas.join(', ') + '</strong>' : 'Ninguém cravou.'}</span>
+                </div>
+                <div class="bg-blue-950/40 border border-blue-500/20 p-3 rounded-xl flex flex-col justify-center">
+                    <span class="text-[10px] uppercase font-black text-blue-400 tracking-wider">⭐ Destaque da Rodada</span>
+                    <span class="text-xs text-slate-300 mt-1"><strong>${melhorDaRodada}</strong> fez ${maxPts} pontos (Média: ${mediaRodada})</span>
+                </div>`;
         }
-    });
-
-    // 8. Mensagens e Injeção
-    const piadasResenha = [
-        `O último resultado de <strong>${ultimoJogo.time_a} x ${ultimoJogo.time_b}</strong> deu o que falar!`,
-        `Com o apito final de <strong>${ultimoJogo.time_a} x ${ultimoJogo.time_b}</strong>, o grupo está pegando fogo!`,
-        `Quem apostou com o coração no jogo <strong>${ultimoJogo.time_a} x ${ultimoJogo.time_b}</strong> talvez precise rever a estratégia.`,
-        `O líder que se cuide, a perseguição está feroz após os últimos resultados!`
-    ];
-
-    let mensagemPrincipal = piadasResenha[Math.floor(Math.random() * piadasResenha.length)];
-    if (profetas.length > 0) {
-        mensagemPrincipal = `🔥 TEMOS VIDENTES! ${profetas.join(', ')} cravaram o placar de ${ultimoJogo.time_a} x ${ultimoJogo.time_b}!`;
-    }
-
-    document.getElementById('resenha-texto').innerHTML = mensagemPrincipal;
-
-    // 9. Atualizar destaques
-    document.getElementById('resenha-destaques').innerHTML = `
-        <div class="bg-emerald-950/40 border border-emerald-500/20 p-3 rounded-xl flex flex-col justify-center">
-            <span class="text-[10px] uppercase font-black text-emerald-400 tracking-wider">🎯 Cravaram o Placar</span>
-            <span class="text-xs text-slate-300 mt-1">${profetas.length > 0 ? '<strong class="text-white">' + profetas.join(', ') + '</strong>' : 'Ninguém cravou o placar em cheio desta vez.'}</span>
-        </div>
-        <div class="bg-blue-950/40 border border-blue-500/20 p-3 rounded-xl flex flex-col justify-center">
-            <span class="text-[10px] uppercase font-black text-blue-400 tracking-wider">⭐ Status</span>
-            <span class="text-xs text-slate-300 mt-1 italic">Ranking atualizado após o último jogo.</span>
-        </div>`;
-}
         function formatarHoraFusoExibicao(isoString) {
             if (!isoString) return "—";
             const d = new Date(isoString);
@@ -859,6 +864,12 @@
                 const posAtual = index + 1;
                 const posAnterior = rankingAnterior.findIndex(u => u.id === user.id) + 1;
         
+                // Lógica de Medalhas
+                let iconePos = `${posAtual}º`;
+                if (posAtual === 1) iconePos = "🥇";
+                if (posAtual === 2) iconePos = "🥈";
+                if (posAtual === 3) iconePos = "🥉";
+
                 // Lógica das setas
                 let seta = "";
                 if (posAnterior > posAtual) {
@@ -870,7 +881,7 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-800/30 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-2 sm:p-4 text-center font-bold text-slate-400">${posAtual}º ${seta}</td>
+                    <td class="p-2 sm:p-4 text-center font-bold text-slate-400">${iconePos} ${seta}</td>
                     <td class="p-2 sm:p-4 font-semibold text-white">${user.nome_completo}</td>
                     <td class="p-2 sm:p-4 text-center font-mono font-bold text-blue-400">${user.pontos_total || 0}</td>
                     <td class="p-2 sm:p-4 text-center">
@@ -879,7 +890,6 @@
                 `;
                 tbody.appendChild(tr);
             });
-
             // 5. Acionar a Resenha após o ranking estar pronto
             // Certifique-se de que a função processarCalculosEstatisticosEranking esteja visível aqui
             processarCalculosEstatisticosEranking();
