@@ -76,10 +76,10 @@
         </div>
 
         <div class="flex bg-slate-900/80 p-0.5 rounded-xl border border-slate-800 overflow-x-auto no-scrollbar max-w-full">
-            <button id="tab-palpites" onclick="mudarAba('palpites')" class="px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all tab-active whitespace-nowrap">
+            <button id="tab-palpites" onclick="mudarAba('palpites')" class="px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all text-slate-400 hover:text-white whitespace-nowrap">
                 PALPITES
             </button>
-            <button id="tab-matamata" onclick="mudarAba('matamata')" class="px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all text-slate-400 hover:text-white whitespace-nowrap">
+            <button id="tab-matamata" onclick="mudarAba('matamata')" class="px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all tab-active whitespace-nowrap">
                 MATA-MATA
             </button>
             <button id="tab-ranking" onclick="mudarAba('ranking')" class="px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all text-slate-400 hover:text-white whitespace-nowrap">
@@ -132,36 +132,37 @@
         </section>
 
         <!-- SEÇÃO: RANKING GERAL -->
-        <section id="aba-ranking" class="hidden">
-            <div id="painel-resenha" class="hidden bg-gradient-to-r from-blue-950/60 to-slate-900/80 rounded-2xl border border-blue-500/20 p-5 mb-6 shadow-xl">
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="text-xl">🎙️</span>
-                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-blue-400">A Resenha do Maurinho</h3>
-                </div>
-                <p id="resenha-texto" class="text-xs sm:text-sm text-slate-300 leading-relaxed italic"></p>
-                <div id="resenha-destaques" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800/60"></div>
-            </div>
+<section id="aba-ranking" class="hidden">
+    <!-- Removido o 'hidden' da div abaixo para a resenha aparecer -->
+    <div id="painel-resenha" class="bg-gradient-to-r from-blue-950/60 to-slate-900/80 rounded-2xl border border-blue-500/20 p-5 mb-6 shadow-xl">
+        <div class="flex items-center gap-2 mb-3">
+            <span class="text-xl">🎙️</span>
+            <h3 class="text-sm font-extrabold uppercase tracking-wider text-blue-400">A Resenha do Maurinho</h3>
+        </div>
+        <p id="resenha-texto" class="text-xs sm:text-sm text-slate-300 leading-relaxed italic">A carregar análise...</p>
+        <div id="resenha-destaques" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800/60"></div>
+    </div>
 
-            <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-3 sm:p-6 shadow-2xl">
-                <div class="mb-6">
-                    <h2 class="text-xl font-bold text-white">Ranking Geral de Participantes</h2>
-                    <p class="text-xs text-slate-400 mt-1">Confronte os palpites de outros participantes para os jogos que já iniciaram.</p>
-                </div>
-                <div class="overflow-x-auto rounded-xl border border-slate-800">
-                    <table class="w-full text-left border-collapse bg-[#121b36]">
-                        <thead>
-                            <tr class="border-b border-slate-800 text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-slate-900/80">
-                                <th class="p-2 sm:p-4 text-center w-12">Pos</th>
-                                <th class="p-2 sm:p-4">Participante</th>
-                                <th class="p-2 sm:p-4 text-center w-24">Pontos</th>
-                                <th class="p-2 sm:p-4 text-center w-16 sm:w-28">Auditar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-ranking-corpo" class="text-xs sm:text-sm text-slate-300 divide-y divide-slate-800/50"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+    <div class="bg-slate-900/50 rounded-2xl border border-slate-800 p-3 sm:p-6 shadow-2xl">
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-white">Ranking Geral de Participantes</h2>
+            <p class="text-xs text-slate-400 mt-1">Confronte os palpites de outros participantes para os jogos que já iniciaram.</p>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-left border-collapse bg-[#121b36]">
+                <thead>
+                    <tr class="border-b border-slate-800 text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-slate-900/80">
+                        <th class="p-2 sm:p-4 text-center w-12">Pos</th>
+                        <th class="p-2 sm:p-4">Participante</th>
+                        <th class="p-2 sm:p-4 text-center w-24">Pontos</th>
+                        <th class="p-2 sm:p-4 text-center w-16 sm:w-28">Auditar</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-ranking-corpo" class="text-xs sm:text-sm text-slate-300 divide-y divide-slate-800/50"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
 
         <!-- SEÇÃO: REGULAMENTO -->
         <section id="aba-regras" class="hidden">
