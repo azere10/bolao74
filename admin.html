@@ -511,62 +511,63 @@
 
         // --- FUNÇÃO DE GUARDAR AJUSTADA PARA PERMITIR VOLTAR AO NULO ---
         async function guardarTodosResultados() {
-            mostrarSpinner(true);
-            try {
-                if (abaAtiva === 'matamata') {
-                    const linhasMata = document.querySelectorAll('.linha-jogo-mata');
+    mostrarSpinner(true);
+    let errosEncontrados = [];
+
+    try {
+        if (abaAtiva === 'matamata') {
+            const linhasMata = document.querySelectorAll('.linha-jogo-mata');
             
-                    for (let div of linhasMata) {
-                        const id = div.getAttribute('data-jogo-id');
-                        // IMPORTANTE: Se o ID estiver nulo, não podemos salvar
-                        if (!id) {
-                            console.error("Erro: ID de jogo não encontrado nesta linha!");
-                            continue;
-                        }
+            for (let div of linhasMata) {
+                const id = div.getAttribute('data-jogo-id');
+                if (!id) continue;
 
-                        const tA = div.querySelector('.input-time-a').value;
-                        const tB = div.querySelector('.input-time-b').value;
-                        const gA = div.querySelector('.input-gols-mandante').value;
-                        const gB = div.querySelector('.input-gols-visitante').value;
+                // Captura dos valores (mesma lógica do index.html)
+                const tA = div.querySelector('.input-time-a').value;
+                const tB = div.querySelector('.input-time-b').value;
+                const gA = div.querySelector('.input-gols-mandante').value;
+                const gB = div.querySelector('.input-gols-visitante').value;
 
-                        // Montar objeto exatamente com os nomes das colunas que vi no seu CSV
-                        const payload = {
-                            time_a: tA,
-                            time_b: tB,
-                            gols_a_oficial: gA !== "" ? parseInt(gA) : null,
-                            gols_b_oficial: gB !== "" ? parseInt(gB) : null,
-                            vencedor: (gA !== "" && gB !== "") ? (parseInt(gA) > parseInt(gB) ? tA : (parseInt(gB) > parseInt(gA) ? tB : null)) : null
-                        };
+                // Objeto de dados preparado para o Supabase
+                const payload = {
+                    id: id, // O upsert exige o ID aqui dentro
+                    time_a: tA,
+                    time_b: tB,
+                    gols_a_oficial: gA !== "" ? parseInt(gA) : null,
+                    gols_b_oficial: gB !== "" ? parseInt(gB) : null,
+                    vencedor: (gA !== "" && gB !== "") ? (parseInt(gA) > parseInt(gB) ? tA : (parseInt(gB) > parseInt(gA) ? tB : null)) : null
+                };
 
-                        console.log("Enviando para ID:", id, "Payload:", payload);
-                        console.log("ID que vou buscar:", id);
-                        console.log("Objeto payload que vou enviar:", payload);
+                // Execução da gravação usando upsert (mais estável)
+                const { error } = await supabaseClient
+                    .from('jogos_mata_mata')
+                    .upsert(payload);
 
-                        // Execução direta sem intermediários
-                        const { error } = await supabaseClient
-                            .from('jogos_mata_mata')
-                            .update(payload)
-                            .match({ id: id }); // Usamos .match que é mais seguro que .eq
-
-                        if (error) {
-                            throw new Error(`Falha no Jogo ${id}: ${error.message}`);
-                        }
-
-                        // Se houver um vencedor, dispara a progressão
-                        if (payload.vencedor) {
-                            await progredirTimeNaArvore(id, payload.vencedor);
-                        }
+                if (error) {
+                    console.error("Erro ao salvar ID " + id, error);
+                    errosEncontrados.push(`Jogo ${id}: ${error.message}`);
+                } else {
+                    // Progressão automática
+                    if (payload.vencedor) {
+                        await progredirTimeNaArvore(id, payload.vencedor);
                     }
                 }
-                mostrarNotificacao("Dados gravados com sucesso no banco!", "success");
-                await carregarDadosDoBanco();
-            } catch (err) {
-                console.error("Erro crítico:", err);
-                mostrarNotificacao("Erro: " + err.message, "danger");
-            } finally {
-                mostrarSpinner(false);
             }
         }
+
+        if (errosEncontrados.length > 0) {
+            mostrarNotificacao("Alguns jogos falharam ao gravar: " + errosEncontrados.join(", "), "danger");
+        } else {
+            mostrarNotificacao("Dados gravados com sucesso!", "success");
+            await carregarDadosDoBanco();
+            await recalcularPontosGerais();
+        }
+    } catch (err) {
+        mostrarNotificacao("Erro crítico: " + err.message, "danger");
+    } finally {
+        mostrarSpinner(false);
+    }
+}
         function obterMultiplicadorFase(fase) {
             if (!fase) return 1.0;
             const f = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
