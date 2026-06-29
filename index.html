@@ -397,29 +397,42 @@
         }
 
         function mudarAba(aba) {
-            abaAtiva = aba;
-            const tabs = ['palpites', 'matamata', 'ranking', 'regras', 'conta'];
-            const btnFlutuante = document.getElementById('btn-salvar-flutuante');
-            if (aba === 'palpites' || aba === 'matamata') btnFlutuante.classList.remove('hidden');
-            else btnFlutuante.classList.add('hidden');
-
-            tabs.forEach(t => {
-                const button = document.getElementById(`tab-${t}`);
-                const section = document.getElementById(`aba-${t}`);
-                if (t === aba) {
-                    if(button) button.className = "px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all tab-active whitespace-nowrap";
-                    if(section) { section.classList.remove('hidden'); section.classList.add('block'); }
-                } else {
-                    if(button) button.className = "px-3 sm:px-4 py-2 rounded-lg font-bold text-[10px] sm:text-xs md:text-sm transition-all text-slate-400 hover:text-white whitespace-nowrap";
-                    if(section) { section.classList.add('hidden'); section.classList.remove('block'); }
-                }
-            });
-
-            if (aba === 'palpites') renderizarMeusPalpites();
-            if (aba === 'matamata') renderizarMataMata();
-            if (aba === 'ranking') renderizarRankingGeral();
-            rolarParaDiaOuFaseAtual();
+    abaAtiva = aba;
+    const tabs = ['palpites', 'matamata', 'ranking', 'regras', 'conta'];
+    
+    // 1. Atualiza visual dos botões
+    tabs.forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (btn) {
+            if (t === aba) btn.classList.add('tab-active');
+            else btn.classList.remove('tab-active');
         }
+    });
+
+    // 2. FORÇA a ocultação de todas as seções e mostra apenas a selecionada
+    tabs.forEach(t => {
+        const section = document.getElementById(`aba-${t}`);
+        if (section) {
+            if (t === aba) {
+                section.classList.remove('hidden');
+                section.classList.add('block');
+            } else {
+                section.classList.add('hidden');
+                section.classList.remove('block');
+            }
+        }
+    });
+
+    // 3. Gerencia o botão flutuante de salvar
+    const btnFlutuante = document.getElementById('btn-salvar-flutuante');
+    if (aba === 'palpites' || aba === 'matamata') btnFlutuante.classList.remove('hidden');
+    else btnFlutuante.classList.add('hidden');
+
+    // 4. Carregamento de dados específico
+    if (aba === 'palpites') renderizarMeusPalpites();
+    if (aba === 'matamata') renderizarMataMata();
+    if (aba === 'ranking') renderizarRankingGeral();
+}
 
         function mudarModoExibicao(modo) {
             modoExibicaoPalpites = modo;
