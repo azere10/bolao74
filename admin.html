@@ -511,51 +511,61 @@
 
         // --- FUNÇÃO DE GUARDAR AJUSTADA PARA PERMITIR VOLTAR AO NULO ---
         async function guardarTodosResultados() {
-    mostrarSpinner(true);
-    let logs = [];
+            mostrarSpinner(true);
+            let logs = [];
 
-    try {
-        const linhasMata = document.querySelectorAll('.linha-jogo-mata');
+            try {
+                // 1. Identifica o contexto: qual aba está ativa para definir a tabela e o container
+                const tabelaAlvo = abaAtiva === 'jogos' ? 'jogos' : 'jogos_mata_mata';
+                const containerId = abaAtiva === 'jogos' ? 'aba-jogos' : 'aba-matamata';
         
-        for (let div of linhasMata) {
-            const id = div.getAttribute('data-jogo-id');
-            const gA = div.querySelector('.input-gols-mandante').value;
-            const gB = div.querySelector('.input-gols-visitante').value;
+                // 2. Busca todos os jogos APENAS da aba visível usando o atributo de ID
+                const linhasJogo = document.querySelectorAll(`#${containerId} [data-jogo-id]`);
+        
+                if (linhasJogo.length === 0) {
+                    mostrarNotificacao("Nenhum jogo encontrado para salvar nesta aba.", "danger");
+                    mostrarSpinner(false);
+                    return;
+                }
 
-            // 1. Verificar se o ID existe e imprimir
-            console.log("Processando Jogo ID:", id);
+                for (let div of linhasJogo) {
+                    const id = div.getAttribute('data-jogo-id');
+                    const gA = div.querySelector('.input-gols-mandante').value;
+                    const gB = div.querySelector('.input-gols-visitante').value;
 
-            // 2. Tentar inserir ou atualizar (Upsert)
-            const payload = {
-                id: id,
-                gols_a_oficial: gA !== "" ? parseInt(gA) : null,
-                gols_b_oficial: gB !== "" ? parseInt(gB) : null
-            };
+                    console.log(`Processando Jogo ID: ${id} para a tabela: ${tabelaAlvo}`);
 
-            const { data, error } = await supabaseClient
-                .from('jogos_mata_mata')
-                .upsert(payload)
-                .select(); // O select força o Supabase a devolver o que foi gravado
+                    const payload = {
+                        gols_a_oficial: gA !== "" ? parseInt(gA) : null,
+                        gols_b_oficial: gB !== "" ? parseInt(gB) : null
+                    };
 
-            if (error) {
-                console.error("ERRO NO SUPABASE:", error);
-                logs.push("Erro no jogo " + id + ": " + error.message);
-            } else {
-                console.log("Supabase respondeu com sucesso para o ID " + id, data);
+                    // 3. Utilizamos UPDATE em vez de UPSERT para garantir a integridade dos outros dados (times, datas, fase)
+                    const { data, error } = await supabaseClient
+                        .from(tabelaAlvo)
+                        .update(payload)
+                        .eq('id', id)
+                        .select();
+
+                    if (error) {
+                        console.error("ERRO NO SUPABASE:", error);
+                        logs.push(`Erro no jogo ${id}: ${error.message}`);
+                    }
+                }
+
+                if (logs.length > 0) {
+                    mostrarNotificacao("Concluído com alguns erros. Verifique o console.", "danger");
+                } else {
+                    mostrarNotificacao("Resultados guardados com sucesso!", "success");
+                    // 4. Recarrega os dados para atualizar o visual da interface (ex: bordas verdes de jogos finalizados)
+                    await carregarDadosDoBanco();
+                }
+            } catch (err) {
+                mostrarNotificacao("Erro crítico: " + err.message, "danger");
+            } finally {
+                mostrarSpinner(false);
             }
         }
-
-        if (logs.length > 0) {
-            mostrarNotificacao("Erros: " + logs[0], "danger");
-        } else {
-            mostrarNotificacao("Gravado! Verifique o Supabase agora.", "success");
-        }
-    } catch (err) {
-        mostrarNotificacao("Erro crítico: " + err.message, "danger");
-    } finally {
-        mostrarSpinner(false);
-    }
-}
         function obterMultiplicadorFase(fase) {
             if (!fase) return 1.0;
             const f = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
