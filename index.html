@@ -852,108 +852,121 @@
 
         function renderizarRankingGeral() {
             const tbody = document.getElementById('tabela-ranking-corpo');
-            if(!tbody) return; tbody.innerHTML = "";
-            const ordenados = [...listaPerfis].sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
+            if (!tbody) return; // Segurança caso o ID não exista
+            tbody.innerHTML = "";
 
-            ordenados.forEach((user, index) => {
-                let medalhaPosicao = `${index + 1}º`;
-                let corLinha = "text-slate-300";
+            // 1. Unificar todos os jogos e ordenar cronologicamente
+            const todosJogos = [...listaJogos, ...listaJogosMataMata].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+            const jogosFinalizados = todosJogos.filter(j => j.gols_a_oficial !== null);
+    
+            // 2. Calcular o ranking ATUAL (pontos totais)
+            const rankingAtual = [...listaPerfis].sort((a, b) => (b.pontos_total || 0) - (a.pontos_total || 0));
 
-                if (index === 0) { medalhaPosicao = "🏆"; corLinha = "text-amber-400 font-extrabold animate-pulse"; }
-                else if (index === 1) { medalhaPosicao = "🥈"; corLinha = "text-slate-300 font-bold"; }
-                else if (index === 2) { medalhaPosicao = "🥉"; corLinha = "text-amber-600 font-semibold"; }
+            // 3. Calcular o ranking ANTERIOR (snapshot de antes do último jogo)
+            let rankingAnterior = [...listaPerfis];
+            if (jogosFinalizados.length > 0) {
+                const ultimoJogo = jogosFinalizados[jogosFinalizados.length - 1];
+                // Busca palpites na lista correta (Mata-mata ou Fase de Grupos)
+                const palpitesUltimoJogo = listaJogosMataMata.some(j => j.id === ultimoJogo.id) ? listaPalpitesMataMata : listaPalpites;
 
-                const isCurrentUser = user.id === currentUser.id;
-                let htmlSeta = "●"; let corSeta = "text-slate-500";
-                const cacheInfo = cacheDesviosRanking[user.id];
+                rankingAnterior = listaPerfis.map(user => {
+                    const palpite = palpitesUltimoJogo.find(p => p.user_id === user.id && p.jogo_id === ultimoJogo.id);
+                    const pontosUltimoJogo = palpite ? avaliarRegrasPalpite(palpite, ultimoJogo, regrasPontuacao) : 0;
+                    return { ...user, pontos_anterior: (user.pontos_total || 0) - pontosUltimoJogo };
+                }).sort((a, b) => (b.pontos_anterior || 0) - (a.pontos_anterior || 0));
+            }
 
-                if (cacheInfo && cacheInfo.diff !== 0) {
-                    if (cacheInfo.diff > 0) { htmlSeta = `▲ +${cacheInfo.diff}`; corSeta = "text-emerald-400 font-extrabold"; }
-                    else { htmlSeta = `▼ ${cacheInfo.diff}`; corSeta = "text-red-400 font-bold"; }
+            // 4. Renderizar Tabela
+            rankingAtual.forEach((user, index) => {
+                const posAtual = index + 1;
+                const posAnterior = rankingAnterior.findIndex(u => u.id === user.id) + 1;
+        
+                // Lógica das setas
+                let seta = "";
+                if (posAnterior > posAtual) {
+                    seta = `<span class="text-emerald-500 font-bold ml-2 text-[10px]">▲</span>`;
+                } else if (posAnterior < posAtual && posAnterior !== 0) {
+                    seta = `<span class="text-red-500 font-bold ml-2 text-[10px]">▼</span>`;
                 }
 
                 const tr = document.createElement('tr');
-                tr.className = isCurrentUser ? "bg-blue-950/40 border-l-4 border-blue-500 font-semibold" : "hover:bg-slate-800/20";
+                tr.className = "hover:bg-slate-800/30 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-2 sm:p-4 text-center font-mono font-bold text-[11px] sm:text-xs text-slate-400">${medalhaPosicao}</td>
-                    <td class="p-2 sm:p-4 ${corLinha} text-[11px] sm:text-sm truncate">
-                        <div class="flex flex-col">
-                            <span class="flex items-center gap-1">${user.nome_completo} ${isCurrentUser ? '<span class="text-[8px] bg-blue-900 px-1 rounded">TU</span>':''}</span>
-                            <span class="text-[8px] sm:text-[9px] ${corSeta}">${htmlSeta} na rodada</span>
-                        </div>
-                    </td>
+                    <td class="p-2 sm:p-4 text-center font-bold text-slate-400">${posAtual}º ${seta}</td>
+                    <td class="p-2 sm:p-4 font-semibold text-white">${user.nome_completo}</td>
+                    <td class="p-2 sm:p-4 text-center font-mono font-bold text-blue-400">${user.pontos_total || 0}</td>
                     <td class="p-2 sm:p-4 text-center">
-                        <span class="bg-[#1c2541] text-blue-400 px-2.5 py-1 rounded-full font-bold text-[10px] sm:text-xs border border-blue-500/15 font-mono">
-                            ${user.pontos_total || 0}
-                        </span>
+                        <button onclick="abrirAuditoriaDeUtilizador('${user.id}')" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] px-3 py-1 rounded-lg transition-all font-bold">VER</button>
                     </td>
-                    <td class="p-2 sm:p-4 text-center">
-                        <button onclick="abrirAuditoriaDeUtilizador('${user.id}')" class="bg-[#242f54] text-indigo-300 font-bold px-2.5 py-1 rounded-lg text-[11px]">🔍 Ver</button>
-                    </td>`;
+                `;
                 tbody.appendChild(tr);
             });
+
+            // 5. Acionar a Resenha após o ranking estar pronto
+            // Certifique-se de que a função processarCalculosEstatisticosEranking esteja visível aqui
+            processarCalculosEstatisticosEranking();
         }
 
         function abrirAuditoriaDeUtilizador(userId) {
-    const user = listaPerfis.find(u => u.id === userId);
-    if (!user) return;
+            const user = listaPerfis.find(u => u.id === userId);
+            if (!user) return;
 
-    document.getElementById('auditoria-titulo-user').textContent = `Auditoria: ${user.nome_completo}`;
-    document.getElementById('auditoria-resumo-pts').textContent = `Total: ${user.pontos_total || 0} pts`;
+            document.getElementById('auditoria-titulo-user').textContent = `Auditoria: ${user.nome_completo}`;
+            document.getElementById('auditoria-resumo-pts').textContent = `Total: ${user.pontos_total || 0} pts`;
 
-    const tbody = document.getElementById('auditoria-tabela-corpo');
-    tbody.innerHTML = "";
+            const tbody = document.getElementById('auditoria-tabela-corpo');
+            tbody.innerHTML = "";
 
-    const isProprioUser = userId === currentUser.id;
+            const isProprioUser = userId === currentUser.id;
 
-    listaJogos.forEach(j => {
-        const p = listaPalpites.find(palpite => palpite.user_id === userId && palpite.jogo_id === j.id);
-        if (!p) return;
+            listaJogos.forEach(j => {
+                const p = listaPalpites.find(palpite => palpite.user_id === userId && palpite.jogo_id === j.id);
+                if (!p) return;
         
-        const oficial = j.gols_a_oficial !== null ? `${j.gols_a_oficial} x ${j.gols_b_oficial}` : "Pendente";
-        const pts = j.gols_a_oficial !== null ? avaliarRegrasPalpite(p, j, regrasPontuacao) : 0;
+                const oficial = j.gols_a_oficial !== null ? `${j.gols_a_oficial} x ${j.gols_b_oficial}` : "Pendente";
+                const pts = j.gols_a_oficial !== null ? avaliarRegrasPalpite(p, j, regrasPontuacao) : 0;
         
-        // Lógica de Ocultação
-        const jogoBloqueado = isJogoBloqueado(j.data_hora);
-        const exibicaoPalpite = (jogoBloqueado || isProprioUser) ? `${p.palpite_a}x${p.palpite_b}` : "🔒 Oculto";
+                // Lógica de Ocultação
+                const jogoBloqueado = isJogoBloqueado(j.data_hora);
+                const exibicaoPalpite = (jogoBloqueado || isProprioUser) ? `${p.palpite_a}x${p.palpite_b}` : "🔒 Oculto";
 
-        const tr = document.createElement('tr');
-        tr.className = "border-b border-slate-800/40 hover:bg-slate-900/20";
-        tr.innerHTML = `
-            <td class="p-2 font-bold text-blue-400 uppercase text-[9px]">${j.fase}</td>
-            <td class="p-2 text-slate-500 font-mono text-[9px]">${formatarHoraFusoExibicao(j.data_hora)}</td>
-            <td class="p-2 font-medium text-slate-300 truncate max-w-[110px]">${j.time_a} x ${j.time_b}</td>
-            <td class="p-2 text-center font-mono font-bold">${oficial}</td>
-            <td class="p-2 text-center font-mono text-blue-400 font-bold">${exibicaoPalpite}</td>
-            <td class="p-2 text-center font-bold text-emerald-400 font-mono">+${pts} pts</td>`;
-        tbody.appendChild(tr);
-    });
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-800/40 hover:bg-slate-900/20";
+                tr.innerHTML = `
+                    <td class="p-2 font-bold text-blue-400 uppercase text-[9px]">${j.fase}</td>
+                    <td class="p-2 text-slate-500 font-mono text-[9px]">${formatarHoraFusoExibicao(j.data_hora)}</td>
+                    <td class="p-2 font-medium text-slate-300 truncate max-w-[110px]">${j.time_a} x ${j.time_b}</td>
+                    <td class="p-2 text-center font-mono font-bold">${oficial}</td>
+                    <td class="p-2 text-center font-mono text-blue-400 font-bold">${exibicaoPalpite}</td>
+                    <td class="p-2 text-center font-bold text-emerald-400 font-mono">+${pts} pts</td>`;
+                tbody.appendChild(tr);
+            });
 
-    listaJogosMataMata.forEach(j => {
-        const p = listaPalpitesMataMata.find(palpite => palpite.user_id === userId && palpite.jogo_id === j.id);
-        if (!p) return;
+            listaJogosMataMata.forEach(j => {
+                const p = listaPalpitesMataMata.find(palpite => palpite.user_id === userId && palpite.jogo_id === j.id);
+                if (!p) return;
         
-        const oficial = j.gols_a_oficial !== null ? `${j.gols_a_oficial} x ${j.gols_b_oficial}` : "Pendente";
-        const pts = j.gols_a_oficial !== null ? avaliarRegrasPalpite(p, j, regrasPontuacao) : 0;
+                const oficial = j.gols_a_oficial !== null ? `${j.gols_a_oficial} x ${j.gols_b_oficial}` : "Pendente";
+                const pts = j.gols_a_oficial !== null ? avaliarRegrasPalpite(p, j, regrasPontuacao) : 0;
 
-        // Lógica de Ocultação para Mata-Mata
-        const jogoBloqueado = isJogoBloqueado(j.data_hora);
-        const exibicaoPalpite = (jogoBloqueado || isProprioUser) ? `${p.palpite_a}x${p.palpite_b}` : "🔒 Oculto";
+                // Lógica de Ocultação para Mata-Mata
+                const jogoBloqueado = isJogoBloqueado(j.data_hora);
+                const exibicaoPalpite = (jogoBloqueado || isProprioUser) ? `${p.palpite_a}x${p.palpite_b}` : "🔒 Oculto";
 
-        const tr = document.createElement('tr');
-        tr.className = "border-b border-slate-800/40 bg-purple-950/10 hover:bg-purple-900/20";
-        tr.innerHTML = `
-            <td class="p-2 font-bold text-purple-400 uppercase text-[9px]">${j.fase}</td>
-            <td class="p-2 text-slate-500 font-mono text-[9px]">${formatarHoraFusoExibicao(j.data_hora)}</td>
-            <td class="p-2 font-medium text-purple-200 truncate max-w-[110px]">${j.time_a || 'A definir'} x ${j.time_b || 'A definir'}</td>
-            <td class="p-2 text-center font-mono font-bold">${oficial}</td>
-            <td class="p-2 text-center font-mono text-purple-400 font-bold">${exibicaoPalpite}</td>
-            <td class="p-2 text-center font-bold text-amber-400 font-mono">+${pts} pts</td>`;
-        tbody.appendChild(tr);
-    });
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-800/40 bg-purple-950/10 hover:bg-purple-900/20";
+                tr.innerHTML = `
+                    <td class="p-2 font-bold text-purple-400 uppercase text-[9px]">${j.fase}</td>
+                    <td class="p-2 text-slate-500 font-mono text-[9px]">${formatarHoraFusoExibicao(j.data_hora)}</td>
+                    <td class="p-2 font-medium text-purple-200 truncate max-w-[110px]">${j.time_a || 'A definir'} x ${j.time_b || 'A definir'}</td>
+                    <td class="p-2 text-center font-mono font-bold">${oficial}</td>
+                    <td class="p-2 text-center font-mono text-purple-400 font-bold">${exibicaoPalpite}</td>
+                    <td class="p-2 text-center font-bold text-amber-400 font-mono">+${pts} pts</td>`;
+                tbody.appendChild(tr);
+            });
 
-    document.getElementById('modal-auditoria').classList.remove('hidden');
-}
+            document.getElementById('modal-auditoria').classList.remove('hidden');
+        }
         function fecharModalAuditoria() { document.getElementById('modal-auditoria').classList.add('hidden'); }
 
         async function guardarMeusPalpites() {
