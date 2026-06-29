@@ -511,58 +511,64 @@
 
         // --- FUNÇÃO DE GUARDAR AJUSTADA PARA PERMITIR VOLTAR AO NULO ---
         async function guardarTodosResultados() {
-    mostrarSpinner(true);
-    try {
-        if (abaAtiva === 'matamata') {
-            const linhasMata = document.querySelectorAll('.linha-jogo-mata');
-            for (let div of linhasMata) {
-                const id = div.getAttribute('data-jogo-id');
-                const tA = div.querySelector('.input-time-a').value;
-                const tB = div.querySelector('.input-time-b').value;
-                const gA = div.querySelector('.input-gols-mandante').value;
-                const gB = div.querySelector('.input-gols-visitante').value;
+            mostrarSpinner(true);
+            let erros = [];
 
-                // CRIAMOS UM OBJETO DE DEBUG
-                let updateData = { 
-                    time_a: tA, 
-                    time_b: tB,
-                    gols_a_oficial: gA !== "" ? parseInt(gA) : null,
-                    gols_b_oficial: gB !== "" ? parseInt(gB) : null
-                };
+            try {
+                if (abaAtiva === 'matamata') {
+                    const linhasMata = document.querySelectorAll('.linha-jogo-mata');
+            
+                    for (let div of linhasMata) {
+                        const id = div.getAttribute('data-jogo-id');
+                        if (!id) continue;
 
-                // Definir vencedor apenas se houver gols
-                if (gA !== "" && gB !== "") {
-                    if (parseInt(gA) > parseInt(gB)) updateData.vencedor = tA;
-                    else if (parseInt(gB) > parseInt(gA)) updateData.vencedor = tB;
-                    else updateData.vencedor = null;
+                        const tA = div.querySelector('.input-time-a').value;
+                        const tB = div.querySelector('.input-time-b').value;
+                        const gA = div.querySelector('.input-gols-mandante').value;
+                        const gB = div.querySelector('.input-gols-visitante').value;
+
+                        let updateData = { time_a: tA, time_b: tB };
+                
+                        if (gA !== "" && gB !== "") {
+                            updateData.gols_a_oficial = parseInt(gA);
+                            updateData.gols_b_oficial = parseInt(gB);
+                            updateData.vencedor = (parseInt(gA) > parseInt(gB)) ? tA : (parseInt(gB) > parseInt(gA) ? tB : null);
+                        } else {
+                            updateData.gols_a_oficial = null;
+                            updateData.gols_b_oficial = null;
+                            updateData.vencedor = null;
+                        }
+
+                        console.log("Tentando atualizar ID:", id, "Dados:", updateData);
+
+                        const { error } = await supabaseClient
+                            .from('jogos_mata_mata')
+                            .update(updateData)
+                            .eq('id', id);
+    
+                        if (error) {
+                            console.error("Erro no Supabase para ID " + id, error);
+                            erros.push(`Erro no Jogo ${id}: ${error.message}`);
+                        } else if (updateData.vencedor) {
+                            await progredirTimeNaArvore(id, updateData.vencedor);
+                        }
+                    }
+                }
+
+                if (erros.length > 0) {
+                    mostrarNotificacao("Erros encontrados: " + erros.join(", "), "danger");
                 } else {
-                    updateData.vencedor = null;
+                    mostrarNotificacao("Atualização concluída com sucesso!", "success");
+                    await carregarDadosDoBanco();
+                    await recalcularPontosGerais();
                 }
-
-                console.log("Enviando para o Supabase (ID " + id + "):", updateData);
-
-                // EXECUTAMOS O UPDATE E CAPTURAMOS O ERRO DE FORMA AGRESSIVA
-                const { data, error } = await supabaseClient
-                    .from('jogos_mata_mata')
-                    .update(updateData)
-                    .eq('id', id);
-
-                if (error) {
-                    console.error("ERRO SUPABASE:", error);
-                    throw new Error("Supabase rejeitou: " + error.message);
-                }
+            } catch (err) {
+                console.error("Erro crítico:", err);
+                mostrarNotificacao("Erro: " + err.message, "danger");
+            } finally {
+                mostrarSpinner(false);
             }
         }
-        
-        mostrarNotificacao("Dados gravados com sucesso!", "success");
-        await carregarDadosDoBanco();
-    } catch (err) {
-        console.error(err);
-        mostrarNotificacao("ERRO: " + err.message, "danger");
-    } finally {
-        mostrarSpinner(false);
-    }
-}
         function obterMultiplicadorFase(fase) {
             if (!fase) return 1.0;
             const f = fase.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
