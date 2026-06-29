@@ -1001,7 +1001,7 @@
             let pontosBase = 0;
             if (pM === jM && pV === jV) pontosBase = regras.placarExato || 25;
             else if ((pM > pV && jM > jV) || (pM < pV && jM < jV) || (pM === pV && jM === jV)) {
-                if (jM !== jV && (pM - pV) === (jM - jV)) pontosBase = rules.vencedorGols || 18;
+                if (jM !== jV && (pM - pV) === (jM - jV)) pontosBase = regras.vencedorGols || 18;
                 else pontosBase = regras.vencedorSimples || 15;
             } else if (pM === jM || pV === jV) pontosBase = regras.golParcial || 3;
 
