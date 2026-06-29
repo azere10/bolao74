@@ -1080,6 +1080,40 @@
             if(container) container.appendChild(alertBox);
             setTimeout(() => alertBox.remove(), 4000);
         }
+        function abrirPalpitesAoVivo(jogoId) {
+            // Identifica se é mata-mata ou fase de grupos para buscar a lista certa
+            const ehMataMata = listaJogosMataMata.some(j => j.id === jogoId);
+            const jogo = ehMataMata ? listaJogosMataMata.find(j => j.id === jogoId) : listaJogos.find(j => j.id === jogoId);
+            const palpitesDaLista = ehMataMata ? listaPalpitesMataMata : listaPalpites;
+    
+            const palpitesDoJogo = palpitesDaLista.filter(p => p.jogo_id === jogoId);
+
+            // Cria o HTML do conteúdo
+            let linhasHTML = palpitesDoJogo.map(p => {
+                const user = listaPerfis.find(u => u.id === p.user_id);
+                return `
+                    <div class="flex justify-between items-center p-2 border-b border-slate-700/50 hover:bg-slate-800">
+                        <span class="text-xs text-slate-300 font-medium">${user ? user.nome_completo : 'Anônimo'}</span>
+                        <span class="font-mono font-bold text-blue-400 bg-blue-950/30 px-2 py-0.5 rounded">${p.palpite_a} x ${p.palpite_b}</span>
+                    </div>`;
+            }).join('');
+
+            // Cria ou reutiliza um container para o modal (estilo auditoria)
+            const modal = document.createElement('div');
+            modal.className = "fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4";
+            modal.innerHTML = `
+                <div class="bg-slate-900 w-full max-w-sm rounded-xl border border-slate-700 overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+                    <div class="p-4 border-b border-slate-700 bg-slate-800 flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-white">${jogo.time_a} vs ${jogo.time_b}</h3>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-slate-400 hover:text-white">✕</button>
+                    </div>
+                    <div class="p-2 max-h-[60vh] overflow-y-auto">
+                        ${linhasHTML || '<p class="p-4 text-center text-slate-500 text-xs">Nenhum palpite registrado.</p>'}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
     </script>
 </body>
 </html>
