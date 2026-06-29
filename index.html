@@ -863,54 +863,65 @@
         }
 
         function abrirAuditoriaDeUtilizador(userId) {
-            const user = listaPerfis.find(u => u.id === userId);
-            if (!user) return;
+    const user = listaPerfis.find(u => u.id === userId);
+    if (!user) return;
 
-            document.getElementById('auditoria-titulo-user').textContent = `Auditoria: ${user.nome_completo}`;
-            document.getElementById('auditoria-resumo-pts').textContent = `Total: ${user.pontos_total || 0} pts`;
+    document.getElementById('auditoria-titulo-user').textContent = `Auditoria: ${user.nome_completo}`;
+    document.getElementById('auditoria-resumo-pts').textContent = `Total: ${user.pontos_total || 0} pts`;
 
-            const tbody = document.getElementById('auditoria-tabela-corpo');
-            tbody.innerHTML = "";
+    const tbody = document.getElementById('auditoria-tabela-corpo');
+    tbody.innerHTML = "";
 
-            listaJogos.forEach(j => {
-                const p = listaPalpites.find(palpite => palpite.user_id === userId && palpite.jogo_id === j.id);
-                if (!p) return;
-                const oficial = j.gols_a_oficial !== null ? `${j.gols_a_oficial} x ${j.gols_b_oficial}` : "Pendente";
-                const pts = j.gols_a_oficial !== null ? avaliarRegrasPalpite(p, j, regrasPontuacao) : 0;
+    const isProprioUser = userId === currentUser.id;
 
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-slate-800/40 hover:bg-slate-900/20";
-                tr.innerHTML = `
-                    <td class="p-2 font-bold text-blue-400 uppercase text-[9px]">${j.fase}</td>
-                    <td class="p-2 text-slate-500 font-mono text-[9px]">${formatarHoraFusoExibicao(j.data_hora)}</td>
-                    <td class="p-2 font-medium text-slate-300 truncate max-w-[110px]">${j.time_a} x ${j.time_b}</td>
-                    <td class="p-2 text-center font-mono font-bold">${oficial}</td>
-                    <td class="p-2 text-center font-mono text-blue-400 font-bold">${p.palpite_a}x${p.palpite_b}</td>
-                    <td class="p-2 text-center font-bold text-emerald-400 font-mono">+${pts} pts</td>`;
-                tbody.appendChild(tr);
-            });
+    listaJogos.forEach(j => {
+        const p = listaPalpites.find(palpite => palpite.user_id === userId && palpite.jogo_id === j.id);
+        if (!p) return;
+        
+        const oficial = j.gols_a_oficial !== null ? `${j.gols_a_oficial} x ${j.gols_b_oficial}` : "Pendente";
+        const pts = j.gols_a_oficial !== null ? avaliarRegrasPalpite(p, j, regrasPontuacao) : 0;
+        
+        // Lógica de Ocultação
+        const jogoBloqueado = isJogoBloqueado(j.data_hora);
+        const exibicaoPalpite = (jogoBloqueado || isProprioUser) ? `${p.palpite_a}x${p.palpite_b}` : "🔒 Oculto";
 
-            listaJogosMataMata.forEach(j => {
-                const p = listaPalpitesMataMata.find(palpite => palpite.user_id === userId && palpite.jogo_id === j.id);
-                if (!p) return;
-                const oficial = j.gols_a_oficial !== null ? `${j.gols_a_oficial} x ${j.gols_b_oficial}` : "Pendente";
-                const pts = j.gols_a_oficial !== null ? avaliarRegrasPalpite(p, j, regrasPontuacao) : 0;
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-slate-800/40 hover:bg-slate-900/20";
+        tr.innerHTML = `
+            <td class="p-2 font-bold text-blue-400 uppercase text-[9px]">${j.fase}</td>
+            <td class="p-2 text-slate-500 font-mono text-[9px]">${formatarHoraFusoExibicao(j.data_hora)}</td>
+            <td class="p-2 font-medium text-slate-300 truncate max-w-[110px]">${j.time_a} x ${j.time_b}</td>
+            <td class="p-2 text-center font-mono font-bold">${oficial}</td>
+            <td class="p-2 text-center font-mono text-blue-400 font-bold">${exibicaoPalpite}</td>
+            <td class="p-2 text-center font-bold text-emerald-400 font-mono">+${pts} pts</td>`;
+        tbody.appendChild(tr);
+    });
 
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-slate-800/40 bg-purple-950/10 hover:bg-purple-900/20";
-                tr.innerHTML = `
-                    <td class="p-2 font-bold text-purple-400 uppercase text-[9px]">${j.fase}</td>
-                    <td class="p-2 text-slate-500 font-mono text-[9px]">${formatarHoraFusoExibicao(j.data_hora)}</td>
-                    <td class="p-2 font-medium text-purple-200 truncate max-w-[110px]">${j.time_a || 'A definir'} x ${j.time_b || 'A definir'}</td>
-                    <td class="p-2 text-center font-mono font-bold">${oficial}</td>
-                    <td class="p-2 text-center font-mono text-purple-400 font-bold">${p.palpite_a}x${p.palpite_b}</td>
-                    <td class="p-2 text-center font-bold text-amber-400 font-mono">+${pts} pts</td>`;
-                tbody.appendChild(tr);
-            });
+    listaJogosMataMata.forEach(j => {
+        const p = listaPalpitesMataMata.find(palpite => palpite.user_id === userId && palpite.jogo_id === j.id);
+        if (!p) return;
+        
+        const oficial = j.gols_a_oficial !== null ? `${j.gols_a_oficial} x ${j.gols_b_oficial}` : "Pendente";
+        const pts = j.gols_a_oficial !== null ? avaliarRegrasPalpite(p, j, regrasPontuacao) : 0;
 
-            document.getElementById('modal-auditoria').classList.remove('hidden');
-        }
+        // Lógica de Ocultação para Mata-Mata
+        const jogoBloqueado = isJogoBloqueado(j.data_hora);
+        const exibicaoPalpite = (jogoBloqueado || isProprioUser) ? `${p.palpite_a}x${p.palpite_b}` : "🔒 Oculto";
 
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-slate-800/40 bg-purple-950/10 hover:bg-purple-900/20";
+        tr.innerHTML = `
+            <td class="p-2 font-bold text-purple-400 uppercase text-[9px]">${j.fase}</td>
+            <td class="p-2 text-slate-500 font-mono text-[9px]">${formatarHoraFusoExibicao(j.data_hora)}</td>
+            <td class="p-2 font-medium text-purple-200 truncate max-w-[110px]">${j.time_a || 'A definir'} x ${j.time_b || 'A definir'}</td>
+            <td class="p-2 text-center font-mono font-bold">${oficial}</td>
+            <td class="p-2 text-center font-mono text-purple-400 font-bold">${exibicaoPalpite}</td>
+            <td class="p-2 text-center font-bold text-amber-400 font-mono">+${pts} pts</td>`;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('modal-auditoria').classList.remove('hidden');
+}
         function fecharModalAuditoria() { document.getElementById('modal-auditoria').classList.add('hidden'); }
 
         async function guardarMeusPalpites() {
