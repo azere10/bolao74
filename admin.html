@@ -607,12 +607,22 @@ const mapaAvancoFase = {
                             vencedor = jogoOriginal.time_b;
                             perdedor = jogoOriginal.time_a;
                         } else {
-                            const seletorPenalidades = div.querySelector('.select-vencedor-penalidades') || div.querySelector('.select-vencedor');
-                            if (seletorPenalidades && seletorPenalidades.value) {
-                                vencedor = seletorPenalidades.value;
+                            // Verifica se o jogo já estava empatado com este exato placar e se o vencedor já existe no banco
+                            const placarInalterado = (parseInt(jogoOriginal.gols_a_oficial) === intGA && parseInt(jogoOriginal.gols_b_oficial) === intGB);
+    
+                            if (placarInalterado && jogoOriginal.vencedor) {
+                                // Recupera o vencedor já existente na base de dados para evitar perguntar novamente
+                                vencedor = jogoOriginal.vencedor;
                             } else {
-                                vencedor = prompt(`O jogo ${jogoOriginal.numero_jogo} empatou. Digite o vencedor exato nos pênaltis:`, jogoOriginal.time_a);
+                                // Se for um empate novo ou o placar foi alterado, solicita a informação
+                                const seletorPenalidades = div.querySelector('.select-vencedor-penalidades') || div.querySelector('.select-vencedor');
+                                if (seletorPenalidades && seletorPenalidades.value) {
+                                    vencedor = seletorPenalidades.value;
+                                } else {
+                                    vencedor = prompt(`O jogo ${jogoOriginal.numero_jogo} empatou. Digite o vencedor exato nos pênaltis:`, jogoOriginal.time_a);
+                                }
                             }
+    
                             if (vencedor) {
                                 perdedor = (vencedor === jogoOriginal.time_a) ? jogoOriginal.time_b : jogoOriginal.time_a;
                             }
