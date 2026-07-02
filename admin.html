@@ -551,7 +551,7 @@ const mapaAvancoFase = {
         const tabelaAlvo = abaAtiva === 'jogos' ? 'jogos' : 'jogos_mata_mata';
         const containerId = abaAtiva === 'jogos' ? 'aba-jogos' : 'aba-matamata';
         const linhasJogo = document.querySelectorAll(`#${containerId} [data-jogo-id]`);
-        
+
         if (linhasJogo.length === 0) {
             mostrarNotificacao("Nenhum jogo encontrado para salvar.", "danger");
             mostrarSpinner(false);
@@ -560,9 +560,13 @@ const mapaAvancoFase = {
 
         for (let div of linhasJogo) {
             const id = div.getAttribute('data-jogo-id');
-            const gA = div.querySelector('.input-gols-mandante').value;
-            const gB = div.querySelector('.input-gols-visitante').value;
+            const inputA = div.querySelector('.input-gols-mandante');
+            const inputB = div.querySelector('.input-gols-visitante');
 
+            const gA = inputA ? inputA.value : "";
+            const gB = inputB ? inputB.value : "";
+
+            // Ignorar processamento se apenas um dos lados do placar for preenchido
             if ((gA === "" && gB !== "") || (gA !== "" && gB === "")) {
                 logs.push(`Jogo ${id} ignorado: placar incompleto.`);
                 continue;
@@ -570,23 +574,20 @@ const mapaAvancoFase = {
 
             const isReset = (gA === "" && gB === "");
             const payload = {
-                gols_a_oficial: isReset ? null : parseInt(gA),
-                gols_b_oficial: isReset ? null : parseInt(gB)
+                gols_a_oficial: isReset ? null : parseInt(gA, 10),
+                gols_b_oficial: isReset ? null : parseInt(gB, 10)
             };
 
             if (tabelaAlvo === 'jogos_mata_mata' && typeof listaJogosMataMata !== 'undefined') {
                 const jogoOriginal = listaJogosMataMata.find(j => j.id === id);
-                
+
                 if (jogoOriginal) {
                     if (isReset) {
                         payload.vencedor = null;
-                        
-                        // Ao resetar, devolve o placeholder original para o próximo jogo
                         const rotas = mapaAvancoFase[jogoOriginal.numero_jogo];
                         if (rotas) {
                             for (const rota of rotas) {
                                 const jogoDestino = listaJogosMataMata.find(j => j.numero_jogo == rota.destino);
-                                // Apenas restaura se o jogo destino ainda não tiver sido jogado
                                 if (jogoDestino && jogoDestino.gols_a_oficial === null && jogoDestino.gols_b_oficial === null) {
                                     let updateDestino = {};
                                     updateDestino[rota.slot] = rota.isPerdedor ? `Perdedor J${jogoOriginal.numero_jogo}` : `Vencedor J${jogoOriginal.numero_jogo}`;
@@ -597,9 +598,9 @@ const mapaAvancoFase = {
                     } else {
                         let vencedor = null;
                         let perdedor = null;
-                        const intGA = parseInt(gA);
-                        const intGB = parseInt(gB);
-                        
+                        const intGA = parseInt(gA, 10);
+                        const intGB = parseInt(gB, 10);
+
                         if (intGA > intGB) {
                             vencedor = jogoOriginal.time_a;
                             perdedor = jogoOriginal.time_b;
@@ -607,22 +608,23 @@ const mapaAvancoFase = {
                             vencedor = jogoOriginal.time_b;
                             perdedor = jogoOriginal.time_a;
                         } else {
-                            // Verifica se o jogo já estava empatado com este exato placar e se o vencedor já existe no banco
-                            const placarInalterado = (parseInt(jogoOriginal.gols_a_oficial) === intGA && parseInt(jogoOriginal.gols_b_oficial) === intGB);
-    
-                            if (placarInalterado && jogoOriginal.vencedor) {
-                                // Recupera o vencedor já existente na base de dados para evitar perguntar novamente
+                            // Captura os elementos de seleção na interface
+                            const seletorPenalidades = div.querySelector('.select-vencedor-penalidades') || div.querySelector('.select-vencedor');
+                            
+                            // Normalização de valores nulos vindos do banco de dados para evitar erros de comparação numérica
+                            const placarBaseA = jogoOriginal.gols_a_oficial !== null ? parseInt(jogoOriginal.gols_a_oficial, 10) : -1;
+                            const placarBaseB = jogoOriginal.gols_b_oficial !== null ? parseInt(jogoOriginal.gols_b_oficial, 10) : -1;
+                            const placarInalterado = (placarBaseA === intGA && placarBaseB === intGB);
+
+                            // Cascata lógica de decisão para evitar prompts redundantes
+                            if (seletorPenalidades && seletorPenalidades.value) {
+                                vencedor = seletorPenalidades.value;
+                            } else if (placarInalterado && jogoOriginal.vencedor) {
                                 vencedor = jogoOriginal.vencedor;
                             } else {
-                                // Se for um empate novo ou o placar foi alterado, solicita a informação
-                                const seletorPenalidades = div.querySelector('.select-vencedor-penalidades') || div.querySelector('.select-vencedor');
-                                if (seletorPenalidades && seletorPenalidades.value) {
-                                    vencedor = seletorPenalidades.value;
-                                } else {
-                                    vencedor = prompt(`O jogo ${jogoOriginal.numero_jogo} empatou. Digite o vencedor exato nos pênaltis:`, jogoOriginal.time_a);
-                                }
+                                vencedor = prompt(`O jogo ${jogoOriginal.numero_jogo} empatou. Digite o vencedor exato nos pênaltis:`, jogoOriginal.time_a);
                             }
-    
+
                             if (vencedor) {
                                 perdedor = (vencedor === jogoOriginal.time_a) ? jogoOriginal.time_b : jogoOriginal.time_a;
                             }
@@ -630,8 +632,6 @@ const mapaAvancoFase = {
 
                         if (vencedor) {
                             payload.vencedor = vencedor;
-
-                            // Injeta o resultado na fase seguinte operando através do mapa fixo
                             const rotas = mapaAvancoFase[jogoOriginal.numero_jogo];
                             if (rotas) {
                                 for (const rota of rotas) {
@@ -639,12 +639,12 @@ const mapaAvancoFase = {
                                     if (jogoDestino) {
                                         let updateDestino = {};
                                         updateDestino[rota.slot] = rota.isPerdedor ? perdedor : vencedor;
-
+                                        
                                         const { error: errUpDest } = await supabaseClient
                                             .from('jogos_mata_mata')
                                             .update(updateDestino)
                                             .eq('id', jogoDestino.id);
-                                        
+
                                         if (errUpDest) {
                                             logs.push(`Erro ao avançar J${jogoOriginal.numero_jogo}: ${errUpDest.message}`);
                                         }
@@ -664,7 +664,7 @@ const mapaAvancoFase = {
             if (error) {
                 logs.push(`Erro no jogo ${id}: ${error.message}`);
             }
-        }
+        } // Fim do bloco for...of
 
         if (logs.length > 0) {
             mostrarNotificacao("Ação finalizada com alertas. Verifique o console.", "danger");
